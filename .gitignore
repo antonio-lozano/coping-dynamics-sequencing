@@ -1,0 +1,25 @@
+# Data (kept out of git)
+data/
+!data/README.md
+
+# Figures / outputs
+figures/
+*.png
+*.pdf
+*.pkl
+*.parquet
+*.npy
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local overrides
+config/paths.py
