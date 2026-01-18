@@ -4,6 +4,8 @@ data/
 
 # Figures / outputs
 figures/
+results/*.png
+results/*.pdf
 *.png
 *.pdf
 *.pkl

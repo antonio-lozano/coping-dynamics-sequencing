@@ -1,0 +1,2 @@
+# This file ensures the results directory is tracked by git.
+# The actual figure outputs (PNG, PDF) are ignored via .gitignore.
