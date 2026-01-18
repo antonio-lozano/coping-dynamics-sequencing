@@ -2,12 +2,10 @@
 data/
 !data/README.md
 
-# Figures / outputs
+# Figures / outputs (results figures are tracked)
 figures/
-results/*.png
-results/*.pdf
-*.png
-*.pdf
+
+# Data files
 *.pkl
 *.parquet
 *.npy
