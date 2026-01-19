@@ -87,10 +87,8 @@ def plot_chord_diagram(matrix, labels, colors, title=None, ax=None, r=1.0, gap=0
     # Get max absolute weight for scaling (handles negative values for difference matrices)
     if hasattr(matrix, 'values'):
         all_vals = matrix.values.flatten()
-    elif hasattr(matrix, 'max'):
-        all_vals = np.array([[matrix.iloc[i, j] for j in range(n)] for i in range(n)]).flatten()
     else:
-        all_vals = matrix.flatten()
+        all_vals = np.asarray(matrix).flatten()
     
     max_abs_weight = np.max(np.abs(all_vals))
     if max_abs_weight == 0:

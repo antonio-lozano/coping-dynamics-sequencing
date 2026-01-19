@@ -45,7 +45,7 @@ FIGURE_SCRIPTS = [
 # ==============================================================================
 # MAIN
 # ==============================================================================
-def run_script(name: str, script_path: Path) -> tuple[bool, float]:
+def run_script(name: str, script_path: Path, quick_mode: bool = False) -> tuple[bool, float]:
     """Run a single figure script and return success status and duration."""
     print(f"\n{'='*70}")
     print(f"  {name}")
@@ -54,9 +54,11 @@ def run_script(name: str, script_path: Path) -> tuple[bool, float]:
     
     start_time = time.time()
     try:
-        # Set BATCH_MODE environment variable so figure scripts skip plt.show()
+        # Set environment variables for figure scripts
         env = os.environ.copy()
-        env["BATCH_MODE"] = "1"
+        env["BATCH_MODE"] = "1"  # Skip plt.show()
+        if quick_mode:
+            env["QUICK_MODE"] = "1"  # Use minimal data for fast testing
         
         result = subprocess.run(
             [sys.executable, str(script_path)],
@@ -119,7 +121,7 @@ def main():
             results.append((name, "NOT FOUND", 0))
             continue
         
-        success, duration = run_script(name, script_path)
+        success, duration = run_script(name, script_path, quick_mode)
         results.append((name, "SUCCESS" if success else "FAILED", duration))
     
     total_duration = time.time() - total_start

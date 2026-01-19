@@ -248,12 +248,12 @@ plt.rcParams.update({
 })
 
 # Build custom layout using normalized axes positions (from top-origin spec)
-fig = plt.figure(figsize=(13, 10), dpi=300, facecolor="#FFFFFF")
-axA = fig.add_axes([0.07, 0.68, 0.88, 0.28])
-axB = fig.add_axes([0.07, 0.38, 0.42, 0.24])
-axC = fig.add_axes([0.58, 0.38, 0.36, 0.24])
-axD = fig.add_axes([0.07, 0.06, 0.54, 0.24])
-axE = fig.add_axes([0.70, 0.06, 0.24, 0.24])
+fig = plt.figure(figsize=(13, 12), dpi=300, facecolor="#FFFFFF")
+axA = fig.add_axes([0.07, 0.72, 0.88, 0.24])
+axB = fig.add_axes([0.07, 0.40, 0.42, 0.22])
+axC = fig.add_axes([0.58, 0.40, 0.36, 0.22])
+axD = fig.add_axes([0.07, 0.07, 0.54, 0.22])
+axE = fig.add_axes([0.70, 0.07, 0.24, 0.22])
 
 def _style_axes(ax):
     for spine in ("top", "right"):

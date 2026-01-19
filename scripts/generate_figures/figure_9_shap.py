@@ -19,9 +19,11 @@ Pipeline:
 #%%
 
 # ==============================================================================
-# TEST MODE FLAG - Set to True for fast testing, False for full analysis
+# QUICK MODE - Controlled by QUICK_MODE environment variable
+# Set by run_all_figures.py --quick flag, or manually for testing
 # ==============================================================================
-TEST_MODE = True  # Set to False for full production run
+import os
+QUICK_MODE = os.environ.get("QUICK_MODE", "0") == "1"
 
 #%% Imports and paths
 print("Loading dependencies and setting paths...")
@@ -371,10 +373,10 @@ if df is None or len(df) == 0:
     sys.exit(1)
 
 # ==============================================================================
-# TEST MODE: Subsample data for fast testing (stratified by class)
+# QUICK MODE: Subsample data for fast testing (stratified by class)
 # ==============================================================================
-if TEST_MODE:
-    print("\n TEST MODE ENABLED - Using minimal data for fast testing...")
+if QUICK_MODE:
+    print("\n QUICK MODE ENABLED - Using minimal data for fast testing...")
     max_samples_per_class = 250  # Limit samples per class
     # Stratified sampling to ensure all classes are represented
     sampled_dfs = []
@@ -405,8 +407,8 @@ print(f"Classes: {list(classes)}")
 print(f"Chance level: {chance_level:.3f}")
 
 #%% Cross-validated accuracy and confusion matrix
-# XGBoost parameters based on TEST_MODE
-if TEST_MODE:
+# XGBoost parameters based on QUICK_MODE
+if QUICK_MODE:
     xgb_params = dict(
         n_estimators=10,      # Minimal trees
         max_depth=3,          # Shallow trees
@@ -484,7 +486,7 @@ X_sample = X[sample_idx]
 # Use shap.Explainer for better compatibility with multi-class XGBoost
 # TreeExplainer has compatibility issues with recent XGBoost multi-class models
 # So we use KernelExplainer with predict_proba which is more robust
-n_background = 20 if TEST_MODE else 50
+n_background = 20 if QUICK_MODE else 50
 print(f"  Using KernelExplainer for multi-class compatibility (background={n_background})...")
 background = shap.kmeans(X_sample, n_background)  # Summarize background data
 explainer = shap.KernelExplainer(final_model.predict_proba, background)
@@ -767,8 +769,8 @@ for (row, col), cls, letter in zip(positions, all_classes, panel_letters):
 plt.tight_layout()
 
 # Save single figure
-fig.savefig(RESULTS_DIR / "figure_9.png", dpi=600, bbox_inches="tight", facecolor="white")
-fig.savefig(RESULTS_DIR / "figure_9.pdf", bbox_inches="tight", facecolor="white")
+fig.savefig(RESULTS_DIR / "figure_9_shap.png", dpi=600, bbox_inches="tight", facecolor="white")
+fig.savefig(RESULTS_DIR / "figure_9_shap.pdf", bbox_inches="tight", facecolor="white")
 print(f"Saved Figure 9 to {RESULTS_DIR}")
 
 # Show only if not in batch mode
