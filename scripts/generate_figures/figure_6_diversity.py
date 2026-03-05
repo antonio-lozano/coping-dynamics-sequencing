@@ -24,7 +24,7 @@ import matplotlib.colors as mcolors
 import seaborn as sns
 import pickle
 
-from src.config import RESULTS_CLUSTERS_PKL, INDEX_CSV, FPS, BEHAVIOR_MAPPING, RESULTS_DIR, PALETTE
+from src.config import RESULTS_CLUSTERS_PKL, INDEX_CSV, FPS, BEHAVIOR_MAPPING, MANUSCRIPT_FIGURES_DIR as RESULTS_DIR, PALETTE
 from src.plotting import plot_chord_diagram
 
 results_pkl = RESULTS_CLUSTERS_PKL
@@ -517,3 +517,4 @@ if not os.environ.get("BATCH_MODE"):
 print("Figure 6 ready.")
 
 # %%
+

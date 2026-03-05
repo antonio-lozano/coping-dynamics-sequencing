@@ -15,6 +15,7 @@ from . import io_utils
 from . import metrics
 from . import plotting
 from . import transition_utils
+from . import ml
 
 __all__ = [
     "config",
@@ -22,4 +23,5 @@ __all__ = [
     "metrics",
     "plotting",
     "transition_utils",
+    "ml",
 ]

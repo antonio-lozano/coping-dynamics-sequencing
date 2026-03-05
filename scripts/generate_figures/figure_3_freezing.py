@@ -21,7 +21,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from src.config import FREEZING_DIR, INDEX_CSV, FPS, BIN_SECONDS, RESULTS_DIR, PALETTE
+from src.config import FREEZING_DIR, INDEX_CSV, FPS, BIN_SECONDS, MANUSCRIPT_FIGURES_DIR as RESULTS_DIR, PALETTE
 
 freezing_dir = FREEZING_DIR
 index_csv = INDEX_CSV
@@ -207,3 +207,4 @@ if not os.environ.get("BATCH_MODE"):
 print("Figure 3 ready.")
 
 # %%
+

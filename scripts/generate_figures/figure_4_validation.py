@@ -24,7 +24,7 @@ import seaborn as sns
 import pickle
 import re
 
-from src.config import RESULTS_RAW_PKL, FREEZING_DIR, INDEX_CSV, FPS, BIN_SECONDS, RESULTS_DIR, PALETTE
+from src.config import RESULTS_RAW_PKL, FREEZING_DIR, INDEX_CSV, FPS, BIN_SECONDS, MANUSCRIPT_FIGURES_DIR as RESULTS_DIR, PALETTE
 
 results_pkl = RESULTS_RAW_PKL
 freezing_dir = FREEZING_DIR
@@ -441,3 +441,4 @@ if not os.environ.get("BATCH_MODE"):
 print("Figure 4 ready.")
 
 # %%
+

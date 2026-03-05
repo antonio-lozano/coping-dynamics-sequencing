@@ -1,5 +1,5 @@
 # Data (kept out of git)
-data/
+data/*
 !data/README.md
 
 # Figures / outputs (results figures are tracked)

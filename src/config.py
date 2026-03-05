@@ -130,6 +130,24 @@ FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 RESULTS_DIR = PROJECT_ROOT / "results"
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
+# Publication figure outputs live in a dedicated subfolder.
+MANUSCRIPT_FIGURES_DIR = RESULTS_DIR / "manuscript_figures"
+MANUSCRIPT_FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+
+# ML model training outputs are saved in-repo for easier tracking/versioning.
+MODEL_TRAINING_DIR = RESULTS_DIR / "model_training"
+MODEL_TRAINING_DIR.mkdir(parents=True, exist_ok=True)
+
+MODELS_DIR = MODEL_TRAINING_DIR / "models" / "xgb_behavior"
+MODELS_DIR.mkdir(parents=True, exist_ok=True)
+
+TO_PREDICT_DIR = DATA_DIR / "to_predict"
+TO_PREDICT_DIR.mkdir(parents=True, exist_ok=True)
+
+# Prediction outputs are saved in-repo under results/ for easier review/sharing.
+PREDICTIONS_DIR = RESULTS_DIR / "predictions"
+PREDICTIONS_DIR.mkdir(parents=True, exist_ok=True)
+
 # Constants
 FPS = 25
 BIN_SECONDS = 30

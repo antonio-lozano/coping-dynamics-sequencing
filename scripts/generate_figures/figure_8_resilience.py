@@ -36,7 +36,7 @@ from sklearn.model_selection import StratifiedKFold, cross_val_score, cross_val_
 import scipy.stats as st
 import warnings
 
-from src.config import RESULTS_CLUSTERS_PKL, INDEX_CSV, FPS, BIN_SECONDS, BEHAVIOR_MAPPING, CODES, RESULTS_DIR, PALETTE
+from src.config import RESULTS_CLUSTERS_PKL, INDEX_CSV, FPS, BIN_SECONDS, BEHAVIOR_MAPPING, CODES, MANUSCRIPT_FIGURES_DIR as RESULTS_DIR, PALETTE
 from src.transition_utils import (
     compute_transition_matrix, 
     compute_stabilized_transition_matrices,
@@ -583,3 +583,4 @@ if not os.environ.get("BATCH_MODE"):
 print("Figure 8 ready.")
 
 # %%
+

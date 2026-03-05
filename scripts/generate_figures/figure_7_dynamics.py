@@ -35,7 +35,7 @@ from scipy.interpolate import griddata
 from scipy import stats
 from sklearn.manifold import MDS
 
-from src.config import RESULTS_CLUSTERS_PKL, INDEX_CSV, FPS, BIN_SECONDS, BEHAVIOR_MAPPING, CODES, RESULTS_DIR, PALETTE
+from src.config import RESULTS_CLUSTERS_PKL, INDEX_CSV, FPS, BIN_SECONDS, BEHAVIOR_MAPPING, CODES, MANUSCRIPT_FIGURES_DIR as RESULTS_DIR, PALETTE
 from src.plotting import plot_chord_diagram, plot_difference_network, add_difference_colorbar
 from src.transition_utils import (
     compute_transition_matrix, 
@@ -627,3 +627,4 @@ if not os.environ.get("BATCH_MODE"):
 print("Figure 7 ready.")
 
 # %%
+

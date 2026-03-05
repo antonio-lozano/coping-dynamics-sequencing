@@ -26,7 +26,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pickle
 
-from src.config import RESULTS_CLUSTERS_PKL, INDEX_CSV, FPS, BIN_SECONDS, RESULTS_DIR, PALETTE
+from src.config import RESULTS_CLUSTERS_PKL, INDEX_CSV, FPS, BIN_SECONDS, MANUSCRIPT_FIGURES_DIR as RESULTS_DIR, PALETTE
 
 results_pkl = RESULTS_CLUSTERS_PKL
 index_csv = INDEX_CSV
@@ -328,3 +328,4 @@ if not os.environ.get("BATCH_MODE"):
 print("Figure 5 ready.")
 
 # %%
+

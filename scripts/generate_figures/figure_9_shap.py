@@ -29,7 +29,6 @@ QUICK_MODE = os.environ.get("QUICK_MODE", "0") == "1"
 print("Loading dependencies and setting paths...")
 from pathlib import Path
 import sys
-import re
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -38,23 +37,28 @@ if str(repo_root) not in sys.path:
     sys.path.insert(0, str(repo_root))
 
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import matplotlib.patches as mpatches
 from matplotlib.gridspec import GridSpec
 import seaborn as sns
 from sklearn.model_selection import StratifiedKFold
-from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import confusion_matrix, accuracy_score
 import xgboost as xgb
 import shap
-import pickle
 
 from src.config import (
-    RESULTS_CLUSTERS_PKL, INDEX_CSV, FPS, BEHAVIOR_MAPPING,
-    RESULTS_DIR, PALETTE, DATA_DIR, DLC_DIR
+    RESULTS_CLUSTERS_PKL, INDEX_CSV, FPS,
+    MANUSCRIPT_FIGURES_DIR as RESULTS_DIR, PALETTE, DATA_DIR, DLC_DIR
 )
+from src.ml.behavior_xgb import (
+    build_feature_matrix,
+    encode_labels,
+    get_xgb_params,
+    n_cv_folds as default_cv_folds,
+    stratified_subsample_by_label,
+)
+from src.ml.pose_features import load_all_dlc_and_compute_features
 
 # ==============================================================================
 # CONFIGURATION
@@ -73,250 +77,6 @@ BEHAVIOR_PALETTE = {
     "Jump": "#E4572E",          # red
     "Unassigned": "#888888",    # gray
 }
-
-# Body part mapping from DLC output
-BODYPART_NAMES = {
-    "nose": "Nose",
-    "H1R": "Head Right 1",
-    "H2R": "Head Right 2", 
-    "H1L": "Head Left 1",
-    "H2L": "Head Left 2",
-    "B1R": "Right Body 1",
-    "B2R": "Right Body 2",
-    "B3R": "Right Body 3",
-    "B1L": "Left Body 1",
-    "B2L": "Left Body 2",
-    "B3L": "Left Body 3",
-    "tail": "Tail",
-    "S2": "Spine 2",
-    "S1": "Spine 1",
-}
-
-# ==============================================================================
-# DLC DATA LOADING AND FEATURE COMPUTATION
-# ==============================================================================
-
-def _normalize_name(name: str) -> str:
-    """Normalize recording name for matching."""
-    return re.sub(r"[^a-z0-9]", "", str(name).lower())
-
-def load_dlc_csv(csv_path: Path) -> pd.DataFrame:
-    """Load a DLC CSV file and return (x, y) coordinates per bodypart per frame."""
-    df = pd.read_csv(csv_path, header=[1, 2], index_col=0)
-    # Flatten multi-index columns to bodypart_coord format
-    df.columns = [f"{bp}_{coord}" for bp, coord in df.columns]
-    # Keep only x, y (drop likelihood)
-    keep_cols = [c for c in df.columns if c.endswith("_x") or c.endswith("_y")]
-    return df[keep_cols].reset_index(drop=True)
-
-def compute_kinematic_features(pose_df: pd.DataFrame, fps: int = 25) -> pd.DataFrame:
-    """
-    Compute kinematic features from DLC pose data.
-    
-    Features computed per frame:
-    - Pairwise distances between all body parts
-    - Per-bodypart velocities
-    - Angular velocity of body axis
-    - Summed velocity across all points
-    - SD and mean of distances over sliding window
-    """
-    features = {}
-    n_frames = len(pose_df)
-    
-    # Extract bodypart names from columns
-    bodyparts = sorted(set(c.rsplit("_", 1)[0] for c in pose_df.columns))
-    
-    # Get x, y arrays for each bodypart
-    coords = {}
-    for bp in bodyparts:
-        x_col = f"{bp}_x"
-        y_col = f"{bp}_y"
-        if x_col in pose_df.columns and y_col in pose_df.columns:
-            coords[bp] = pose_df[[x_col, y_col]].values
-    
-    # 1. Pairwise distances between all body parts
-    bp_list = list(coords.keys())
-    for i, bp1 in enumerate(bp_list):
-        for bp2 in bp_list[i+1:]:
-            dist = np.sqrt(np.sum((coords[bp1] - coords[bp2])**2, axis=1))
-            bp1_nice = BODYPART_NAMES.get(bp1, bp1)
-            bp2_nice = BODYPART_NAMES.get(bp2, bp2)
-            features[f"{bp1_nice} - {bp2_nice} Distance"] = dist
-    
-    # 2. Per-bodypart velocities (frame-to-frame displacement)
-    for bp in bp_list:
-        xy = coords[bp]
-        vel = np.zeros(n_frames)
-        vel[1:] = np.sqrt(np.sum(np.diff(xy, axis=0)**2, axis=1)) * fps
-        bp_nice = BODYPART_NAMES.get(bp, bp)
-        features[f"{bp_nice} Velocity"] = vel
-    
-    # 3. Angular velocity (using nose-tail axis)
-    if "nose" in coords and "tail" in coords:
-        nose = coords["nose"]
-        tail = coords["tail"]
-        angle = np.arctan2(nose[:, 1] - tail[:, 1], nose[:, 0] - tail[:, 0])
-        ang_vel = np.zeros(n_frames)
-        ang_diff = np.diff(angle)
-        # Handle angle wrapping
-        ang_diff = np.where(ang_diff > np.pi, ang_diff - 2*np.pi, ang_diff)
-        ang_diff = np.where(ang_diff < -np.pi, ang_diff + 2*np.pi, ang_diff)
-        ang_vel[1:] = np.abs(ang_diff) * fps
-        features["Angular Velocity"] = ang_vel
-        features["SD Angular Velocity"] = pd.Series(ang_vel).rolling(15, center=True, min_periods=1).std().values
-    
-    # 4. Summed velocity across all body points
-    all_vel = np.zeros(n_frames)
-    for bp in bp_list:
-        xy = coords[bp]
-        v = np.zeros(n_frames)
-        v[1:] = np.sqrt(np.sum(np.diff(xy, axis=0)**2, axis=1)) * fps
-        all_vel += v
-    features["Summed Velocity"] = all_vel
-    
-    # 5. Center body position (mean of body points)
-    body_bps = [bp for bp in bp_list if bp.startswith("B") or bp.startswith("S")]
-    if body_bps:
-        center = np.mean([coords[bp] for bp in body_bps], axis=0)
-        features["Center Body X"] = center[:, 0]
-        features["Center Body Y"] = center[:, 1]
-        # Distances from each point to center
-        for bp in bp_list:
-            dist_to_center = np.sqrt(np.sum((coords[bp] - center)**2, axis=1))
-            bp_nice = BODYPART_NAMES.get(bp, bp)
-            features[f"{bp_nice} - Center Body Distance"] = dist_to_center
-    
-    # 6. Rolling statistics (variability)
-    window = 15  # ~0.6s at 25fps
-    for key in list(features.keys()):
-        if "Distance" in key or "Velocity" in key:
-            series = pd.Series(features[key])
-            features[f"Mean {key}"] = series.rolling(window, center=True, min_periods=1).mean().values
-            features[f"SD {key}"] = series.rolling(window, center=True, min_periods=1).std().values
-    
-    # 7. Tail variability (specific feature mentioned in spec)
-    if "tail" in coords:
-        tail_xy = coords["tail"]
-        tail_vel = np.zeros(n_frames)
-        tail_vel[1:] = np.sqrt(np.sum(np.diff(tail_xy, axis=0)**2, axis=1)) * fps
-        features["Mean Tail Velocity"] = pd.Series(tail_vel).rolling(window, center=True, min_periods=1).mean().values
-        features["Tail Variability"] = pd.Series(tail_vel).rolling(window, center=True, min_periods=1).std().values
-        
-        # Body 3 to Tail variability (mentioned in spec)
-        for side in ["R", "L"]:
-            b3 = f"B3{side}"
-            if b3 in coords:
-                dist = np.sqrt(np.sum((coords[b3] - coords["tail"])**2, axis=1))
-                side_name = "Right" if side == "R" else "Left"
-                features[f"{side_name} Body 3 - Tail Variability"] = pd.Series(dist).rolling(window, center=True, min_periods=1).std().values
-    
-    return pd.DataFrame(features)
-
-def load_all_dlc_and_compute_features(dlc_dir: Path, results_pkl: Path, index_csv: Path):
-    """
-    Load all DLC CSVs, compute features, and merge with MoSeq cluster labels.
-    """
-    print(f"Loading MoSeq cluster results from {results_pkl}...")
-    with open(results_pkl, "rb") as f:
-        results_dict = pickle.load(f)
-    
-    index_df = pd.read_csv(index_csv)
-    name_to_group = {_normalize_name(r["name"]): r["group"] for _, r in index_df.iterrows()}
-    
-    all_rows = []
-    
-    # Find DLC CSV files
-    dlc_csvs = list(dlc_dir.glob("*DLC*.csv"))
-    print(f"Found {len(dlc_csvs)} DLC CSV files.")
-    
-    for csv_path in dlc_csvs:
-        # Extract recording name
-        fname = csv_path.stem
-        # Try to match with results_dict keys
-        matched_key = None
-        fname_norm = _normalize_name(fname)
-        
-        for key in results_dict.keys():
-            if _normalize_name(key) == fname_norm or fname_norm in _normalize_name(key) or _normalize_name(key) in fname_norm:
-                matched_key = key
-                break
-        
-        if matched_key is None:
-            # Try partial match on animal ID
-            for key in results_dict.keys():
-                key_norm = _normalize_name(key)
-                # Extract animal number pattern
-                animal_match = re.search(r"animal\s*(\d+)", fname_norm)
-                session_match = re.search(r"_(\d+)dlc", fname_norm)
-                if animal_match:
-                    animal_id = animal_match.group(1)
-                    if f"animal{animal_id}" in key_norm:
-                        # Check session number if present
-                        if session_match:
-                            session_id = session_match.group(1)
-                            if f"_{session_id}" in key_norm or f"_{session_id}." in str(key).lower():
-                                matched_key = key
-                                break
-                        else:
-                            matched_key = key
-                            break
-        
-        if matched_key is None:
-            continue
-        
-        # Get cluster labels (key is 'syllable' singular, not 'syllables')
-        rec_data = results_dict[matched_key]
-        if "syllable" in rec_data:
-            labels = rec_data["syllable"]
-        elif "syllables_reindexed" in rec_data:
-            labels = rec_data["syllables_reindexed"]
-        elif "syllables" in rec_data:
-            labels = rec_data["syllables"]
-        else:
-            print(f"  No syllable data for {matched_key}, keys: {list(rec_data.keys())}")
-            continue
-        
-        # Map to behavior names (values 1-7 map to behaviors, others to Unassigned)
-        behavior_labels = []
-        for s in labels:
-            if np.isnan(s) if isinstance(s, float) else False:
-                behavior_labels.append("Unassigned")
-            else:
-                behavior_labels.append(BEHAVIOR_MAPPING.get(int(s), "Unassigned"))
-        
-        # Load DLC and compute features
-        try:
-            pose_df = load_dlc_csv(csv_path)
-        except Exception as e:
-            print(f"  Error loading {csv_path.name}: {e}")
-            continue
-        
-        # Ensure same length
-        min_len = min(len(pose_df), len(behavior_labels))
-        pose_df = pose_df.iloc[:min_len]
-        behavior_labels = behavior_labels[:min_len]
-        
-        # Compute features
-        feat_df = compute_kinematic_features(pose_df, fps=fps)
-        feat_df = feat_df.iloc[:min_len]
-        feat_df[label_col] = behavior_labels
-        feat_df["recording"] = matched_key
-        
-        # Get group
-        for name_key, grp in name_to_group.items():
-            if name_key in _normalize_name(matched_key):
-                feat_df["group"] = grp
-                break
-        
-        all_rows.append(feat_df)
-        print(f"  Processed {csv_path.name} -> {matched_key} ({len(feat_df)} frames)")
-    
-    if not all_rows:
-        return None
-    
-    combined = pd.concat(all_rows, ignore_index=True)
-    print(f"Total: {len(combined):,} frames with {combined.shape[1]-3} features.")
-    return combined
 
 # ==============================================================================
 # STYLING FUNCTIONS
@@ -378,28 +138,19 @@ if df is None or len(df) == 0:
 if QUICK_MODE:
     print("\n QUICK MODE ENABLED - Using minimal data for fast testing...")
     max_samples_per_class = 250  # Limit samples per class
-    # Stratified sampling to ensure all classes are represented
-    sampled_dfs = []
-    for label in df[label_col].unique():
-        class_df = df[df[label_col] == label]
-        n_samples = min(len(class_df), max_samples_per_class)
-        if n_samples > 0:
-            sampled_dfs.append(class_df.sample(n=n_samples, random_state=42))
-    df = pd.concat(sampled_dfs, ignore_index=True)
+    df = stratified_subsample_by_label(
+        df=df,
+        label_col=label_col,
+        max_samples_per_class=max_samples_per_class,
+        random_state=42,
+    )
     print(f"   Stratified subsampled to {len(df)} frames ({max_samples_per_class} max per class)")
 
 # Clean up feature columns
-feature_cols = [c for c in df.columns if c not in [label_col, "recording", "group"]]
-X_df = df[feature_cols].apply(pd.to_numeric, errors="coerce").fillna(0)
-X = X_df.to_numpy(dtype=np.float32)
-
-# Handle infinite values
-X = np.nan_to_num(X, nan=0.0, posinf=0.0, neginf=0.0)
+X_df, X = build_feature_matrix(df, label_col=label_col)
 
 # Labels
-le = LabelEncoder()
-y = le.fit_transform(df[label_col])
-classes = le.inverse_transform(np.arange(len(le.classes_)))
+y, le, classes = encode_labels(df[label_col])
 num_classes = len(classes)
 chance_level = 1.0 / num_classes
 
@@ -409,35 +160,13 @@ print(f"Chance level: {chance_level:.3f}")
 #%% Cross-validated accuracy and confusion matrix
 # XGBoost parameters based on QUICK_MODE
 if QUICK_MODE:
-    xgb_params = dict(
-        n_estimators=10,      # Minimal trees
-        max_depth=3,          # Shallow trees
-        learning_rate=0.3,    # Fast learning
-        subsample=0.8,
-        colsample_bytree=0.8,
-        objective="multi:softprob",
-        eval_metric="mlogloss",
-        random_state=42,
-        n_jobs=-1,
-        verbosity=0,
-    )
-    n_cv_folds = 2  # Fewer folds
+    xgb_params = get_xgb_params(quick=True)
+    n_cv_folds = default_cv_folds(quick=True)
     shap_sample_size = 100  # Very small SHAP sample
     shap_compute_size = 50  # Even smaller for actual SHAP computation
 else:
-    xgb_params = dict(
-        n_estimators=500,     # Full trees
-        max_depth=6,          # Deeper trees
-        learning_rate=0.05,   # Slower learning
-        subsample=0.9,
-        colsample_bytree=0.9,
-        objective="multi:softprob",
-        eval_metric="mlogloss",
-        random_state=42,
-        n_jobs=-1,
-        verbosity=0,
-    )
-    n_cv_folds = 3  # Standard CV
+    xgb_params = get_xgb_params(quick=False)
+    n_cv_folds = default_cv_folds(quick=False)
     shap_sample_size = 1000  # Larger SHAP sample
     shap_compute_size = 500  # For actual SHAP computation
 
@@ -783,3 +512,4 @@ print("Figure 9 complete!")
 print("=" * 60)
 
 # %%
+
