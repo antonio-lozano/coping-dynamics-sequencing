@@ -20,14 +20,19 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import warnings
 
 from src.config import FREEZING_DIR, INDEX_CSV, FPS, BIN_SECONDS, MANUSCRIPT_FIGURES_DIR as RESULTS_DIR, PALETTE
 
 freezing_dir = FREEZING_DIR
 index_csv = INDEX_CSV
 fps = FPS
-bin_seconds = BIN_SECONDS  # bins to match FC tone/shock structure
+bin_seconds = BIN_SECONDS  # keep original script setting (30-second bins)
 bin_size = fps * bin_seconds
+warnings.warn(
+    f"Figure 3 uses bin_seconds={bin_seconds} (original-script compatible, expected 30s).",
+    RuntimeWarning,
+)
 
 #%%
 # Load group labels and freezing CSVs
@@ -105,6 +110,40 @@ agg = (
     .reset_index(name="freeze_frac")
 )
 
+# Explicit omission requested for Figure 3 analysis.
+excluded_animals_fig3 = {"Animal_48_6", "48_6"}
+excluded_tokens = {_normalize(a).lower() for a in excluded_animals_fig3}
+pre_exclude_n_animals = agg["animal"].nunique()
+agg = agg[
+    ~agg["animal"].map(lambda a: _normalize(str(a)).lower() in excluded_tokens)
+].copy()
+post_exclude_n_animals = agg["animal"].nunique()
+if post_exclude_n_animals != pre_exclude_n_animals:
+    warnings.warn(
+        f"Figure 3 exclusion applied for known bad subject(s): {sorted(excluded_animals_fig3)}",
+        RuntimeWarning,
+    )
+    print(
+        f"Figure 3 exclusion applied: removed {pre_exclude_n_animals - post_exclude_n_animals} animal(s) "
+        f"matching {sorted(excluded_animals_fig3)}."
+    )
+else:
+    warnings.warn(
+        f"Figure 3 exclusion note: no rows matched exclusion list {sorted(excluded_animals_fig3)}.",
+        RuntimeWarning,
+    )
+    print(f"Figure 3 exclusion note: no animals matched {sorted(excluded_animals_fig3)}.")
+
+# Figure 3 analysis must only use Control/ELS (never Unknown).
+unknown_animals_analysis = sorted(agg.loc[agg["group"] == "Unknown", "animal"].unique().tolist())
+if unknown_animals_analysis:
+    warnings.warn(
+        "Figure 3 excludes Unknown-group animals from analysis: "
+        + ", ".join(unknown_animals_analysis),
+        RuntimeWarning,
+    )
+agg = agg[agg["group"].isin(["Control", "ELS"])].copy()
+
 def _summary_for_animals(animals):
     data = agg[agg["animal"].isin(animals)]
     summary = (
@@ -112,7 +151,8 @@ def _summary_for_animals(animals):
         .agg(["mean", "sem", "count"])
         .reset_index()
     )
-    summary["time_sec"] = (summary["bin"] + 0.5) * bin_seconds
+    # Use bin end-time so 30s bins are labeled 0.5, 1.0, ..., 7.5 minutes.
+    summary["time_sec"] = (summary["bin"] + 1.0) * bin_seconds
     summary["time_min"] = summary["time_sec"] / 60.0
     return summary
 
@@ -130,9 +170,35 @@ els_a, els_b = _split_animals_by_group("ELS")
 dataset_a_animals = set(ctrl_a + els_a)
 dataset_b_animals = set(ctrl_b + els_b)
 
+all_loaded_animals = sorted(agg["animal"].unique().tolist())
+analysis_animals = sorted(agg.loc[agg["group"].isin(["Control", "ELS"]), "animal"].unique().tolist())
+excluded_unknown_animals = unknown_animals_analysis
+print(f"Figure 3 animals used (Control + ELS): {len(analysis_animals)}")
+
+print("\n=== Animal usage audit for Figure 3 ===")
+print(f"All animals with freezing traces loaded: {len(all_loaded_animals)}")
+print(all_loaded_animals)
+print(f"\nAnimals included in analysis (Control/ELS only): {len(analysis_animals)}")
+print(analysis_animals)
+print(f"\nAnimals excluded from group-based analysis (Unknown group): {len(excluded_unknown_animals)}")
+print(excluded_unknown_animals)
+print(f"\nControl animals total used: {len(sorted(ctrl_a + ctrl_b))}")
+print(sorted(ctrl_a + ctrl_b))
+print(f"ELS animals total used: {len(sorted(els_a + els_b))}")
+print(sorted(els_a + els_b))
+print(f"\nPanel A animals (n={len(dataset_a_animals)}):")
+print(sorted(dataset_a_animals))
+print(f"  Control in A (n={len(ctrl_a)}): {ctrl_a}")
+print(f"  ELS in A (n={len(els_a)}): {els_a}")
+print(f"\nPanel B animals (n={len(dataset_b_animals)}):")
+print(sorted(dataset_b_animals))
+print(f"  Control in B (n={len(ctrl_b)}): {ctrl_b}")
+print(f"  ELS in B (n={len(els_b)}): {els_b}")
+print("=== End animal usage audit ===\n")
+
 summary_a = _summary_for_animals(dataset_a_animals)
 summary_b = _summary_for_animals(dataset_b_animals)
-summary_all = _summary_for_animals(agg["animal"].unique())
+summary_all = _summary_for_animals(analysis_animals)
 
 #%%
 # Plot Figure 3 (three panels)
@@ -180,8 +246,8 @@ def _plot_panel(ax, data, title, tag):
     ax.set_ylabel("Freezing (% of time)", fontsize=8)
     ax.set_xlim(0, 7.5)
     ax.set_xticks([1, 2, 3, 4, 5, 6, 7])
-    ax.set_ylim(0, 80)
-    ax.set_yticks([0, 20, 40, 60, 80])
+    ax.set_ylim(0, 100)
+    ax.set_yticks(np.arange(0, 101, 10))
     ax.legend(frameon=False, loc="upper right", fontsize=7, ncol=1)
     ax.text(4.0, 72, "*", ha="center", va="center", color="#4b4b4b", fontsize=10)
     _style_axes(ax)
@@ -190,8 +256,8 @@ def _plot_panel(ax, data, title, tag):
 fig, axes = plt.subplots(1, 3, figsize=(12, 3.5), dpi=300, facecolor="#FFFFFF")
 plt.subplots_adjust(wspace=0.35, left=0.07, right=0.97, top=0.85, bottom=0.18)
 
-_plot_panel(axes[0], summary_a, "Sanguino-Gómez and Krugers, 2024", "A")
-_plot_panel(axes[1], summary_b, "Sanguino-Gómez et al., 2024", "B")
+_plot_panel(axes[0], summary_b, "Sanguino-Gómez and Krugers, 2024", "A")
+_plot_panel(axes[1], summary_a, "Sanguino-Gómez et al., 2024", "B")
 _plot_panel(axes[2], summary_all, "Combined datasets", "C")
 
 # Save high-quality outputs (before show to avoid blank figures)

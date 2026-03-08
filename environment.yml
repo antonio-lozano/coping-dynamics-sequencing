@@ -23,3 +23,4 @@ dependencies:
       - hdbscan>=0.8
       - shapely>=1.8
       - fastparquet>=0.8
+      - dearpygui>=1.11,<2

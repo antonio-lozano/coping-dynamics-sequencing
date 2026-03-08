@@ -23,6 +23,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pickle
 import re
+import warnings
 
 from src.config import RESULTS_RAW_PKL, FREEZING_DIR, INDEX_CSV, FPS, BIN_SECONDS, MANUSCRIPT_FIGURES_DIR as RESULTS_DIR, PALETTE
 
@@ -32,6 +33,25 @@ index_csv = INDEX_CSV
 fps = FPS
 bin_seconds = BIN_SECONDS
 bin_size = fps * bin_seconds
+excluded_animals_fig4 = {"Animal_48_6", "48_6"}
+excluded_tokens_fig4 = {_normalize_name.strip().replace(" ", "_").lower() for _normalize_name in excluded_animals_fig4}
+warnings.warn(
+    f"Figure 4 uses bin_seconds={bin_seconds} (from config/original pipeline setting).",
+    RuntimeWarning,
+)
+warnings.warn(
+    "Figure 4 excludes known bad subject(s): " + ", ".join(sorted(excluded_animals_fig4)),
+    RuntimeWarning,
+)
+warnings.warn(
+    "Precision/recall uses matched MoSeq+freezing frames with per-recording truncation to min(len(syllable), len(freezing)).",
+    RuntimeWarning,
+)
+
+
+def _is_excluded_recording(name: str) -> bool:
+    norm = _normalize(str(name)).lower()
+    return norm in excluded_tokens_fig4
 
 #%%
 # Load data
@@ -81,6 +101,8 @@ for rec, data in results_dict.items():
     if "syllable" not in data:
         continue
     rec_raw = str(rec).strip()
+    if _is_excluded_recording(rec_raw):
+        continue
     rec_norm = _normalize(rec_raw)
     rec_prefix = rec_norm.split("DLC")[0].split("_resnet")[0].rstrip("_")
     freeze = (
@@ -131,6 +153,12 @@ print(f"Matched recordings: {matched_rec}; Missing: {len(missing_rec)}")
 print("Group counts in matched metrics:")
 print(metrics_df["group"].value_counts())
 print(f"Computed metrics for {metrics_df['syllable'].nunique()} syllables.")
+if (metrics_df["group"] == "Unknown").any():
+    unknown_n = int(metrics_df.loc[metrics_df["group"] == "Unknown", "recording"].nunique())
+    warnings.warn(
+        f"Figure 4 includes {unknown_n} Unknown-group recording(s) in overall syllable metrics (panel A).",
+        RuntimeWarning,
+    )
 
 #%%
 # Aggregate across recordings
@@ -151,6 +179,118 @@ group_agg = (
     .reset_index()
 )
 
+#%%
+# Debug cell: inspect syllable 61 precision/recall statistics
+debug_syll = 61
+print(f"=== DEBUG S{debug_syll} ===")
+
+s_row = agg[agg["syllable"] == debug_syll]
+if s_row.empty:
+    print(f"S{debug_syll} not found in aggregated metrics.")
+else:
+    r = s_row.iloc[0]
+    print(
+        f"S{debug_syll} overall: "
+        f"precision_mean={r['precision']:.6f}, recall_mean={r['recall']:.6f}, "
+        f"frames={int(r['frames'])}, tp={int(r['tp'])}, fp={int(r['fp'])}, fn={int(r['fn'])}"
+    )
+    weighted_precision = (r["tp"] / (r["tp"] + r["fp"])) if (r["tp"] + r["fp"]) > 0 else np.nan
+    weighted_recall = (r["tp"] / (r["tp"] + r["fn"])) if (r["tp"] + r["fn"]) > 0 else np.nan
+    print(
+        f"S{debug_syll} weighted from summed counts: "
+        f"precision={weighted_precision:.6f}, recall={weighted_recall:.6f}"
+    )
+
+s_group = group_agg[group_agg["syllable"] == debug_syll].copy()
+if s_group.empty:
+    print(f"S{debug_syll} group rows: none")
+else:
+    s_group = s_group.sort_values("group")
+    print(f"S{debug_syll} by group:")
+    print(
+        s_group[
+            ["group", "precision", "recall", "frames", "tp", "fp", "fn"]
+        ].to_string(index=False)
+    )
+
+s_rec = metrics_df[metrics_df["syllable"] == debug_syll].copy()
+print(f"S{debug_syll} recording-level rows: {len(s_rec)}")
+if not s_rec.empty:
+    print(
+        "S61 recording precision summary: "
+        f"mean={s_rec['precision'].mean():.6f}, median={s_rec['precision'].median():.6f}, "
+        f"min={s_rec['precision'].min():.6f}, max={s_rec['precision'].max():.6f}"
+    )
+print("=== END DEBUG S61 ===")
+
+#%%
+# Debug cell: frame-level freezing labels at S61 frames
+print(f"=== DEBUG S{debug_syll} FRAME-LEVEL MATCHES ===")
+s61_frame_rows = []
+for rec, data in results_dict.items():
+    if "syllable" not in data:
+        continue
+    rec_raw = str(rec).strip()
+    if _is_excluded_recording(rec_raw):
+        continue
+    rec_norm = _normalize(rec_raw)
+    rec_prefix = rec_norm.split("DLC")[0].split("_resnet")[0].rstrip("_")
+    freeze = (
+        freezing_records.get(rec_raw)
+        or freezing_records.get(rec_norm)
+        or freezing_records.get(rec_prefix)
+    )
+    if freeze is None:
+        continue
+    syll = np.array(data["syllable"])
+    n = min(len(syll), len(freeze))
+    if n <= 0:
+        continue
+    syll = syll[:n]
+    freeze = np.array(freeze[:n], dtype=int)
+    idx = np.flatnonzero(syll == debug_syll)
+    if idx.size == 0:
+        continue
+    grp = group_map.get(rec_raw) or group_map.get(rec_norm) or group_map.get(rec_prefix, "Unknown")
+    for f in idx:
+        s61_frame_rows.append(
+            {
+                "recording": rec_raw,
+                "group": grp,
+                "frame": int(f),
+                "freeze_label": int(freeze[f]),
+            }
+        )
+
+s61_frames_df = pd.DataFrame(s61_frame_rows)
+if s61_frames_df.empty:
+    print(f"No frame-level matches found for S{debug_syll}.")
+else:
+    print(f"S{debug_syll} frame-level rows: {len(s61_frames_df)}")
+    print(f"Recordings containing S{debug_syll}: {s61_frames_df['recording'].nunique()}")
+    print("Freeze label counts at S61 frames:")
+    print(s61_frames_df["freeze_label"].value_counts(dropna=False).sort_index())
+    print("Freeze label fractions at S61 frames:")
+    print((s61_frames_df["freeze_label"].value_counts(normalize=True).sort_index()).round(6))
+
+    rec_summary = (
+        s61_frames_df.groupby(["recording", "group"])["freeze_label"]
+        .agg(["count", "mean"])
+        .reset_index()
+        .rename(columns={"count": "s61_frames", "mean": "freeze_rate_at_s61"})
+        .sort_values(["group", "recording"])
+    )
+    print("Per-recording S61 summary (first 20 rows):")
+    print(rec_summary.head(20).to_string(index=False))
+
+    print("Sample frame-level rows (first 40):")
+    print(s61_frames_df.sort_values(["recording", "frame"]).head(40).to_string(index=False))
+
+    out_csv = RESULTS_DIR / f"debug_s{debug_syll}_frame_freeze_matches.csv"
+    s61_frames_df.sort_values(["recording", "frame"]).to_csv(out_csv, index=False)
+    print(f"Saved full S{debug_syll} frame-level table to: {out_csv}")
+print(f"=== END DEBUG S{debug_syll} FRAME-LEVEL MATCHES ===")
+
 # Syllables exclusive to ELS (present in ELS recordings but never in Control)
 group_counts = (
     metrics_df.groupby(["syllable", "group"])["recording"].nunique().unstack(fill_value=0)
@@ -170,6 +310,8 @@ for rec, data in results_dict.items():
     if "syllable" not in data:
         continue
     rec_raw = str(rec).strip()
+    if _is_excluded_recording(rec_raw):
+        continue
     rec_norm = _normalize(rec_raw)
     rec_prefix = rec_norm.split("DLC")[0].split("_resnet")[0].rstrip("_")
     freeze = (
@@ -204,6 +346,8 @@ seq_by_rec = []
 for rec, data in results_dict.items():
     if "syllable" not in data:
         continue
+    if _is_excluded_recording(str(rec).strip()):
+        continue
     seq = np.array(data["syllable"])
     bins = len(seq) // bin_size
     if bins > 0:
@@ -233,7 +377,8 @@ time_summary = (
     .agg(["mean", "sem", "count"])
     .reset_index()
 )
-time_summary["time_min"] = (time_summary["bin"] + 0.5) * (bin_seconds / 60.0)
+# Use bin end-time so first 30s bin is plotted at 0.5 min.
+time_summary["time_min"] = (time_summary["bin"] + 1.0) * (bin_seconds / 60.0)
 
 #%%
 # Plot Figure 4 panels (precision and recall)
@@ -301,6 +446,18 @@ precision_order = [
 ]
 syll_order = [f"S{s}" for s in precision_order if s in agg["syllable"].values]
 show_prec = agg[agg["syllable"].isin(precision_order)].set_index("syllable").reindex(precision_order).dropna().reset_index()
+s61_in_agg = bool((agg["syllable"] == 61).any())
+s61_in_show = bool((show_prec["syllable"] == 61).any())
+if not s61_in_agg:
+    print("S61 diagnostic: absent from aggregated metrics (not present in matched/retained recordings).")
+elif not s61_in_show:
+    s61_row = agg.loc[agg["syllable"] == 61].iloc[0]
+    print(
+        "S61 diagnostic: present in agg but dropped from panel B view "
+        f"(precision={s61_row['precision']}, recall={s61_row['recall']})."
+    )
+else:
+    print("S61 diagnostic: present and plotted in panel B.")
 
 def _group_vals(metric):
     overall = show_prec.set_index("syllable")[metric].reindex(show_prec["syllable"]).to_numpy()

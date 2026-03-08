@@ -1,0 +1,25 @@
+{
+  "source_mode_requested": "results_pkl",
+  "source_mode_used": "results_pkl",
+  "source_path_used": "C:\\Users\\admin\\keypoint_moseq\\keypoint_moseq_project\\equipo_project_data\\new_results.pkl",
+  "fallback_used": false,
+  "fallback_warning": true,
+  "freezing_dir": "C:\\Users\\admin\\keypoint_moseq\\keypoint_moseq_project\\code\\equipo_project\\Freezing_predictions_light",
+  "index_csv": "C:\\Users\\admin\\keypoint_moseq\\keypoint_moseq_project\\code\\equipo_project\\index.csv",
+  "results_pkl": "C:\\Users\\admin\\keypoint_moseq\\keypoint_moseq_project\\equipo_project_data\\new_results.pkl",
+  "moseq_df_arg": null,
+  "excluded_animals": [
+    "48_6",
+    "animal_48_6"
+  ],
+  "n_seq_recordings_loaded": 83,
+  "n_matched_recordings_metrics": 83,
+  "n_missing_freezing_records": 0,
+  "recording_counts_by_group": {
+    "Control": 42,
+    "ELS": 41
+  },
+  "fps": 25,
+  "bin_seconds": 30,
+  "notes": "Precision/recall can change if source differs between legacy moseq_df and results_pkl. This provenance file records exactly which source was used."
+}
