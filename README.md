@@ -40,6 +40,16 @@ Main scripts:
 - `scripts/analysis/predict_behavior_xgb.py`
 - `scripts/analysis/visualize_behavior_predictions.py`
 
+## GUI viewers
+Desktop viewers live under `gui/`.
+
+- DearPyGui mapping explorer:
+  `python gui/mapping_explorer_dpg/app.py`
+- Minimal PyQtGraph comparison viewer:
+  `python gui/app_visual.py`
+
+The PyQtGraph viewer loads left/right videos explicitly, plus pose files (`.csv` or `.h5`) and optional feature tables (`.csv` or `.parquet`).
+
 ## Project structure
 ```
 |-- data/                   # Raw + processed data (not in git)

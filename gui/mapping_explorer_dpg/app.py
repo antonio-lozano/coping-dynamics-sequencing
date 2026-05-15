@@ -1326,7 +1326,11 @@ class ExplorerApp:
         y_axis_tag: str,
     ) -> None:
         if df is None or len(df) == 0 or not feature_names:
-         _full = self._series_x(df, bundle)
+            dpg.delete_item(y_axis_tag, children_only=True)
+            self._feature_plot_signatures[side_key] = None
+            return
+
+        x_full = self._series_x(df, bundle)
         cursor_x = self._feature_x_cursor(df, bundle, frame_idx, time_s)
 
         # --- Collect full valid series per feature ---
@@ -1432,7 +1436,6 @@ class ExplorerApp:
                 tag=cursor_tag,
             )
         dpg.set_axis_limits(y_axis_tag, y_min, y_max)
-        window_min, window_max = self._feature_stream_window_bounds(cursor_x, x_min, x_max)
         dpg.set_axis_limits(x_axis_tag, window_min, window_max)
 
     def _feature_stream_window_bounds(self, cursor_x: float, x_min: float, x_max: float) -> tuple[float, float]:

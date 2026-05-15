@@ -10,6 +10,12 @@ figures/
 *.parquet
 *.npy
 
+# Heavy ML artefacts (models, predictions, scratch debug outputs)
+results/model_training/models/xgb_behavior/
+results/predictions/
+debug/outputs/
+results/manuscript_figures/debug_*
+
 # Python
 __pycache__/
 *.pyc

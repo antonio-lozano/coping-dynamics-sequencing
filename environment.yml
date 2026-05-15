@@ -24,3 +24,5 @@ dependencies:
       - shapely>=1.8
       - fastparquet>=0.8
       - dearpygui>=1.11,<2
+      - PyQt6>=6.6,<7
+      - pyqtgraph>=0.13,<0.14

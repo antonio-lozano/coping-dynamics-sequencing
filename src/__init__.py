@@ -1,27 +1,26 @@
-"""
-coping-dynamics-sequencing source modules.
+"""coping-dynamics-sequencing source modules.
 
-Modules:
-    config: Centralized configuration and path management
-    io_utils: Data loading and saving utilities
-    metrics: Behavioral metrics computation
-    plotting: Visualization utilities
-    stats_utils: Statistical testing utilities
-    transition_utils: Transition matrix analysis (BFL scores, bootstrap tests)
+Keep package imports lightweight so tool-specific entrypoints do not pull
+optional visualization dependencies unless they are actually used.
 """
 
-from . import config
-from . import io_utils
-from . import metrics
-from . import plotting
-from . import transition_utils
-from . import ml
+from __future__ import annotations
+
+from importlib import import_module
 
 __all__ = [
     "config",
-    "io_utils", 
+    "io_utils",
     "metrics",
     "plotting",
     "transition_utils",
     "ml",
 ]
+
+
+def __getattr__(name: str):
+    if name in __all__:
+        module = import_module(f"{__name__}.{name}")
+        globals()[name] = module
+        return module
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
