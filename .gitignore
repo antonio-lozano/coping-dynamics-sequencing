@@ -1,20 +1,19 @@
 # Data (kept out of git)
 data/*
 !data/README.md
+!data/Raw_data.xlsx
+!data/Statistical_report.xlsx
 
-# Figures / outputs (results figures are tracked)
-figures/
+# Manuscript figures are the tracked canonical output (figures/ + figures/data/)
 
 # Data files
 *.pkl
 *.parquet
 *.npy
 
-# Heavy ML artefacts (models, predictions, scratch debug outputs)
+# Heavy ML artefacts (models, predictions)
 results/model_training/models/xgb_behavior/
 results/predictions/
-debug/outputs/
-results/manuscript_figures/debug_*
 
 # Python
 __pycache__/

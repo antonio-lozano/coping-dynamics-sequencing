@@ -1,2 +1,0 @@
-dataset_id,ref_dist_px_count,ref_dist_px_mean,ref_dist_px_median,ref_dist_px_min,ref_dist_px_max,finite_ratio_count,finite_ratio_mean,finite_ratio_median,finite_ratio_min,finite_ratio_max,x_range_px_count,x_range_px_mean,x_range_px_median,x_range_px_min,x_range_px_max,y_range_px_count,y_range_px_mean,y_range_px_median,y_range_px_min,y_range_px_max
-_tmp_store_test,0,,,,,1,1.0,1.0,1.0,1.0,1,811.8288886547089,811.8288886547089,811.8288886547089,811.8288886547089,1,612.414849281311,612.414849281311,612.414849281311,612.414849281311

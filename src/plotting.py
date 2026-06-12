@@ -19,7 +19,27 @@ def save(fig, path, dpi=300):
     fig.savefig(path.with_suffix(".pdf"), bbox_inches="tight")
 
 
-def plot_chord_diagram(matrix, labels, colors, title=None, ax=None, r=1.0, gap=0.05, arc_width=0.06):
+def plot_chord_diagram(
+    matrix,
+    labels,
+    colors,
+    title=None,
+    ax=None,
+    r=1.0,
+    gap=0.05,
+    arc_width=0.06,
+    label_fontsize=10,
+    title_fontsize=12,
+    title_pad=15,
+    limit_pad=1.4,
+    label_radius_factor=1.5,
+    flip_labels=True,
+    edge_lw_scale=12,
+    edge_lw_offset=0.5,
+    edge_alpha=0.7,
+    edge_alpha_min=None,
+    delta_angle=0.12,
+):
     """
     Draw a chord diagram where transitions between behaviors are visualized with arcs.
     
@@ -73,14 +93,14 @@ def plot_chord_diagram(matrix, labels, colors, title=None, ax=None, r=1.0, gap=0
         ax.add_patch(wedge)
 
         # Label positioning
-        label_radius = r + arc_width * 1.5
+        label_radius = r + arc_width * label_radius_factor
         angle_deg = np.degrees(mid_angle) - 90
         ax.text(label_radius * np.cos(mid_angle),
                 label_radius * np.sin(mid_angle),
                 label,
                 ha='center', va='center',
-                fontsize=10,
-                rotation=angle_deg if -90 <= angle_deg <= 90 else angle_deg + 180,
+                fontsize=label_fontsize,
+                rotation=angle_deg if (not flip_labels or -90 <= angle_deg <= 90) else angle_deg + 180,
                 rotation_mode='anchor',
                 color="#4d4d4d")
 
@@ -95,8 +115,6 @@ def plot_chord_diagram(matrix, labels, colors, title=None, ax=None, r=1.0, gap=0
         max_abs_weight = 1  # Avoid division by zero
         
     endpoint_radius = r - arc_width * 0.9
-    delta_angle = 0.12  # Offset for bidirectional edges
-
     # Draw chord connections
     for i in range(n):
         for j in range(n):
@@ -125,7 +143,8 @@ def plot_chord_diagram(matrix, labels, colors, title=None, ax=None, r=1.0, gap=0
             
             # Line width based on absolute weight (log scale for better visualization)
             abs_weight = abs(weight_ij)
-            lw = (np.log1p(abs_weight) / np.log1p(max_abs_weight)) * 12 + 0.5
+            rel_weight = np.log1p(abs_weight) / np.log1p(max_abs_weight)
+            lw = rel_weight * edge_lw_scale + edge_lw_offset
             
             x_source = endpoint_radius * np.cos(theta_source)
             y_source = endpoint_radius * np.sin(theta_source)
@@ -135,7 +154,7 @@ def plot_chord_diagram(matrix, labels, colors, title=None, ax=None, r=1.0, gap=0
             # Color: use source behavior color for positive, red-ish for negative (increased/decreased)
             if weight_ij > 0:
                 edge_color = colors.get(labels[i], "#888888")
-                alpha = 0.7
+                alpha = edge_alpha if edge_alpha_min is None else edge_alpha_min + rel_weight * (edge_alpha - edge_alpha_min)
             else:
                 # For negative values (decreased transitions), use a muted blue
                 edge_color = "#668AB2"
@@ -149,11 +168,11 @@ def plot_chord_diagram(matrix, labels, colors, title=None, ax=None, r=1.0, gap=0
                               lw=lw, alpha=alpha)
             ax.add_patch(patch)
 
-    ax.set_xlim(-1.4 * r, 1.4 * r)
-    ax.set_ylim(-1.4 * r, 1.4 * r)
+    ax.set_xlim(-limit_pad * r, limit_pad * r)
+    ax.set_ylim(-limit_pad * r, limit_pad * r)
     
     if title:
-        ax.set_title(title, fontsize=12, color="#4d4d4d", pad=15)
+        ax.set_title(title, fontsize=title_fontsize, color="#4d4d4d", pad=title_pad)
     
     ax.set_xticks([])
     ax.set_yticks([])
