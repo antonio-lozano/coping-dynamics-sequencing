@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import gzip
 import pickle
 import sys
 import zipfile
@@ -21,10 +22,14 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-COPING_DATA2 = Path(r"H:\Downloads\Coping_data2.zip")
-ORIGINAL_EQUIPO_RESULTS = Path(r"H:\antonio\keypoint_moseq_project\code\code_Jen_February\updated_results.pkl")
+from src.config import (
+    COPING_DATA2_ZIP as COPING_DATA2,
+    COPING2_MEMBER_UPDATED_RESULTS,
+    FIGURE_DATA_DIR as OUTPUT_DIR,
+    UPDATED_RESULTS_PKL as ORIGINAL_EQUIPO_RESULTS,
+)
+
 LEGACY_FIGURES_DIR = REPO_ROOT / "figures"
-OUTPUT_DIR = LEGACY_FIGURES_DIR / "data"
 
 AXIS = "#4D4D4D"
 CONTROL = "#F9C74F"
@@ -122,10 +127,11 @@ def loocv_logistic(coords: np.ndarray, labels: np.ndarray, c_value: float = 1.0)
 
 def load_feature_matrix() -> tuple[pd.DataFrame, np.ndarray]:
     if ORIGINAL_EQUIPO_RESULTS.exists():
-        with ORIGINAL_EQUIPO_RESULTS.open("rb") as f:
+        opener = gzip.open if ORIGINAL_EQUIPO_RESULTS.suffix == ".gz" else open
+        with opener(ORIGINAL_EQUIPO_RESULTS, "rb") as f:
             results = pickle.load(f)
     else:
-        results = read_zip_pickle(COPING_DATA2, "COping/updated_results.pkl")
+        results = read_zip_pickle(COPING_DATA2, COPING2_MEMBER_UPDATED_RESULTS)
 
     valid_codes = list(range(1, 8))
     bin_size = 25 * 30

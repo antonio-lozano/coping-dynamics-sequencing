@@ -1,2 +1,0 @@
-"""DearPyGui mapping explorer package."""
-

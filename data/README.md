@@ -1,66 +1,50 @@
-# Data layout (not tracked in git)
+# Data
 
-Set `COPING_DYNAMICS_DATA` to point here if your data live outside the repo.
+All inputs needed to regenerate the manuscript figures are bundled here under
+`data/source/` and tracked in git, so the figures reproduce with no external
+data. The two large inputs (a per-frame syllable table and a results pickle) are
+stored gzip-compressed to stay within GitHub's file-size limits; pandas and the
+scripts read the compressed forms transparently.
 
-```
-data/
-|-- metadata/
-|   |-- index.csv
-|   `-- config.yml
-|-- aya_raw/
-|   `-- *_filtered.h5
-|-- freezing_predictions/
-|   `-- *_freezing_predictions_only.csv
-|-- processed/
-|   |-- new_results.pkl
-|   |-- new_results_clusters.pkl
-|   |-- pose_features_with_clusters.parquet
-`-- to_predict/
-    `-- <dataset_id>/
-        |-- *_matched_to_jen.csv
-        |-- *DLC*.csv
-        |-- fps_manifest.csv
-        `-- mapping_report.json
+## Figure source data (`data/source/`)
 
-results/
-|-- model_training/
-|   `-- models/
-|       `-- xgb_behavior/
-|           `-- <model_version>/
-|               |-- model.json
-|               |-- model.pkl
-|               |-- metadata.json
-|               |-- cv_metrics.json
-|               |-- cv_confusion_matrix_oof.png
-|               `-- cv_confusion_matrix_oof.pdf
-`-- predictions/
-    `-- <dataset_id>/
-        `-- <model_version>/
-            |-- predictions_frame.parquet
-            |-- predictions_frame.csv
-            |-- predictions_summary.csv
-            `-- figures/
-                |-- prediction_qc.png
-                `-- prediction_qc.pdf
+| File | Original source | Used by |
+| --- | --- | --- |
+| `syllable_usage_per_timebin_30s.csv` | `Coping_data2.zip::COping/Syllable_per_timebin_final(30s).csv` | Fig 3, Fig 5 |
+| `syllable_usage_per_timebin_250ms.csv` | `Coping_data2.zip::COping/Syllable_per_timebin_final(250ms).csv` | Fig 4, Fig 6 |
+| `bfl_scores.xlsx` | `Coping_data.zip::CSVs/BFL_scores.xlsx` | Fig 5 |
+| `animal_groups.csv` | equipo_project `index.csv` (name → group) | Fig 2 |
+| `syllable_classification_metrics.csv` | equipo_project | Fig 2 (panels D/E) |
+| `freezing_overlap_by_group.svg` | equipo_project | Fig 2 (82-animal cohort) |
+| `freezing_predictions/` (98 CSVs) | equipo_project `Freezing_predictions_light/` | Fig 2 |
+| `moseq_syllables_per_frame.csv.gz` (~15 MB) | `Coping_data2.zip::COping/moseq_df_final.csv` | Fig 2 |
+| `updated_results.pkl.gz` (~63 MB) | `Coping_data2.zip::COping/updated_results.pkl` | Fig 5, Supp 3 |
+
+The optional `Behavioral_clusters.json` is not bundled — Fig 4 & 6 fall back to
+the built-in `CLUSTER_MAP` in each script when it is absent.
+
+The scripts resolve these files from `data/source/` first; if a file is missing
+they fall back to the original `Coping_data.zip` / `Coping_data2.zip` archives.
+Override locations with `COPING_DYNAMICS_SOURCE_DIR`, `COPING_DYNAMICS_DOWNLOADS`,
+`COPING_DATA_ZIP`, `COPING_DATA2_ZIP`.
+
+Regenerate every figure with:
+
+```powershell
+python scripts\run_all_figures.py
 ```
 
-Use `scripts/preprocessing/map_aya_to_jen.py` to convert raw AYA tracking files into JEN-style CSVs under `data/to_predict/<dataset_id>/`.
-Use `scripts/analysis/train_behavior_xgb.py` to train/save models, `scripts/analysis/predict_behavior_xgb.py` to run inference, and `scripts/analysis/visualize_behavior_predictions.py` to generate QC figures.
+## Manuscript data workbooks
 
-## Manuscript source-data workbooks
-
-`Raw_data.xlsx` and `Statistical_report.xlsx` are compact manuscript-facing exports generated from:
-
-- `H:\Downloads\Coping_data.zip`
-- `H:\Downloads\Coping_data2.zip`
-- the Figure 3 SimBA freezing CSVs under `H:\antonio\keypoint_moseq_project\code\equipo_project\Freezing_predictions_light`
-
-Together, these two workbooks collect the raw tabular values and statistical summaries needed for the manuscript figures and supplementary figures. They include SimBA validation, freezing time-course analyses, cluster frequency/time-course tables, Figure 4 and Figure 6 behavioral-dynamics metrics, Supplementary Figure 3 distance metrics, syllable/freezing overlap checks, and archived COping statistical reports.
-
-Regenerate them with:
+`Raw_data.xlsx` and `Statistical_report.xlsx` are compact manuscript-facing
+exports (raw tabular values + statistical summaries: SimBA validation, freezing
+time-course, cluster frequency/time-course, Figure 4 & 6 dynamics metrics,
+Supplementary Figure 3 distance metrics, syllable/freezing overlap, and archived
+statistical reports). Regenerate them with:
 
 ```powershell
 python scripts\data_exports\build_freezing_data_workbooks.py
 ```
 
-The export script stores only curated tabular values in this repository. It does not copy the large source archives or frame-level freezing CSVs.
+The exporter reads from the same source archives (`Coping_data.zip` /
+`Coping_data2.zip`) and stores only curated tabular values in the repo.

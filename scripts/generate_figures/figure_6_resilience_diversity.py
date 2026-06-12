@@ -21,12 +21,15 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from src.plotting import plot_chord_diagram
+from src.config import (
+    CLUSTER_JSON,
+    COPING_DATA2_ZIP,
+    COPING2_MEMBER_TIMEBIN_250MS as TIMEBIN_250MS,
+    FIGURE_DATA_DIR as OUTPUT_DIR,
+    SYLLABLE_TIMEBIN_250MS,
+)
 
-ARCHIVE_PATH = Path(r"H:\Downloads\Coping_data2.zip")
-CLUSTER_JSON = Path(r"H:\antonio\keypoint_moseq_project\code\shapley\Behavioral_clusters_a_mano_definitivo_no_mix_inaccurate.json")
-TIMEBIN_250MS = "COping/Syllable_per_timebin_final(250ms).csv"
 LEGACY_FIGURES_DIR = REPO_ROOT / "figures"
-OUTPUT_DIR = LEGACY_FIGURES_DIR / "data"
 
 AXIS = "#4D4D4D"
 # Match the physical boxplot panel dimensions used in Figure 4.
@@ -109,7 +112,9 @@ COLORS = {
 
 
 def read_zip_csv(member: str) -> pd.DataFrame:
-    with zipfile.ZipFile(ARCHIVE_PATH) as archive:
+    if SYLLABLE_TIMEBIN_250MS.exists():
+        return pd.read_csv(SYLLABLE_TIMEBIN_250MS)
+    with zipfile.ZipFile(COPING_DATA2_ZIP) as archive:
         with archive.open(member) as handle:
             return pd.read_csv(handle)
 

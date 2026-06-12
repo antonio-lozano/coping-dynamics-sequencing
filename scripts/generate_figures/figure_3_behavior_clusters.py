@@ -9,6 +9,7 @@ cluster mapping used elsewhere in this repository.
 from __future__ import annotations
 
 import math
+import sys
 import zipfile
 from pathlib import Path
 
@@ -18,10 +19,17 @@ import pandas as pd
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from src.config import (
+    COPING_DATA2_ZIP,
+    COPING2_MEMBER_TIMEBIN_30S as ARCHIVE_MEMBER,
+    FIGURE_DATA_DIR as OUTPUT_DIR,
+    SYLLABLE_TIMEBIN_30S,
+)
+
 LEGACY_FIGURES_DIR = REPO_ROOT / "figures"
-OUTPUT_DIR = LEGACY_FIGURES_DIR / "data"
-ARCHIVE_PATH = Path(r"H:\Downloads\Coping_data2.zip")
-ARCHIVE_MEMBER = "COping/Syllable_per_timebin_final(30s).csv"
 
 COLORS = {"Control": "#F9C74F", "ELS": "#C37BA0"}
 AXIS_COLOR = "#4D4D4D"
@@ -53,13 +61,17 @@ A4_PORTRAIT = (8.27, 11.69)
 
 
 def load_timebin_data() -> pd.DataFrame:
-    if not ARCHIVE_PATH.exists():
+    if SYLLABLE_TIMEBIN_30S.exists():
+        df = pd.read_csv(SYLLABLE_TIMEBIN_30S)
+    elif COPING_DATA2_ZIP.exists():
+        with zipfile.ZipFile(COPING_DATA2_ZIP) as archive:
+            with archive.open(ARCHIVE_MEMBER) as handle:
+                df = pd.read_csv(handle)
+    else:
         raise FileNotFoundError(
-            f"Missing source archive: {ARCHIVE_PATH}. Expected member: {ARCHIVE_MEMBER}"
+            f"Missing source data. Expected {SYLLABLE_TIMEBIN_30S} or member "
+            f"{ARCHIVE_MEMBER} inside {COPING_DATA2_ZIP}."
         )
-    with zipfile.ZipFile(ARCHIVE_PATH) as archive:
-        with archive.open(ARCHIVE_MEMBER) as handle:
-            df = pd.read_csv(handle)
     df = df.rename(columns={"Time Bin": "time_bin", "Condition": "group"})
     df = df[df["group"].isin(["Control", "ELS"])].copy()
     df["Syllable"] = df["Syllable"].astype(int)

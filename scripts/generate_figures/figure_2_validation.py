@@ -28,33 +28,47 @@ import seaborn as sns
 
 from src.config import (
     BIN_SECONDS,
+    FIGURE_DATA_DIR,
     FREEZING_DIR,
     FPS,
     INDEX_CSV,
-    MANUSCRIPT_FIGURES_DIR as RESULTS_DIR,
     PALETTE,
     RESULTS_RAW_PKL,
+    SOURCE_DATA_DIR,
 )
 
 LEGACY_FIGURES_DIR = repo_root / "figures"
-FIGURE_OUTPUT_DIR = LEGACY_FIGURES_DIR / "data"
+FIGURE_OUTPUT_DIR = FIGURE_DATA_DIR
 OVERLAP_SYLLABLES = {0, 28, 40}
 TIMECOURSE_SYLLABLES = {0, 28}
 EVENT_SPAN_STARTS_MIN = [3.5, 4.5, 5.5]
 EVENT_SPAN_WIDTH_MIN = 0.5
 
 
+# Prefer files dropped into data/source/; fall back to original-machine paths.
 _REF_CSV_CANDIDATES = [
+    SOURCE_DATA_DIR / "syllable_classification_metrics.csv",
     Path(r"H:\antonio\keypoint_moseq_project\code\syllable_recall_precision_f1_usage.csv"),
     Path(r"C:\Users\admin\keypoint_moseq\keypoint_moseq_project\code\syllable_recall_precision_f1_usage.csv"),
 ]
 REFERENCE_METRICS_CSV: Path | None = next((p for p in _REF_CSV_CANDIDATES if p.exists()), None)
 
 _PANEL_G_SVG_CANDIDATES = [
+    SOURCE_DATA_DIR / "freezing_overlap_by_group.svg",
     Path(r"H:\antonio\keypoint_moseq_project\code\equipo_project\overlap_freezing_per_mouse_by_group_cleaned_sorted.svg"),
     Path(r"C:\Users\admin\keypoint_moseq\keypoint_moseq_project\code\equipo_project\overlap_freezing_per_mouse_by_group_cleaned_sorted.svg"),
 ]
 PANEL_G_REFERENCE_SVG: Path | None = next((p for p in _PANEL_G_SVG_CANDIDATES if p.exists()), None)
+
+# Prefer inputs extracted into data/source/; fall back to config (external) paths.
+_FREEZING_DIR_DEFAULT = next(
+    (p for p in [SOURCE_DATA_DIR / "freezing_predictions", FREEZING_DIR] if p.exists()),
+    FREEZING_DIR,
+)
+_INDEX_CSV_DEFAULT = next(
+    (p for p in [SOURCE_DATA_DIR / "animal_groups.csv", INDEX_CSV] if p.exists()),
+    INDEX_CSV,
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -62,8 +76,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--source-mode", choices=["auto", "moseq_df", "results_pkl"], default="auto")
     parser.add_argument("--moseq-df", type=Path, default=None, help="Path to legacy moseq_df.csv.")
     parser.add_argument("--results-pkl", type=Path, default=RESULTS_RAW_PKL)
-    parser.add_argument("--freezing-dir", type=Path, default=FREEZING_DIR)
-    parser.add_argument("--index-csv", type=Path, default=INDEX_CSV)
+    parser.add_argument("--freezing-dir", type=Path, default=_FREEZING_DIR_DEFAULT)
+    parser.add_argument("--index-csv", type=Path, default=_INDEX_CSV_DEFAULT)
     parser.add_argument("--exclude-animals", type=str, default="Animal_48_6,48_6")
     parser.add_argument("--fail-on-fallback", action="store_true", default=False)
     parser.add_argument("--reference-metrics-csv", type=Path, default=REFERENCE_METRICS_CSV,
@@ -227,6 +241,7 @@ def _resolve_moseq_df_path(explicit: Path | None, results_pkl: Path, index_csv: 
     candidates.extend(
         [
             rp.parent / "moseq_df.csv",
+            SOURCE_DATA_DIR / "moseq_syllables_per_frame.csv.gz",
             repo_root / "data" / "processed" / "moseq_df.csv",
             Path(r"C:\Users\admin\keypoint_moseq\keypoint_moseq_project\code\equipo_project\2025_01_24-16_44_21\moseq_df.csv"),
             Path(r"C:\Users\admin\keypoint_moseq\keypoint_moseq_project\equipo_project_data\moseq_df.csv"),

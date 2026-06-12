@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from io import BytesIO
 from pathlib import Path
+import gzip
 import pickle
 import sys
 import zipfile
@@ -20,11 +21,19 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-COPING_DATA = Path(r"H:\Downloads\Coping_data.zip")
-COPING_DATA2 = Path(r"H:\Downloads\Coping_data2.zip")
-ORIGINAL_EQUIPO_RESULTS = Path(r"H:\antonio\keypoint_moseq_project\code\code_Jen_February\updated_results.pkl")
+from src.config import (
+    BFL_SCORES_XLSX,
+    COPING_DATA_ZIP as COPING_DATA,
+    COPING_DATA2_ZIP as COPING_DATA2,
+    COPING_MEMBER_BFL_SCORES,
+    COPING2_MEMBER_TIMEBIN_30S,
+    COPING2_MEMBER_UPDATED_RESULTS,
+    FIGURE_DATA_DIR as OUTPUT_DIR,
+    SYLLABLE_TIMEBIN_30S,
+    UPDATED_RESULTS_PKL as ORIGINAL_EQUIPO_RESULTS,
+)
+
 LEGACY_FIGURES_DIR = REPO_ROOT / "figures"
-OUTPUT_DIR = LEGACY_FIGURES_DIR / "data"
 
 AXIS = "#4D4D4D"
 CONTROL = "#F9C74F"
@@ -84,7 +93,10 @@ def group_ext(animal: str, group: str) -> str:
 
 
 def load_cluster_time() -> pd.DataFrame:
-    raw = read_zip_csv(COPING_DATA2, "COping/Syllable_per_timebin_final(30s).csv")
+    if SYLLABLE_TIMEBIN_30S.exists():
+        raw = pd.read_csv(SYLLABLE_TIMEBIN_30S)
+    else:
+        raw = read_zip_csv(COPING_DATA2, COPING2_MEMBER_TIMEBIN_30S)
     raw = raw.rename(columns={"Condition": "group", "Time Bin": "time_bin"})
     raw["Animal"] = raw["Animal"].astype(str)
     raw["Syllable"] = pd.to_numeric(raw["Syllable"], errors="coerce").astype(int)
@@ -105,7 +117,10 @@ def load_cluster_time() -> pd.DataFrame:
 
 
 def load_bfl() -> pd.DataFrame:
-    bfl = read_zip_excel(COPING_DATA, "CSVs/BFL_scores.xlsx")
+    if BFL_SCORES_XLSX.exists():
+        bfl = pd.read_excel(BFL_SCORES_XLSX)
+    else:
+        bfl = read_zip_excel(COPING_DATA, COPING_MEMBER_BFL_SCORES)
     bfl = bfl[["Animal", "Condition", "Score", "Experiment"]].dropna(subset=["Animal", "Condition", "Score"])
     bfl["animal"] = bfl["Animal"].astype(float).map(lambda v: str(v).rstrip("0").rstrip(".") if "." in str(v) else str(v))
     bfl["animal"] = bfl["Animal"].map(lambda v: f"{float(v):.1f}")
@@ -229,10 +244,11 @@ def loocv_logistic(coords: np.ndarray, labels: np.ndarray, c_value: float = 1.0)
 
 def mds_profiles_from_updated_results() -> tuple[pd.DataFrame, np.ndarray, float]:
     if ORIGINAL_EQUIPO_RESULTS.exists():
-        with ORIGINAL_EQUIPO_RESULTS.open("rb") as f:
+        opener = gzip.open if ORIGINAL_EQUIPO_RESULTS.suffix == ".gz" else open
+        with opener(ORIGINAL_EQUIPO_RESULTS, "rb") as f:
             results = pickle.load(f)
     else:
-        results = read_zip_pickle(COPING_DATA2, "COping/updated_results.pkl")
+        results = read_zip_pickle(COPING_DATA2, COPING2_MEMBER_UPDATED_RESULTS)
     valid_codes = list(range(1, 8))
     fps = 25
     bin_seconds = 30

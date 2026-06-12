@@ -44,11 +44,14 @@ _data_candidates = [
     _data_env,
     _freezing_root,
     _freezing_root / "equipo_project_data" if _freezing_root else None,
+    PROJECT_ROOT / "data",
     r"C:\Users\admin\keypoint_moseq\keypoint_moseq_project\equipo_project_data",
     r"C:\Users\admin\keypoint_moseq\keypoint_moseq_project\code\equipo_project\equipo_project_data",
     r"C:\Users\admin\keypoint_moseq\keypoint_moseq_project\code\equipo_project",
 ]
-DATA_DIR = _first_existing_dir(_data_candidates, _data_candidates[3])
+# Fall back to the repo's own data/ directory so importing config never tries to
+# create directories under an absent external (e.g. another machine's) path.
+DATA_DIR = _first_existing_dir(_data_candidates, PROJECT_ROOT / "data")
 
 # DLC CSV directory (raw DeepLabCut pose tracking outputs); override with COPING_DYNAMICS_DLC_DIR
 _dlc_env = os.getenv("COPING_DYNAMICS_DLC_DIR")
@@ -130,23 +133,48 @@ FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 RESULTS_DIR = PROJECT_ROOT / "results"
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
-# Publication figure outputs live in a dedicated subfolder.
-MANUSCRIPT_FIGURES_DIR = RESULTS_DIR / "manuscript_figures"
-MANUSCRIPT_FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+# ==============================================================================
+# Manuscript figure source data
+# ==============================================================================
+# Extracted source files live under data/source/ (preferred). The original
+# archives (Coping_data.zip / Coping_data2.zip) are searched in the user's
+# Downloads folder as a fallback. Override any of these with the matching env
+# var (COPING_DYNAMICS_SOURCE_DIR, COPING_DYNAMICS_DOWNLOADS, COPING_DATA_ZIP,
+# COPING_DATA2_ZIP, COPING_DYNAMICS_CLUSTER_JSON).
+SOURCE_DATA_DIR = Path(os.getenv("COPING_DYNAMICS_SOURCE_DIR") or (DATA_DIR / "source"))
 
-# ML model training outputs are saved in-repo for easier tracking/versioning.
-MODEL_TRAINING_DIR = RESULTS_DIR / "model_training"
-MODEL_TRAINING_DIR.mkdir(parents=True, exist_ok=True)
+_downloads_dir = Path(os.getenv("COPING_DYNAMICS_DOWNLOADS") or (Path.home() / "Downloads"))
 
-MODELS_DIR = MODEL_TRAINING_DIR / "models" / "xgb_behavior"
-MODELS_DIR.mkdir(parents=True, exist_ok=True)
+COPING_DATA_ZIP = _first_existing_path(
+    [os.getenv("COPING_DATA_ZIP"), _downloads_dir / "Coping_data.zip"],
+    _downloads_dir / "Coping_data.zip",
+)
+COPING_DATA2_ZIP = _first_existing_path(
+    [os.getenv("COPING_DATA2_ZIP"), _downloads_dir / "Coping_data2.zip"],
+    _downloads_dir / "Coping_data2.zip",
+)
 
-TO_PREDICT_DIR = DATA_DIR / "to_predict"
-TO_PREDICT_DIR.mkdir(parents=True, exist_ok=True)
+# Extracted source files (may be absent; scripts fall back to the archives).
+SYLLABLE_TIMEBIN_30S = SOURCE_DATA_DIR / "syllable_usage_per_timebin_30s.csv"
+SYLLABLE_TIMEBIN_250MS = SOURCE_DATA_DIR / "syllable_usage_per_timebin_250ms.csv"
+BFL_SCORES_XLSX = SOURCE_DATA_DIR / "bfl_scores.xlsx"
+UPDATED_RESULTS_PKL = SOURCE_DATA_DIR / "updated_results.pkl.gz"
 
-# Prediction outputs are saved in-repo under results/ for easier review/sharing.
-PREDICTIONS_DIR = RESULTS_DIR / "predictions"
-PREDICTIONS_DIR.mkdir(parents=True, exist_ok=True)
+# Optional hand-curated syllable->cluster JSON; scripts fall back to the
+# built-in CLUSTER_MAP in each figure script when this is absent.
+CLUSTER_JSON = _first_existing_path(
+    [os.getenv("COPING_DYNAMICS_CLUSTER_JSON"), SOURCE_DATA_DIR / "Behavioral_clusters.json"],
+    SOURCE_DATA_DIR / "Behavioral_clusters.json",
+)
+
+# Archive member paths (used when reading directly from the zips).
+COPING2_MEMBER_TIMEBIN_30S = "COping/Syllable_per_timebin_final(30s).csv"
+COPING2_MEMBER_TIMEBIN_250MS = "COping/Syllable_per_timebin_final(250ms).csv"
+COPING2_MEMBER_UPDATED_RESULTS = "COping/updated_results.pkl"
+COPING_MEMBER_BFL_SCORES = "CSVs/BFL_scores.xlsx"
+
+# Supporting figure tables / audits / descriptive renders (kept out of figures/).
+FIGURE_DATA_DIR = RESULTS_DIR / "figure_data"
 
 # Constants
 FPS = 25

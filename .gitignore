@@ -3,6 +3,11 @@ data/*
 !data/README.md
 !data/Raw_data.xlsx
 !data/Statistical_report.xlsx
+# Extracted figure source data (small CSV/XLSX + compressed moseq tracked)
+!data/source/
+!data/source/**
+# moseq per-frame table is tracked compressed (.csv.gz); ignore raw re-extractions
+data/source/moseq_syllables_per_frame.csv
 
 # Manuscript figures are the tracked canonical output (figures/ + figures/data/)
 

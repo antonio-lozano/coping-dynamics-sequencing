@@ -1,4 +1,0 @@
-recording,n_frames,mean_confidence,median_confidence,%_low_confidence(<0.5),%_Climbing,%_Freezing,%_Grooming,%_Jump,%_Locomotion,%_Sniffing,%_Turn,%_Unassigned
-Day1-Trial3-Mouse6DLC_Resnet50_Han-PNASDec25shuffle1_snapshot_best-170_filtered_matched_to_jen,7200,0.664499124466545,0.6678978502750397,1.0833333333333335,0.0,0.0,0.0,0.0,0.0,0.0,99.94444444444444,0.05555555555555555
-Day2-Trial1-Mouse1DLC_Resnet50_Han-PNASDec25shuffle1_snapshot_best-170_filtered_matched_to_jen,7200,0.645877617382341,0.6604634523391724,6.375,0.0,0.027777777777777776,0.0,0.0,0.0,0.0,95.23611111111111,4.736111111111111
-Day2-Trial1-Mouse5DLC_Resnet50_Han-PNASDec25shuffle1_snapshot_best-170_filtered_matched_to_jen,7200,0.6706438304815028,0.679986298084259,2.666666666666667,0.0,0.0,0.0,0.0,0.0,0.0,99.19444444444444,0.8055555555555556

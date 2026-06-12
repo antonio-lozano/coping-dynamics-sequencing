@@ -1,6 +1,8 @@
 # Coping Dynamics Sequencing
 
-Unsupervised behavioral motif discovery and explainability for stress coping dynamics. This repository contains figure-generation scripts, preprocessing utilities, and model training/inference workflows.
+Reproducible manuscript figures for unsupervised behavioral motif discovery in
+stress coping dynamics. This repository regenerates every published figure from
+keypoint-MoSeq syllable data and supervised freezing predictions.
 
 ## Setup
 
@@ -15,12 +17,13 @@ conda activate coping-dynamics
 pip install -r requirements.txt
 ```
 
-Place data under `data/` following `data/README.md` (or set `COPING_DYNAMICS_DATA` to your data path).
+All figure inputs are bundled under `data/source/` (see `data/README.md`), so the
+figures regenerate out of the box with no external data.
 
 ## Running figures
 Run scripts from the repo root. Each script writes the clean manuscript figure
 (`figureN.pdf/.svg/.png`) to the top-level `figures/` directory, and supporting
-tables / intermediate renders to `figures/data/`.
+tables / intermediate renders to `results/figure_data/`.
 
 | Manuscript figure | Script |
 | --- | --- |
@@ -39,51 +42,33 @@ python scripts/run_all_figures.py
 
 (Figure 1 is a hand-made schematic with no repo generator.)
 
-## Model training and inference
-Use the XGBoost workflow to train on labeled DLC data and predict behavior on new DLC datasets.
-
-See `docs/MODEL_INFERENCE.md` for full commands and output layout.
-
-Main scripts:
-- `scripts/analysis/train_behavior_xgb.py`
-- `scripts/analysis/predict_behavior_xgb.py`
-- `scripts/analysis/visualize_behavior_predictions.py`
-
-## GUI viewers
-Desktop viewers live under `gui/`.
-
-- DearPyGui mapping explorer:
-  `python gui/mapping_explorer_dpg/app.py`
-- Minimal PyQtGraph comparison viewer:
-  `python gui/app_visual.py`
-
-The PyQtGraph viewer loads left/right videos explicitly, plus pose files (`.csv` or `.h5`) and optional feature tables (`.csv` or `.parquet`).
-
 ## Project structure
 ```
-|-- data/                   # Raw + processed data (not in git)
-|-- docs/                   # Reproduction and workflow docs
-|-- figures/                # Canonical manuscript figures (figureN.*) + data/ provenance
-|-- results/                # Model training + prediction outputs, QC
+|-- data/
+|   |-- source/             # Bundled figure inputs (CSV/XLSX/SVG + compressed tables)
+|   |-- Raw_data.xlsx       # Manuscript data workbooks
+|   `-- Statistical_report.xlsx
+|-- docs/                   # Figure provenance / replication notes
+|-- figures/                # Canonical manuscript figures (figureN.*)
+|-- results/figure_data/    # Supporting tables, audits, intermediate renders
 |-- scripts/
-|   |-- analysis/           # Analysis and model train/predict/QC scripts
-|   |-- data_exports/       # Data workbook exporters
 |   |-- generate_figures/   # One script per manuscript figure (figure_2..6, supplementary_figure_3)
-|   |-- preprocessing/      # Data preprocessing utilities
+|   |-- data_exports/       # Manuscript data-workbook exporter
 |   `-- run_all_figures.py  # Regenerate every figure
 |-- src/
-|   |-- config.py           # Centralized paths and constants
-|   |-- ml/                 # Reusable pose features + XGBoost helpers
-|   |-- plotting.py         # Plotting utilities
-|   |-- stats_utils.py      # Statistical testing helpers
-|   `-- transition_utils.py # Transition/BFL utilities
+|   |-- config.py           # Centralized paths, source-data resolution, constants
+|   `-- plotting.py         # Shared plotting utilities (chord diagram, etc.)
 |-- environment.yml
 |-- requirements.txt
 `-- README.md
 ```
 
 ## Data
-Data are not stored in the repo. See `data/README.md` for expected layout.
+All required figure inputs are tracked under `data/source/` (the large per-frame
+table and results pickle are stored gzip-compressed). Overrides are available via
+`COPING_DYNAMICS_SOURCE_DIR`, and the original archives can be pointed at with
+`COPING_DYNAMICS_DOWNLOADS`, `COPING_DATA_ZIP`, `COPING_DATA2_ZIP`. See
+`data/README.md` for the full inventory.
 
 ## License
 See `LICENSE`.
