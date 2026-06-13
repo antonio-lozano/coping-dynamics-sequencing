@@ -64,11 +64,16 @@ python scripts/run_all_figures.py
 ```
 
 ## Data
-All required figure inputs are tracked under `data/source/` (the large per-frame
-table and results pickle are stored gzip-compressed). Overrides are available via
-`COPING_DYNAMICS_SOURCE_DIR`, and the original archives can be pointed at with
-`COPING_DYNAMICS_DOWNLOADS`, `COPING_DATA_ZIP`, `COPING_DATA2_ZIP`. See
-`data/README.md` for the full inventory.
+All required figure inputs are self-contained in `data/source/` (the large 
+per-frame syllable table and results pickle are stored gzip-compressed). The 
+figures regenerate reproducibly without any external dependencies.
+
+For reproducibility extensions or re-extraction from source archives, override paths via:
+- `COPING_DYNAMICS_SOURCE_DIR` — extracted source directory
+- `COPING_DYNAMICS_DOWNLOADS` — directory containing `Coping_data.zip`/`Coping_data2.zip`
+- `COPING_DATA_ZIP`, `COPING_DATA2_ZIP` — specific archive paths
+
+See `data/README.md` for the full inventory of bundled inputs.
 
 ## License
 See `LICENSE`.

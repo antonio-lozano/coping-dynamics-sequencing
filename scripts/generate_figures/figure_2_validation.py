@@ -80,8 +80,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--index-csv", type=Path, default=_INDEX_CSV_DEFAULT)
     parser.add_argument("--exclude-animals", type=str, default="Animal_48_6,48_6")
     parser.add_argument("--fail-on-fallback", action="store_true", default=False)
-    parser.add_argument("--reference-metrics-csv", type=Path, default=REFERENCE_METRICS_CSV,
-                        help="Pre-computed syllable_recall_precision_f1_usage.csv from original analysis.")
     parser.add_argument("--panel-g-reference-svg", type=Path, default=PANEL_G_REFERENCE_SVG,
                         help="Original overlap_freezing_per_mouse_by_group_cleaned_sorted.svg for panel G animal order/filter.")
     return parser.parse_args()
@@ -591,39 +589,6 @@ def _top_metric_from_original_metrics(metrics_df: pd.DataFrame, metric: str, cov
     return out
 
 
-def _plot_metric_bars_ref(
-    ax,
-    show_df: pd.DataFrame,
-    group_agg: pd.DataFrame,
-    tag: str,
-    metric_col: str = "precision_all",
-    ylabel: str = "Mean Precision (%)",
-    group_metric: str = "precision",
-) -> None:
-    """Plot grouped bars using reference overall values + per-group values from group_agg."""
-    syllables = show_df["syllable"].astype(int).tolist()
-    overall = show_df.set_index("syllable")[metric_col].reindex(syllables).to_numpy()
-    ctrl_ser = group_agg[group_agg["group"] == "Control"].set_index("syllable")[group_metric]
-    els_ser = group_agg[group_agg["group"] == "ELS"].set_index("syllable")[group_metric]
-    # group_agg precision is 0-1; scale to %
-    control = ctrl_ser.reindex(syllables).fillna(0).to_numpy() * 100.0
-    els = els_ser.reindex(syllables).fillna(0).to_numpy() * 100.0
-    x = np.arange(len(syllables))
-    width = 0.25
-    ax.bar(x - width, overall, width=width, color="#4B4B4B", edgecolor="#FFFFFF", linewidth=0.25, label="All Groups")
-    ax.bar(x, control, width=width, color=PALETTE["Control"], edgecolor="#FFFFFF", linewidth=0.25, label="Control")
-    ax.bar(x + width, els, width=width, color=PALETTE["ELS"], edgecolor="#FFFFFF", linewidth=0.25, label="ELS")
-    ax.set_title(ylabel, fontsize=6.5, color="#4b4b4b", pad=8)
-    ax.set_ylabel(ylabel, fontsize=6)
-    ax.set_xlabel("Syllable", fontsize=6, loc="right")
-    ax.set_xticks(x)
-    ax.set_xticklabels([str(s) for s in syllables], rotation=90, fontsize=4.8)
-    ax.set_ylim(0, 100)
-    ax.legend(frameon=False, fontsize=5, loc="upper right")
-    _style_axes(ax)
-    _panel_tag(ax, tag, y=1.05)
-
-
 def _plot_metric_bars_original(ax, show_df: pd.DataFrame, tag: str, ylabel: str, tag_x: float = -0.17) -> None:
     syllables = show_df["syllable"].astype(int).tolist()
     x = np.arange(len(syllables))
@@ -660,7 +625,6 @@ def plot_figure(
     time_summary: pd.DataFrame,
     usage_df: pd.DataFrame | None = None,
     panel_g_reference_labels: list[str] | None = None,
-    ref_metrics: pd.DataFrame | None = None,
 ) -> plt.Figure:
     sns.set_theme(style="ticks", context="paper", font_scale=0.85)
     fig = plt.figure(figsize=(8.27, 11.69), dpi=300, facecolor="white")
@@ -790,27 +754,6 @@ def plot_figure(
     return fig
 
 
-def _plot_metric_bars(ax, show_df: pd.DataFrame, group_agg: pd.DataFrame, metric: str, title: str, tag: str, ylim: float) -> None:
-    syllables = show_df["syllable"].astype(int).tolist()
-    overall = show_df.set_index("syllable")[metric].reindex(syllables).to_numpy()
-    control = group_agg[group_agg["group"] == "Control"].set_index("syllable")[metric].reindex(syllables).to_numpy()
-    els = group_agg[group_agg["group"] == "ELS"].set_index("syllable")[metric].reindex(syllables).to_numpy()
-    x = np.arange(len(syllables))
-    width = 0.25
-    ax.bar(x - width, overall * 100.0, width=width, color="#4B4B4B", edgecolor="#FFFFFF", linewidth=0.25, label="All Groups")
-    ax.bar(x, control * 100.0, width=width, color=PALETTE["Control"], edgecolor="#FFFFFF", linewidth=0.25, label="Control")
-    ax.bar(x + width, els * 100.0, width=width, color=PALETTE["ELS"], edgecolor="#FFFFFF", linewidth=0.25, label="ELS")
-    ax.set_title(title, fontsize=6.5, color="#4b4b4b", pad=4)
-    ax.set_ylabel(title, fontsize=6)
-    ax.set_xlabel("Syllable", fontsize=6, loc="right")
-    ax.set_xticks(x)
-    ax.set_xticklabels([str(s) for s in syllables], rotation=90, fontsize=4.8)
-    ax.set_ylim(0, ylim)
-    ax.legend(frameon=False, fontsize=5, loc="upper right")
-    _style_axes(ax)
-    _panel_tag(ax, tag, y=1.05)
-
-
 def main() -> None:
     args = parse_args()
     if not args.freezing_dir.exists():
@@ -850,12 +793,6 @@ def main() -> None:
     )
     print(f"Matched recordings: {matched_rec}; missing freezing records: {missing_rec}")
 
-    ref_metrics = None
-    if args.reference_metrics_csv is not None and args.reference_metrics_csv.exists():
-        ref_metrics = pd.read_csv(args.reference_metrics_csv)
-        print(f"Reference metrics CSV loaded: {args.reference_metrics_csv}")
-    else:
-        print("No reference metrics CSV found; computing D/E from data.")
     print("Rendering final Figure 2 layout...")
     fig = plot_figure(
         summaries,
@@ -866,7 +803,6 @@ def main() -> None:
         time_summary,
         usage_df=usage_df,
         panel_g_reference_labels=panel_g_reference_labels,
-        ref_metrics=ref_metrics,
     )
     FIGURE_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     out_pdf = FIGURE_OUTPUT_DIR / "figure_2_validation.pdf"

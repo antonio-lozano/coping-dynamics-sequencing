@@ -13,6 +13,7 @@ import math
 import os
 import re
 import shutil
+import sys
 import zipfile
 
 from openpyxl import Workbook
@@ -23,25 +24,24 @@ import numpy as np
 import pandas as pd
 import statsmodels.formula.api as smf
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DATA_DIR = REPO_ROOT / "data"
-COMMON_DIR = DATA_DIR
-OLD_FIGURE2_DIR = DATA_DIR / "figure_2"
-OLD_COMMON_DIR = DATA_DIR / "common"
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
-COPING_DATA = Path(r"H:\Downloads\Coping_data.zip")
-COPING_DATA2 = Path(r"H:\Downloads\Coping_data2.zip")
+from src.config import (
+    DATA_DIR,
+    COPING_DATA_ZIP,
+    COPING_DATA2_ZIP,
+    FREEZING_DIR,
+    INDEX_CSV,
+    SOURCE_DATA_DIR,
+    CLUSTER_JSON,
+    MOSEQ_DF,
+)
 
-DEFAULT_FREEZING_DIR = Path(r"H:\antonio\keypoint_moseq_project\code\equipo_project\Freezing_predictions_light")
-DEFAULT_INDEX_CSV = Path(r"H:\antonio\keypoint_moseq_project\code\equipo_project\index.csv")
-DEFAULT_PANEL_G_REFERENCE_SVG = Path(
-    r"H:\antonio\keypoint_moseq_project\code\equipo_project\overlap_freezing_per_mouse_by_group_cleaned_sorted.svg"
-)
-DEFAULT_MOSEQ_DF = Path(r"H:\antonio\keypoint_moseq_project\code\equipo_project\2025_01_24-16_44_21\moseq_df.csv")
-DEFAULT_CLUSTER_JSON = Path(
-    r"H:\antonio\keypoint_moseq_project\code\shapley\Behavioral_clusters_a_mano_definitivo_no_mix_inaccurate.json"
-)
+# Aliases for compatibility with rest of file
+COPING_DATA = COPING_DATA_ZIP
+COPING_DATA2 = COPING_DATA2_ZIP
 
 GROUND_TRUTH_CSVS = {
     "Context": "SimBa_ManualvsAutomatic/R/Context_manual_automatic.csv",
@@ -122,22 +122,17 @@ TEXT_EFFECT_SIZES = {
 }
 
 
-def source_path(env_var: str, default: Path) -> Path:
-    return Path(os.environ.get(env_var, str(default)))
-
-
 def require_sources() -> None:
     paths = [
-        COPING_DATA,
-        COPING_DATA2,
-        source_path("COPING_DYNAMICS_FREEZING_DIR", DEFAULT_FREEZING_DIR),
-        source_path("COPING_DYNAMICS_INDEX_CSV", DEFAULT_INDEX_CSV),
-        source_path("COPING_DYNAMICS_PANEL_G_REFERENCE_SVG", DEFAULT_PANEL_G_REFERENCE_SVG),
-        source_path("COPING_DYNAMICS_MOSEQ_DF", DEFAULT_MOSEQ_DF),
+        (COPING_DATA, "COPING_DATA"),
+        (COPING_DATA2, "COPING_DATA2"),
+        (FREEZING_DIR, "COPING_DYNAMICS_FREEZING_DIR"),
+        (INDEX_CSV, "COPING_DYNAMICS_INDEX_CSV"),
     ]
-    missing = [str(path) for path in paths if not path.exists()]
+    missing = [f"{name} ({path})" for path, name in paths if not path.exists()]
     if missing:
-        raise FileNotFoundError("Missing source path(s): " + "; ".join(missing))
+        raise FileNotFoundError(f"Missing source path(s):\n" + "\n".join(missing) +
+                              "\nEnsure data/source/ is populated or set COPING_DYNAMICS_* env vars.")
 
 
 def read_zip_csv(zip_path: Path, member: str) -> pd.DataFrame:
@@ -177,7 +172,9 @@ def resilience_group(animal: str, group: str) -> str:
 
 
 def load_panel_reference_labels() -> list[str]:
-    svg_path = source_path("COPING_DYNAMICS_PANEL_G_REFERENCE_SVG", DEFAULT_PANEL_G_REFERENCE_SVG)
+    svg_path = SOURCE_DATA_DIR / "freezing_overlap_by_group.svg"
+    if not svg_path.exists():
+        return []
     labels: list[str] = []
     pattern = re.compile(r"<!--\s*(\d+\.\d+)\s*-->")
     for line in svg_path.read_text(encoding="utf-8", errors="ignore").splitlines():
@@ -190,9 +187,10 @@ def load_panel_reference_labels() -> list[str]:
 
 
 def load_group_map() -> dict[str, str]:
-    index_csv = source_path("COPING_DYNAMICS_INDEX_CSV", DEFAULT_INDEX_CSV)
+    if not INDEX_CSV.exists():
+        return {}
     group_map: dict[str, str] = {}
-    index_df = pd.read_csv(index_csv)
+    index_df = pd.read_csv(INDEX_CSV)
     for _, row in index_df.iterrows():
         raw = str(row["name"]).strip()
         group = row["group"]
@@ -295,10 +293,11 @@ def load_freezing_long() -> pd.DataFrame:
 
 
 def load_moseq_frame_table() -> pd.DataFrame:
-    moseq_path = source_path("COPING_DYNAMICS_MOSEQ_DF", DEFAULT_MOSEQ_DF)
+    if not MOSEQ_DF.exists():
+        raise FileNotFoundError(f"MOSEQ_DF not found: {MOSEQ_DF}. Ensure data/source/moseq_syllables_per_frame.csv.gz is present.")
     include_labels = set(load_panel_reference_labels())
     group_map = load_group_map()
-    df = pd.read_csv(moseq_path, usecols=["name", "frame_index", "syllable", "group"])
+    df = pd.read_csv(MOSEQ_DF, usecols=["name", "frame_index", "syllable", "group"])
     df["animal_id"] = df["name"].map(short_id)
     df = df[df["animal_id"].isin(include_labels)].copy()
     df["group"] = df.apply(
@@ -789,8 +788,8 @@ def fit_fig3_cluster_time_models(cluster_long: pd.DataFrame) -> pd.DataFrame:
 
 def fig4_syllable_to_cluster() -> dict[int, str]:
     cluster_map = FIG4_CLUSTER_MAP
-    if DEFAULT_CLUSTER_JSON.exists():
-        with DEFAULT_CLUSTER_JSON.open("r", encoding="utf-8") as handle:
+    if CLUSTER_JSON.exists():
+        with CLUSTER_JSON.open("r", encoding="utf-8") as handle:
             cluster_map = json.load(handle)
     out: dict[int, str] = {}
     for cluster, syllables in cluster_map.items():
@@ -1545,7 +1544,7 @@ def write_raw_workbook(
         ws = wb.create_sheet(sheet_name)
         append_df(ws, df, title=title)
 
-    out = COMMON_DIR / "Raw_data.xlsx"
+    out = DATA_DIR / "Raw_data.xlsx"
     wb.save(out)
     return out
 
@@ -1733,14 +1732,14 @@ def write_stats_workbook(
         ws = wb.create_sheet(sheet_name[:31])
         append_df(ws, df, title=sheet_name.replace("_", " "))
 
-    out = COMMON_DIR / "Statistical_report.xlsx"
+    out = DATA_DIR / "Statistical_report.xlsx"
     wb.save(out)
     return out
 
 
 def main() -> None:
     require_sources()
-    COMMON_DIR.mkdir(parents=True, exist_ok=True)
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
 
     simba_raw, simba_stats = load_simba_validation()
     freezing_long = load_freezing_long()
@@ -1845,13 +1844,6 @@ def main() -> None:
         archived_stats,
     )
 
-    for old_dir in (OLD_FIGURE2_DIR, OLD_COMMON_DIR):
-        if old_dir.exists():
-            shutil.rmtree(old_dir)
-    for old_file in ("Ground_truth.xlsx", "Freezing.xlsx", "common_raw_data.xlsx", "common_statistical_report.xlsx"):
-        old_path = DATA_DIR / old_file
-        if old_path.exists():
-            old_path.unlink()
 
     print(f"Saved: {raw_out}")
     print(f"Saved: {stats_out}")

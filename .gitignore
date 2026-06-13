@@ -16,10 +16,6 @@ data/source/moseq_syllables_per_frame.csv
 *.parquet
 *.npy
 
-# Heavy ML artefacts (models, predictions)
-results/model_training/models/xgb_behavior/
-results/predictions/
-
 # Python
 __pycache__/
 *.pyc
