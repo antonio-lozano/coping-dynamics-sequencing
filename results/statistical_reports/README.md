@@ -1,6 +1,6 @@
 # Statistical Reports
 
-Statistical CSV outputs and final manuscript Results audit.
+Statistical CSV outputs and manuscript Results text audit.
 
 Key files:
 
@@ -13,7 +13,7 @@ Key files:
 - `fig6_diversity_resilience_stats.csv`
 - `fig6_bout_resilience_stats.csv`
 - `fig6_transition_resilience_stats.csv`
-- `results_final.md`
+- `manuscript_results_text.md`
 
 The styled Excel workbook assembled from these outputs lives at
-`report/STATISTICAL_REPORT_FINAL.xlsx`.
+`report/STATISTICAL_REPORT.xlsx`.

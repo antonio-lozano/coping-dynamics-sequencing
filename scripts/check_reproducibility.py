@@ -40,7 +40,7 @@ REQUIRED_FILES = [
     "data/source/tracking_exclusions_per_animal.csv",
     "data/source/updated_results.pkl.gz",
     "report/RAW_DATA.xlsx",
-    "report/STATISTICAL_REPORT_FINAL.xlsx",
+    "report/STATISTICAL_REPORT.xlsx",
     "report/STATISTICAL_REPORT_TEMPLATE.xlsx",
     "scripts/run_all_figures.py",
     "scripts/build_statistical_report.py",
@@ -76,7 +76,7 @@ INTERMEDIATE_CSVS = [
     "results/statistical_reports/fig6_bout_resilience_stats.csv",
     "results/statistical_reports/fig6_diversity_resilience_stats.csv",
     "results/statistical_reports/fig6_transition_resilience_stats.csv",
-    "results/statistical_reports/results_final.md",
+    "results/statistical_reports/manuscript_results_text.md",
 ]
 
 FORBIDDEN_PATHS = [
@@ -93,6 +93,7 @@ FORBIDDEN_PATHS = [
 
 TEXT_SUFFIXES = {".md", ".py", ".txt", ".json", ".yml", ".yaml", ".cff", ".toml"}
 LOCAL_PATH_PATTERN = re.compile(r"(?i)\b[a-z]:\\(?:users|downloads|jen|antonio|big_computer)|/mnt/[a-z]/")
+SKIP_DIRS = {".git", ".venv", "__pycache__", ".mypy_cache", ".pytest_cache"}
 
 
 def sha256(path: Path) -> str:
@@ -134,7 +135,7 @@ def check_forbidden(errors: list[str]) -> None:
             fail(f"forbidden scratch/artifact path exists: {rel}", errors)
 
     for path in ROOT.rglob("*"):
-        if not path.is_file():
+        if not path.is_file() or SKIP_DIRS.intersection(path.parts):
             continue
         name = path.name.lower()
         if name.startswith("~$") or name.endswith(("_test.xlsx", "_rebuilt.xlsx")) or "smoke" in name:
@@ -143,7 +144,7 @@ def check_forbidden(errors: list[str]) -> None:
 
 def check_local_paths(errors: list[str]) -> None:
     for path in ROOT.rglob("*"):
-        if ".git" in path.parts or not path.is_file() or path.suffix.lower() not in TEXT_SUFFIXES:
+        if SKIP_DIRS.intersection(path.parts) or not path.is_file() or path.suffix.lower() not in TEXT_SUFFIXES:
             continue
         rel = path.relative_to(ROOT).as_posix()
         try:

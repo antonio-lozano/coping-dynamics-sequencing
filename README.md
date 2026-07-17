@@ -6,6 +6,13 @@ figures from keypoint-MoSeq syllable data and supervised freezing predictions.
 
 ## Setup
 
+For an exact locked environment with `uv`:
+
+```bash
+uv sync
+uv run python scripts/check_reproducibility.py
+```
+
 Using conda:
 
 ```bash
@@ -16,6 +23,7 @@ conda activate coping-dynamics
 Using pip:
 
 ```bash
+python --version  # use Python 3.9, 3.10, or 3.11
 pip install -r requirements.txt
 ```
 
@@ -63,10 +71,10 @@ as a canonical assembled manuscript figure in `figures/`.
 |   `-- source/             # Bundled figure inputs
 |-- docs/                   # Figure provenance / replication notes
 |-- figures/                # Canonical manuscript figures
-|-- report/                 # Final styled statistical workbook
+|-- report/                 # Styled statistical workbook
 |-- results/
 |   |-- figure_data/        # Supporting tables and intermediate renders
-|   `-- statistical_reports/# Statistical CSVs and final Results text
+|   `-- statistical_reports/# Statistical CSVs and manuscript Results text
 |-- scripts/
 |   |-- generate_figures/   # Data-derived figure generators
 |   |-- derive_tables/      # Rebuild committed source/statistical tables
@@ -83,7 +91,7 @@ as a canonical assembled manuscript figure in `figures/`.
 All required figure inputs are self-contained in `data/source/`. The large
 per-frame syllable table and results pickle are gzip-compressed.
 
-The final report workbook is `report/STATISTICAL_REPORT_FINAL.xlsx`. Rebuild it
+The statistical report workbook is `report/STATISTICAL_REPORT.xlsx`. Rebuild it
 with:
 
 ```bash
@@ -96,7 +104,7 @@ and mirrored in the final statistical report.
 Manuscript-facing workbook outputs are:
 
 - `report/RAW_DATA.xlsx`
-- `report/STATISTICAL_REPORT_FINAL.xlsx`
+- `report/STATISTICAL_REPORT.xlsx`
 
 See `REPRODUCIBILITY.md`, `DATA_AVAILABILITY.md`, and `CODE_AVAILABILITY.md`
 for publication and repository-release notes.

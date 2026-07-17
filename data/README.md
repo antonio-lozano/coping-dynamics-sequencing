@@ -30,8 +30,8 @@ python scripts\run_all_figures.py
 
 ## Report Workbook
 
-The final styled statistical workbook lives at
-`report/STATISTICAL_REPORT_FINAL.xlsx` and is rebuilt by:
+The styled statistical workbook lives at `report/STATISTICAL_REPORT.xlsx` and is
+rebuilt by:
 
 ```powershell
 python scripts\build_statistical_report.py

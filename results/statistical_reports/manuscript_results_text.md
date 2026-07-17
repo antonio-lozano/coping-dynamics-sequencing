@@ -1,4 +1,4 @@
-# Results (final mixed-model analysis)
+# Manuscript Results Text (mixed-model analysis)
 
 All Figure 4 per-animal statistics report the plain MixedLM fit with the default
 optimizer. Effect sizes (beta) are stable; SE/z/p are the default-optimizer

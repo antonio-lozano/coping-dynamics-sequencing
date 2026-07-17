@@ -1,5 +1,5 @@
 # Dependencies for the coping-dynamics-sequencing manuscript figures
-# Install with: pip install -r requirements.txt
+# Use Python 3.9, 3.10, or 3.11. Install with: pip install -r requirements.txt
 
 # Data processing
 numpy>=1.21.0,<2.0.0
@@ -11,6 +11,7 @@ openpyxl>=3.1.0,<4.0.0
 matplotlib>=3.4.0,<4.0.0
 seaborn>=0.11.0,<1.0.0
 pymupdf>=1.24.0,<2.0.0
+networkx>=3.0.0,<4.0.0
 
 # Statistical analysis (manuscript data workbooks)
 statsmodels>=0.13.0,<1.0.0

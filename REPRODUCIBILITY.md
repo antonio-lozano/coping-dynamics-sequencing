@@ -17,6 +17,11 @@ This verifies required files, expected figure exports, intermediate CSVs,
 freezing-prediction file count, absence of common scratch artifacts, absence of
 machine-local absolute paths in text files, and `MANIFEST.csv` checksums.
 
+Use Python 3.9, 3.10, or 3.11 for the analysis environment. The conda
+environment pins Python 3.9; the GitHub Actions workflow uses Python 3.11. For
+an exact locked dependency resolution, use `uv sync` with the tracked
+`uv.lock`.
+
 ## Rebuild Figures
 
 Install dependencies, then run:
@@ -36,7 +41,7 @@ exports in `figures/`.
 python scripts/build_statistical_report.py
 ```
 
-The final report is `report/STATISTICAL_REPORT_FINAL.xlsx`. The manuscript raw
+The statistical report is `report/STATISTICAL_REPORT.xlsx`. The manuscript raw
 data workbook is `report/RAW_DATA.xlsx`.
 
 ## Rebuild Derived Tables
@@ -66,7 +71,7 @@ Commit the updated `MANIFEST.csv` with the changed artifacts.
 - All required input data are tracked under `data/source/`.
 - Manuscript figures are tracked under `figures/`.
 - Intermediate analysis tables are tracked under `results/figure_data/`.
-- Statistical outputs and final Results audit are tracked under
+- Statistical outputs and manuscript Results text audit are tracked under
   `results/statistical_reports/`.
 - Manuscript raw-data and statistical workbooks are tracked under `report/`.
 - `MANIFEST.csv` records byte sizes and SHA-256 hashes for publication

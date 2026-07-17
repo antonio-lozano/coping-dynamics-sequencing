@@ -16,7 +16,7 @@ The tracked source data include:
 Manuscript-facing workbooks are included under `report/`:
 
 - `report/RAW_DATA.xlsx`
-- `report/STATISTICAL_REPORT_FINAL.xlsx`
+- `report/STATISTICAL_REPORT.xlsx`
 
 For a journal submission or public release, archive this repository on a stable
 repository service such as Zenodo, Figshare, Dryad, or OSF. Once archived, cite

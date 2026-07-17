@@ -1,4 +1,4 @@
-"""Build the final statistical report workbook (report/STATISTICAL_REPORT_FINAL.xlsx).
+"""Build the manuscript statistical report workbook (report/STATISTICAL_REPORT.xlsx).
 
 Starts from the curated template shape and:
   1. Rebuilds the three Figure 4 sheets from the default MixedLM fits with
@@ -6,22 +6,26 @@ Starts from the curated template shape and:
   2. Applies house styling to every sheet: #4d4d4d header/title accent (white
      text) and a mustard-yellow highlight on significant p-values (P>|z| < .05).
 
-Run:  python scripts/build_statistical_report.py
+Run: python scripts/build_statistical_report.py
 """
-import os, sys, shutil, warnings
+import importlib.util
+import os
+import shutil
+import warnings
 from pathlib import Path
-warnings.filterwarnings("ignore")
+
+import openpyxl
 import numpy as np
 import pandas as pd
 import statsmodels.formula.api as smf
-import openpyxl
-from openpyxl.styles import PatternFill, Font, Alignment
 from openpyxl.cell.cell import MergedCell
-import importlib.util
+from openpyxl.styles import Alignment, Font, PatternFill
+
+warnings.filterwarnings("ignore")
 
 REPO = Path(__file__).resolve().parents[1]
 TEMPLATE = Path(os.getenv("COPING_DYNAMICS_REPORT_TEMPLATE", REPO / "report" / "STATISTICAL_REPORT_TEMPLATE.xlsx"))
-OUT = REPO / "report" / "STATISTICAL_REPORT_FINAL.xlsx"
+OUT = REPO / "report" / "STATISTICAL_REPORT.xlsx"
 
 # ---- house style ----
 ACCENT = "FF4D4D4D"        # dark grey accent for titles/headers
@@ -99,16 +103,22 @@ def write_block(ws, top, left, title, table_source, metric):
 
 
 FIG4_SHEETS = {
-    "Fig.4E-H_frequency_metrics": [("Simpson Index", metrics, "simpson"),
-                                   ("Shannon entropy", metrics, "shannon"),
-                                   ("Evenness", metrics, "evenness"),
-                                   ("Cumulative usage index", metrics, "cui")],
-    "Fig.4T-W_transition_metrics": [("Lempel-Ziv complexity", transitions, "lz"),
-                                    ("Recurrence rate", transitions, "recurrence"),
-                                    ("Determinism", transitions, "determinism"),
-                                    ("Markov entropy", transitions, "markov")],
-    "Fig.4J-Q_bout_duration": [(c, mean_bouts[mean_bouts["cluster"] == c].rename(columns={"bout_duration": c}), c)
-                               for c in ["Freezing", "Sniffing", "Grooming", "Turn", "Locomotion", "Climbing", "Jump"]],
+    "Fig4_frequency_metrics": [
+        ("Simpson Index", metrics, "simpson"),
+        ("Shannon entropy", metrics, "shannon"),
+        ("Evenness", metrics, "evenness"),
+        ("Cumulative usage index", metrics, "cui"),
+    ],
+    "Fig4_transition_metrics": [
+        ("Lempel-Ziv complexity", transitions, "lz"),
+        ("Recurrence rate", transitions, "recurrence"),
+        ("Determinism", transitions, "determinism"),
+        ("Markov entropy", transitions, "markov"),
+    ],
+    "Fig4_bout_duration": [
+        (c, mean_bouts[mean_bouts["cluster"] == c].rename(columns={"bout_duration": c}), c)
+        for c in ["Freezing", "Sniffing", "Grooming", "Turn", "Locomotion", "Climbing", "Jump"]
+    ],
 }
 
 
