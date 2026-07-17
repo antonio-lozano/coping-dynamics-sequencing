@@ -2,33 +2,29 @@
 
 This note records the checked data path for manuscript Figure 4.
 
-## Archives Checked
+## Bundled Inputs
 
-- `H:\Downloads\Coping_data2.zip\COping\Code`
-- `H:\Downloads\Coping_data.zip`
-- `H:\Downloads\London\JEN_STORAGE_archives`
-- `H:\antonio\keypoint_moseq_project\code\shapley\Behavioral_clusters_a_mano_definitivo_no_mix_inaccurate.json`
+The current repository is self-contained. Figure 4 is regenerated from:
 
-The London/JEN February folders contain raw videos, DLC CSVs, and pickle files
-for context/cue/training storage. They are upstream raw/tracking material, not
-the scripts that assemble Figure 4.
+- `dataset/source/syllable_usage_per_timebin_250ms.csv`
+- the built-in behavioral cluster map in
+  `scripts/generate_figures/figure_4_diversity_dynamics.py`
 
 ## Actual Figure 4 Data Chain
 
-1. `COping/Code/1. MoSeq data cleaning, time binning and predominant syllable extraction.py`
-   starts from `moseq_df_final.csv` and produces:
+1. The upstream MoSeq cleaning step starts from the per-frame syllable table and produces:
    - `new_moseq_df_final.csv`
    - `Syllable_per_timebin_final(250ms).csv`
    - predominant-syllable tables for ethogram/barcode display
 
-2. `COping/Code/6. Frequency metrics and bout duration.py` uses:
+2. The frequency and bout-duration analysis uses:
    - `Syllable_per_timebin_final(250ms).csv`
-   - `Behavioral_clusters_a_mano_definitivo_no_mix_inaccurate.json`
-   - saved result workbooks under `COping/Code/Results/Frequency_metrics`
-   - saved result workbooks under `COping/Code/Results/Bout_duration`
+   - the behavioral cluster map
+   - per-animal frequency metrics
+   - per-cluster bout duration summaries
 
-3. `COping/Code/7. Transition metrics.py` uses the same 250 ms table and JSON,
-   saving transition workbooks under `COping/Code/Results/Transition_metrics`.
+3. The transition analysis uses the same 250 ms table and behavioral cluster map
+   to compute LZ complexity, recurrence, determinism, and Markov entropy.
 
 ## Important Implementation Detail
 
@@ -61,7 +57,4 @@ The corrected Figure 4 generator reproduces the archived COping group means for:
 - determinism
 - Markov entropy
 
-The generator is:
-
-`scripts\figure_4_diversity_dynamics\generate_figure_4_diversity_dynamics.py`
-
+The generator is `scripts/generate_figures/figure_4_diversity_dynamics.py`.

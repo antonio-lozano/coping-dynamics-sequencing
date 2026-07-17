@@ -30,10 +30,7 @@ uv pip install -r requirements.txt
 ## Quick Smoke Test
 
 ```powershell
-uv run --with joblib --with scikit-learn --with xgboost `
-  python scripts\train_behavior_classifier.py train `
-  --skip-cv --max-frames 5000 --n-estimators 5 --max-depth 3 `
-  --model results\behavior_classifier\fig7_behavior_xgb_smoke.joblib
+python scripts\train_behavior_classifier.py train --skip-cv --max-frames 5000
 ```
 
 ## Full Training
@@ -55,8 +52,8 @@ CSVs must contain `frame_index` plus either `syllable` or `behavior_label`.
 
 ```powershell
 python scripts\train_behavior_classifier.py train-from-dlc `
-  --dlc-dir "D:\Downloads\London\DLC_filtered" `
-  --labels-dir "D:\Downloads\London\behavior_labels" `
+  --dlc-dir path\to\filtered_dlc_tracks `
+  --labels-dir path\to\frame_labels `
   --model results\behavior_classifier\fig7_behavior_xgb.joblib
 ```
 
@@ -75,17 +72,17 @@ tracks into the Fig. 7/SHAP-style pose summaries, then predict behaviors.
 
 ```powershell
 python scripts\train_behavior_classifier.py run-from-raw `
-  --video "D:\Downloads\London\original_videos\Trial     9_mouse3.mp4" `
-  --dlc-config "D:\Downloads\London\config.yaml" `
+  --video path\to\video.mp4 `
+  --dlc-config path\to\dlc_config.yaml `
   --model results\behavior_classifier\fig7_behavior_xgb.joblib `
-  --output-root results\behavior_classifier\london_trial9_mouse3
+  --output-root results\behavior_classifier\example_video
 ```
 
 If DLC has already produced a filtered CSV/H5 for the video:
 
 ```powershell
 python scripts\train_behavior_classifier.py run-from-dlc `
-  --dlc-file "D:\Downloads\London\original_videos\Trial     9_mouse3DLC...filtered.csv" `
+  --dlc-file path\to\filtered_dlc_tracks.csv `
   --model results\behavior_classifier\fig7_behavior_xgb.joblib `
-  --output-dir results\behavior_classifier\london_trial9_mouse3\behavior_predictions
+  --output-dir results\behavior_classifier\example_video\behavior_predictions
 ```

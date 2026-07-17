@@ -30,3 +30,5 @@ config/paths.py
 *.log
 *_test.xlsx
 *_rebuilt.xlsx
+results/behavior_classifier/*_smoke.joblib
+results/figure_data/*_smoke.csv

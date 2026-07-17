@@ -3,9 +3,9 @@
 """
 Figure 2 - manuscript validation, keypoint-moseq compatible regeneration.
 
-This script keeps the final manuscript A-H layout, but mirrors the original
-keypoint_moseq_project/SURF_results_analysis_spyder_CAPITULO.py processing
-for the validation panels. In particular, it uses the original selected
+This script keeps the final manuscript A-H layout and mirrors the original
+keypoint-MoSeq processing for the validation panels. In particular, it uses the
+original selected
 syllables for the animal overlap panel, cumulative 95% usage cutoff for panel
 D, and per-animal precision/recall aggregation before plotting panels E/F.
 """
@@ -48,24 +48,20 @@ EVENT_SPAN_STARTS_MIN = [3.5, 4.5, 5.5]
 EVENT_SPAN_WIDTH_MIN = 0.5
 
 
-# Prefer files dropped into dataset/source/; fall back to original-machine paths.
+# Prefer files bundled into dataset/source/.
 _REF_CSV_CANDIDATES = [
     SOURCE_DATA_DIR / "syllable_classification_metrics.csv",
-    Path(r"H:\antonio\keypoint_moseq_project\code\syllable_recall_precision_f1_usage.csv"),
-    Path(r"C:\Users\admin\keypoint_moseq\keypoint_moseq_project\code\syllable_recall_precision_f1_usage.csv"),
 ]
 REFERENCE_METRICS_CSV: Path | None = next((p for p in _REF_CSV_CANDIDATES if p.exists()), None)
 
 _PANEL_G_SVG_CANDIDATES = [
     SOURCE_DATA_DIR / "freezing_overlap_by_group.svg",
-    Path(r"H:\antonio\keypoint_moseq_project\code\equipo_project\overlap_freezing_per_mouse_by_group_cleaned_sorted.svg"),
-    Path(r"C:\Users\admin\keypoint_moseq\keypoint_moseq_project\code\equipo_project\overlap_freezing_per_mouse_by_group_cleaned_sorted.svg"),
 ]
 PANEL_G_REFERENCE_SVG: Path | None = next((p for p in _PANEL_G_SVG_CANDIDATES if p.exists()), None)
 
 PRECOMPUTED_OVERLAP_CSV: Path = SOURCE_DATA_DIR / "freezing_overlap_by_group.csv"
 
-# Prefer inputs extracted into dataset/source/; fall back to config (external) paths.
+# Prefer inputs extracted into dataset/source/; fall back to configured paths.
 _FREEZING_DIR_DEFAULT = next(
     (p for p in [SOURCE_DATA_DIR / "freezing_predictions", FREEZING_DIR] if p.exists()),
     FREEZING_DIR,
@@ -442,9 +438,6 @@ def _resolve_moseq_df_path(explicit: Path | None, results_pkl: Path, index_csv: 
             rp.parent / "moseq_df.csv",
             SOURCE_DATA_DIR / "moseq_syllables_per_frame.csv.gz",
             repo_root / "dataset" / "processed" / "moseq_df.csv",
-            Path(r"C:\Users\admin\keypoint_moseq\keypoint_moseq_project\code\equipo_project\2025_01_24-16_44_21\moseq_df.csv"),
-            Path(r"C:\Users\admin\keypoint_moseq\keypoint_moseq_project\equipo_project_data\moseq_df.csv"),
-            Path(r"C:\Users\admin\keypoint_moseq\keypoint_moseq_project\code\moseq_df.csv"),
         ]
     )
     for path in candidates:

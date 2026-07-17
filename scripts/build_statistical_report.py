@@ -1,9 +1,8 @@
 """Build the final statistical report workbook (report/STATISTICAL_REPORT_FINAL.xlsx).
 
 Starts from the curated template shape and:
-  1. Rebuilds the three Figure 4 sheets from the no-seed MixedLM fits
-     (default optimizer, no start_params seed) with Combined + per-experiment
-     blocks per metric. Effect sizes are seed-independent.
+  1. Rebuilds the three Figure 4 sheets from the default MixedLM fits with
+     Combined + per-experiment blocks per metric.
   2. Applies house styling to every sheet: #4d4d4d header/title accent (white
      text) and a mustard-yellow highlight on significant p-values (P>|z| < .05).
 
@@ -163,7 +162,7 @@ def main():
     OUT.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy(TEMPLATE, OUT)
     wb = openpyxl.load_workbook(OUT)
-    print("Rebuilding Figure 4 sheets (no-seed, combined + per-experiment)...")
+    print("Rebuilding Figure 4 sheets (combined + per-experiment)...")
     rebuild_fig4(wb)
     print("Restyling all sheets (#4D4D4D accent, mustard significance)...")
     restyle_all(wb, skip=set(FIG4_SHEETS))

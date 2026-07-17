@@ -1,11 +1,8 @@
 """Regenerate the Figure 6 resilience statistics (diversity metrics + bout duration),
 3-group: Control / vulnerable ELS / resilient ELS.
 
-Faithful port of the original analysis
-  E:\\#Deeplabcut_project\\Data\\Additional_data\\Code\\Resilience analysis\\
-  3. Frequency metrics and bout duration resilience.py
-which the manuscript Report.xlsx (Frequency_metrics_resilience, Bout_duration_resilience)
-was built from. Self-contained: reads only repo data.
+Reproduces the manuscript resilience statistics from the bundled source data.
+Self-contained: reads only repo data.
 
 Model per metric (and per cluster for bout duration):
   MixedLM(metric ~ C(New_condition, Treatment(reference=R)) + Experiment, groups=Animal, reml=False)

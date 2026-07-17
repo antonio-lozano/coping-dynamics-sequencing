@@ -83,8 +83,8 @@ The final report workbook is `report/STATISTICAL_REPORT_FINAL.xlsx`. Rebuild it 
 python scripts/build_statistical_report.py
 ```
 
-Figure 4 uses the final no-seed MixedLM analysis. The seeded analysis is recoverable
-from tag `pre-noseed-seeded` or branch `backup-seeded-analysis`.
+Figure 4 uses the default MixedLM analysis implemented in the figure generator
+and mirrored in the final statistical report.
 
 See `dataset/README.md` for the full inventory of bundled inputs.
 

@@ -657,9 +657,9 @@ def export_source_data(metrics: pd.DataFrame, bouts: pd.DataFrame, transitions: 
         df.to_csv(output_csv, index=False)
         print(f"Saved: {output_csv}")
 
-    # --- MixedLM for diversity metrics (default optimizer, no seed) ---
-    # No start_params seed: the plain MixedLM fit is reported. beta is seed-independent;
-    # SE/z/p are the default-optimizer values (no-seed finalization).
+    # --- MixedLM for diversity metrics (default optimizer) ---
+    # The plain MixedLM fit is reported. Beta is stable across fits; SE/z/p are
+    # the default-optimizer values.
     DIVERSITY_METRICS = ["simpson", "shannon", "evenness", "cui"]
     div_rows: list[dict] = []
     for metric_name in DIVERSITY_METRICS:
@@ -818,7 +818,7 @@ def main() -> None:
     )
     for ax_i, (label, data, ylim, yticks, yfmt, star) in enumerate(
         [
-            # star flags reflect no-seed stats_figure4_bouts_MixedLM.csv (BH-FDR across 7 clusters):
+            # star flags reflect stats_figure4_bouts_MixedLM.csv (BH-FDR across 7 clusters):
             # Freezing BH=0.016, Sniffing BH=0.026, Turn BH=0.016 -> significant; others n.s.
             ("Overall", overall, (0, 2.0), [0, 0.5, 1.0, 1.5, 2.0], "%.1f", False),
             ("Freeze", cluster_means[cluster_means["cluster"] == "Freezing"], (0, 2.0), [0, 0.5, 1.0, 1.5, 2.0], "%.1f", True),

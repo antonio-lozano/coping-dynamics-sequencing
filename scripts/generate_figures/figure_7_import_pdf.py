@@ -2,13 +2,12 @@
 # Copyright (c) 2026 Jeniffer Sanguino Gomez and Antonio Lozano
 """Import manuscript Figure 7 from the assembled source PDF.
 
-Figure 7 is maintained as an externally assembled PDF rather than regenerated
-from tabular source data in this repository. This script copies the original
-PDF into the canonical manuscript output directory, renders PNG/SVG copies, and
-keeps archival copies in ``results/figure_data/``.
+Figure 7 is maintained as an assembled PDF rather than regenerated from tabular
+source data in this repository. The source PDF is tracked in ``dataset/source/``
+and this script writes only the canonical manuscript outputs in ``figures/``.
 
 Override the source PDF with:
-    FIGURE7_SOURCE_PDF="path/to/Figure7.pdf" python scripts/generate_figures/figure_7_import_pdf.py
+FIGURE7_SOURCE_PDF="path/to/Figure7.pdf" python scripts/generate_figures/figure_7_import_pdf.py
 """
 
 from __future__ import annotations
@@ -21,10 +20,8 @@ import tempfile
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 FIGURES_DIR = REPO_ROOT / "figures"
-FIGURE_DATA_DIR = REPO_ROOT / "results" / "figure_data"
 
 BUNDLED_SOURCE = REPO_ROOT / "dataset" / "source" / "figure7.pdf"
-LOCAL_FALLBACK_SOURCE = Path(r"C:\Users\jenif\Downloads\Copying_dynamics_paper2\Figure7.pdf")
 PANEL_A_UNASSIGNED_RECT = (19.5, 123.0, 46.5, 131.5)
 PANEL_A_UNASSIGNED_ORIGIN = (20.582500457763672, 128.6944580078125)
 PANEL_A_UNASSIGNED_SIZE = 5.0
@@ -52,7 +49,7 @@ def resolve_source_pdf() -> Path:
     """Return the first available Figure 7 source PDF."""
     env_source = os.environ.get("FIGURE7_SOURCE_PDF")
     candidates = [Path(env_source)] if env_source else []
-    candidates.extend([BUNDLED_SOURCE, LOCAL_FALLBACK_SOURCE])
+    candidates.append(BUNDLED_SOURCE)
 
     for candidate in candidates:
         if candidate.exists():
@@ -243,17 +240,9 @@ def main() -> None:
     source_pdf = resolve_source_pdf()
     validate_pdf(source_pdf)
 
-    copy_pdf(source_pdf, FIGURE_DATA_DIR / "figure_7_source.pdf")
     figure_pdf = FIGURES_DIR / "figure7.pdf"
-    imported_pdf = FIGURE_DATA_DIR / "figure_7_imported.pdf"
     write_normalized_pdf(source_pdf, figure_pdf)
-    write_normalized_pdf(source_pdf, imported_pdf)
     render_png_and_svg(figure_pdf, FIGURES_DIR / "figure7.png", FIGURES_DIR / "figure7.svg")
-    render_png_and_svg(
-        imported_pdf,
-        FIGURE_DATA_DIR / "figure_7_imported.png",
-        FIGURE_DATA_DIR / "figure_7_imported.svg",
-    )
 
     print(f"Source: {source_pdf}")
 
