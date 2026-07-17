@@ -14,7 +14,7 @@ Jump: 23, 29, 30, 34
 Unassigned: all other syllables
 ```
 
-The feature set mirrors the Fig. 7 XGBoost checks in `scripts/_verify_fig7_xgb.py`:
+The feature set mirrors the Fig. 7 XGBoost feature extraction in `src/behavior_classifier/features.py`:
 centroid position, heading, angular velocity, velocity, absolute angular velocity,
 rolling movement statistics, and short lags within each recording. When using
 DLC tracks directly, the feature table also includes the SHAP-style movement
