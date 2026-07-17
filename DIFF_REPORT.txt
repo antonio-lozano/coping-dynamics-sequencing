@@ -1,0 +1,346 @@
+
+Figure 1 - SimBA Validation (HAND-CURATED, NOT SCRIPT-GENERATED)
+================================================================
+  📋 HAND-CURATED SimBA r²
+      Manuscript: 0.95
+      STATUS: Hand-curated (not script-generated)
+  📋 HAND-CURATED SimBA p
+      Manuscript: 0.001
+      STATUS: Hand-curated (not script-generated)
+
+Figure 2 - Validation
+=====================
+  ✅ PASS SimBA validation r²
+      Manuscript: 0.95
+  ✅ PASS SimBA validation p
+      Manuscript: 0.001
+  ✅ PASS Freezing Exp1 time β
+      Manuscript: 3.721
+  ✅ PASS Freezing Exp1 time SE
+      Manuscript: 0.128
+  ✅ PASS Freezing Exp1 time z
+      Manuscript: 29.048
+  ✅ PASS Freezing Exp1 time p
+      Manuscript: 0.001
+  ✅ PASS Freezing Exp1 ELS×time β
+      Manuscript: -0.887
+  ✅ PASS Freezing Exp1 ELS×time SE
+      Manuscript: 0.181
+  ✅ PASS Freezing Exp1 ELS×time z
+      Manuscript: -4.898
+  ✅ PASS Freezing Exp1 ELS×time p
+      Manuscript: 0.001
+  ✅ PASS Freezing Exp1 ELS×time Cohen's d
+      Manuscript: 0.284
+  ✅ PASS Freezing Exp3 time β
+      Manuscript: 4.412
+  ✅ PASS Freezing Exp3 time SE
+      Manuscript: 0.191
+  ✅ PASS Freezing Exp3 time z
+      Manuscript: 23.091
+  ✅ PASS Freezing Exp3 time p
+      Manuscript: 0.001
+  ✅ PASS Freezing Exp3 ELS×time β
+      Manuscript: -0.721
+  ✅ PASS Freezing Exp3 ELS×time SE
+      Manuscript: 0.27
+  ✅ PASS Freezing Exp3 ELS×time z
+      Manuscript: -2.667
+  ✅ PASS Freezing Exp3 ELS×time p
+      Manuscript: 0.008
+  ✅ PASS Freezing Exp3 ELS×time Cohen's d
+      Manuscript: 0.189
+  ✅ PASS Freezing Combined ELS×time β
+      Manuscript: -0.822
+  ✅ PASS Freezing Combined ELS×time SE
+      Manuscript: 0.154
+  ✅ PASS Freezing Combined ELS×time z
+      Manuscript: -5.327
+  ✅ PASS Freezing Combined ELS×time p
+      Manuscript: 0.001
+  ✅ PASS Freezing Combined ELS×time Cohen's d
+      Manuscript: 0.241
+  ✅ PASS S0+S28 overlap mean %
+      Manuscript: 80.86
+  ✅ PASS S0+S28 overlap SE %
+      Manuscript: 9.62
+  ✅ PASS S0+S28 time β
+      Manuscript: 0.126
+  ✅ PASS S0+S28 time SE
+      Manuscript: 0.004
+  ✅ PASS S0+S28 time z
+      Manuscript: 32.602
+  ✅ PASS S0+S28 time p
+      Manuscript: 0.001
+  ✅ PASS S0+S28 ELS×time β
+      Manuscript: -0.023
+  ✅ PASS S0+S28 ELS×time SE
+      Manuscript: 0.005
+  ✅ PASS S0+S28 ELS×time z
+      Manuscript: -4.241
+  ✅ PASS S0+S28 ELS×time p
+      Manuscript: 0.001
+
+Figure 3 - Behavior Clusters
+============================
+  ✅ PASS Freeze ELS β
+      Manuscript: -0.204
+  ✅ PASS Freeze ELS SE
+      Manuscript: 0.081
+  ✅ PASS Freeze ELS z
+      Manuscript: -2.511
+  ✅ PASS Freeze ELS p
+      Manuscript: 0.012
+  ✅ PASS Turn ELS β
+      Manuscript: 0.1
+  ✅ PASS Turn ELS SE
+      Manuscript: 0.032
+  ✅ PASS Turn ELS z
+      Manuscript: 3.099
+  ✅ PASS Turn ELS p
+      Manuscript: 0.002
+  ✅ PASS Sniff ELS β
+      Manuscript: -0.068
+  ✅ PASS Sniff ELS SE
+      Manuscript: 0.185
+  ✅ PASS Sniff ELS z
+      Manuscript: -2.133
+  ✅ PASS Sniff ELS p
+      Manuscript: 0.033
+  ✅ PASS Freeze time×ELS β
+      Manuscript: -0.023
+  ✅ PASS Freeze time×ELS SE
+      Manuscript: 0.005
+  ✅ PASS Freeze time×ELS z
+      Manuscript: -4.241
+  ✅ PASS Freeze time×ELS p
+      Manuscript: 0.001
+  ✅ PASS Sniff time β
+      Manuscript: -0.014
+  ✅ PASS Sniff time SE
+      Manuscript: 0.004
+  ✅ PASS Sniff time z
+      Manuscript: -3.656
+  ✅ PASS Sniff time p
+      Manuscript: 0.001
+  ✅ PASS Turn time×ELS β
+      Manuscript: 0.026
+  ✅ PASS Turn time×ELS SE
+      Manuscript: 0.007
+  ✅ PASS Turn time×ELS z
+      Manuscript: 3.61
+  ✅ PASS Turn time×ELS p
+      Manuscript: 0.001
+
+Figure 4 - Diversity Dynamics
+=============================
+  ✅ PASS Simpson β
+      Manuscript: -0.013
+  ✅ PASS Simpson SE
+      Manuscript: 0.007
+  ✅ PASS Simpson z
+      Manuscript: -2.039
+  ✅ PASS Simpson p
+      Manuscript: 0.041
+  ✅ PASS CUI β
+      Manuscript: 0.064
+  ✅ PASS CUI SE
+      Manuscript: 0.021
+  ✅ PASS CUI z
+      Manuscript: 2.968
+  ✅ PASS CUI p
+      Manuscript: 0.003
+  ✅ PASS Freezing bout β
+      Manuscript: -0.105
+  ✅ PASS Freezing bout SE
+      Manuscript: 0.053
+  ✅ PASS Freezing bout z
+      Manuscript: -2.001
+  ✅ PASS Freezing bout p
+      Manuscript: 0.045
+  ✅ PASS Sniffing bout β
+      Manuscript: 0.322
+  ✅ PASS Sniffing bout SE
+      Manuscript: 0.129
+  ✅ PASS Sniffing bout z
+      Manuscript: 2.506
+  ✅ PASS Sniffing bout p
+      Manuscript: 0.012
+  ✅ PASS Turning bout β
+      Manuscript: 0.159
+  ✅ PASS Turning bout SE
+      Manuscript: 0.052
+  ✅ PASS Turning bout z
+      Manuscript: 3.088
+  ✅ PASS Turning bout p
+      Manuscript: 0.002
+  ✅ PASS Recurrence β
+      Manuscript: 0.013
+  ✅ PASS Recurrence SE
+      Manuscript: 0.006
+  ✅ PASS Recurrence z
+      Manuscript: 2.264
+  ✅ PASS Recurrence p
+      Manuscript: 0.024
+  ✅ PASS Determinism β
+      Manuscript: 0.016
+  ✅ PASS Determinism SE
+      Manuscript: 0.005
+  ✅ PASS Determinism z
+      Manuscript: 3.382
+  ✅ PASS Determinism p
+      Manuscript: 0.001
+  ✅ PASS Markov entropy β
+      Manuscript: -0.041
+  ✅ PASS Markov entropy SE
+      Manuscript: 0.018
+  ✅ PASS Markov entropy z
+      Manuscript: -2.342
+  ✅ PASS Markov entropy p
+      Manuscript: 0.019
+
+Figure 5 - Resilience Dynamics
+==============================
+  ✅ PASS Dynamics score ELS β
+      Manuscript: 0.336
+  ✅ PASS Dynamics score ELS SE
+      Manuscript: 0.087
+  ✅ PASS Dynamics score ELS z
+      Manuscript: 3.869
+  ✅ PASS Dynamics score ELS p
+      Manuscript: 0.001
+  ✅ PASS LOOCV accuracy %
+      Manuscript: 63.4
+  ✅ PASS Resilient prevalence %
+      Manuscript: 30
+  ✅ PASS Fig 5C: Freeze Resilient>Vulnerable β
+      Manuscript: 0.18
+  ✅ PASS Fig 5C: Freeze Resilient>Vulnerable SE
+      Manuscript: 0.038
+  ✅ PASS Fig 5C: Freeze Resilient>Vulnerable z
+      Manuscript: 4.681
+  ✅ PASS Fig 5C: Freeze Resilient>Vulnerable p
+      Manuscript: 0.001
+  ✅ PASS Fig 5C: Sniff Resilient>Vulnerable β
+      Manuscript: 0.492
+  ✅ PASS Fig 5C: Sniff Resilient>Vulnerable SE
+      Manuscript: 0.119
+  ✅ PASS Fig 5C: Sniff Resilient>Vulnerable z
+      Manuscript: 4.139
+  ✅ PASS Fig 5C: Sniff Resilient>Vulnerable p
+      Manuscript: 0.001
+  ✅ PASS Fig 5C: Groom Resilient>Vulnerable β
+      Manuscript: -0.398
+  ✅ PASS Fig 5C: Groom Resilient>Vulnerable SE
+      Manuscript: 0.187
+  ✅ PASS Fig 5C: Groom Resilient>Vulnerable z
+      Manuscript: -2.123
+  🛑 # REVIEW: (IMPOSSIBLE) Fig 5C: Groom Resilient>Vulnerable p
+      Manuscript: 0.003
+      STATUS: STATISTICALLY IMPOSSIBLE (DO NOT MATCH)
+      ⚠️ IMPOSSIBLE: p-value statistically inconsistent with z-value
+  ✅ PASS Fig 5C: Turn Resilient>Vulnerable β
+      Manuscript: 0.009
+  ✅ PASS Fig 5C: Turn Resilient>Vulnerable SE
+      Manuscript: 0.016
+  ✅ PASS Fig 5C: Turn Resilient>Vulnerable z
+      Manuscript: 0.568
+  🛑 # REVIEW: (IMPOSSIBLE) Fig 5C: Turn Resilient>Vulnerable p
+      Manuscript: 0.001
+      STATUS: STATISTICALLY IMPOSSIBLE (DO NOT MATCH)
+      ⚠️ IMPOSSIBLE: p-value statistically inconsistent with z-value
+  ✅ PASS Fig 5C: Locomotion Resilient>Vulnerable β
+      Manuscript: -0.424
+  ✅ PASS Fig 5C: Locomotion Resilient>Vulnerable SE
+      Manuscript: 0.089
+  ✅ PASS Fig 5C: Locomotion Resilient>Vulnerable z
+      Manuscript: -4.755
+  ✅ PASS Fig 5C: Locomotion Resilient>Vulnerable p
+      Manuscript: 0.001
+  ✅ PASS Fig 5C: Climb Resilient>Vulnerable β
+      Manuscript: -0.196
+  ✅ PASS Fig 5C: Climb Resilient>Vulnerable SE
+      Manuscript: 0.074
+  ✅ PASS Fig 5C: Climb Resilient>Vulnerable z
+      Manuscript: -2.624
+  ✅ PASS Fig 5C: Climb Resilient>Vulnerable p
+      Manuscript: 0.009
+  ✅ PASS Fig 5C: Freeze Resilient vs Control β
+      Manuscript: -0.342
+  ✅ PASS Fig 5C: Freeze Resilient vs Control SE
+      Manuscript: 0.082
+  ✅ PASS Fig 5C: Freeze Resilient vs Control z
+      Manuscript: -4.168
+  ✅ PASS Fig 5C: Freeze Resilient vs Control p
+      Manuscript: 0.001
+  ✅ PASS Fig 5D: Freeze time×Resilient β
+      Manuscript: -1.865
+  ✅ PASS Fig 5D: Freeze time×Resilient SE
+      Manuscript: 0.249
+  ✅ PASS Fig 5D: Freeze time×Resilient z
+      Manuscript: -7.484
+  ✅ PASS Fig 5D: Freeze time×Resilient p
+      Manuscript: 0.001
+  ✅ PASS Fig 5D: Freeze time×Resilient vs Control β
+      Manuscript: 0.619
+  ✅ PASS Fig 5D: Freeze time×Resilient vs Control SE
+      Manuscript: 0.238
+  ✅ PASS Fig 5D: Freeze time×Resilient vs Control z
+      Manuscript: 2.599
+  ✅ PASS Fig 5D: Freeze time×Resilient vs Control p
+      Manuscript: 0.009
+  ✅ PASS Fig 5G: Turn time×Resilient β
+      Manuscript: 1.622
+  ✅ PASS Fig 5G: Turn time×Resilient SE
+      Manuscript: 0.326
+  ✅ PASS Fig 5G: Turn time×Resilient z
+      Manuscript: 4.967
+  ✅ PASS Fig 5G: Turn time×Resilient p
+      Manuscript: 0.001
+  ✅ PASS Fig 5E: Sniff baseline×Resilient β
+      Manuscript: -0.338
+  ✅ PASS Fig 5E: Sniff baseline×Resilient SE
+      Manuscript: 0.176
+  ✅ PASS Fig 5E: Sniff baseline×Resilient z
+      Manuscript: -1.92
+  ✅ PASS Fig 5E: Sniff baseline×Resilient p
+      Manuscript: 0.050
+
+Figure 6 - Resilience-Diversity
+===============================
+  ✅ PASS Simpson Vulnerable vs Control β
+      Manuscript: -0.022
+  ✅ PASS Simpson Vulnerable vs Control SE
+      Manuscript: 0.008
+  ✅ PASS Simpson Vulnerable vs Control z
+      Manuscript: -2.835
+  ✅ PASS Simpson Vulnerable vs Control p
+      Manuscript: 0.005
+  ✅ PASS Simpson Resilient vs Vulnerable β
+      Manuscript: 0.029
+  ✅ PASS Simpson Resilient vs Vulnerable SE
+      Manuscript: 0.011
+  ✅ PASS Simpson Resilient vs Vulnerable z
+      Manuscript: 2.627
+  ✅ PASS Simpson Resilient vs Vulnerable p
+      Manuscript: 0.009
+  ✅ PASS CUI Vulnerable β
+      Manuscript: 0.075
+  ✅ PASS CUI Vulnerable SE
+      Manuscript: 0.028
+  ✅ PASS CUI Vulnerable z
+      Manuscript: 2.664
+  ✅ PASS CUI Vulnerable p
+      Manuscript: 0.008
+
+Figure 7 - XGBoost/SHAP (HAND-CURATED, NOT SCRIPT-GENERATED)
+============================================================
+  📋 HAND-CURATED XGBoost overall accuracy %
+      Manuscript: 62.7
+      STATUS: Hand-curated (not script-generated)
+  📋 HAND-CURATED XGBoost chance baseline %
+      Manuscript: 12.5
+      STATUS: Hand-curated (not script-generated)
+  📋 HAND-CURATED XGBoost gain (ratio)
+      Manuscript: 5
+      STATUS: Hand-curated (not script-generated)

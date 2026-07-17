@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Jeniffer Sanguino Gómez and Antonio Lozano
 """
 Figure 2 - manuscript validation, keypoint-moseq compatible regeneration.
 
@@ -36,6 +38,7 @@ from src.config import (
     RESULTS_RAW_PKL,
     SOURCE_DATA_DIR,
 )
+from src.statistics import fit_mixed_models, cohens_d
 
 LEGACY_FIGURES_DIR = repo_root / "figures"
 FIGURE_OUTPUT_DIR = FIGURE_DATA_DIR
@@ -60,6 +63,8 @@ _PANEL_G_SVG_CANDIDATES = [
 ]
 PANEL_G_REFERENCE_SVG: Path | None = next((p for p in _PANEL_G_SVG_CANDIDATES if p.exists()), None)
 
+PRECOMPUTED_OVERLAP_CSV: Path = SOURCE_DATA_DIR / "freezing_overlap_by_group.csv"
+
 # Prefer inputs extracted into data/source/; fall back to config (external) paths.
 _FREEZING_DIR_DEFAULT = next(
     (p for p in [SOURCE_DATA_DIR / "freezing_predictions", FREEZING_DIR] if p.exists()),
@@ -69,6 +74,202 @@ _INDEX_CSV_DEFAULT = next(
     (p for p in [SOURCE_DATA_DIR / "animal_groups.csv", INDEX_CSV] if p.exists()),
     INDEX_CSV,
 )
+
+
+def _build_freezing_long_format(
+    freezing_df: pd.DataFrame,
+    group_map: dict[str, str],
+    include_labels: set[str] | None = None,
+) -> pd.DataFrame:
+    """Build per-animal, per-bin freezing data for mixed model fitting."""
+    bin_size = int(FPS * BIN_SECONDS)
+    df = freezing_df.copy()
+    df["bin"] = (df["frame"] // bin_size).astype(int)
+
+    # Aggregate to per-animal, per-bin mean freezing
+    agg = (
+        df.groupby(["animal", "bin"])["freezing"]
+        .mean()
+        .reset_index(name="freezing_percent")
+    )
+
+    # Add group mapping
+    agg["group"] = agg["animal"].map(lambda a: group_map.get(str(a), "Unknown"))
+    agg = agg[agg["group"].isin(["Control", "ELS"])].copy()
+
+    # Filter to include_labels if provided (for original manuscript cohort)
+    if include_labels:
+        agg["label"] = agg["animal"].map(_short_id)
+        agg = agg[agg["label"].isin(include_labels)].copy()
+
+    # time_bin: 1-indexed integer bins (1–15) matching original manuscript timescale
+    agg["time_bin"] = agg["bin"] + 1
+    agg["time_min"] = agg["time_bin"] * BIN_SECONDS / 60.0
+
+    return agg[["animal", "group", "bin", "time_bin", "time_min", "freezing_percent"]].copy()
+
+
+def _compute_overlap_stats(
+    overlap_df: pd.DataFrame,
+) -> dict:
+    """Compute summary stats from per-animal overlap_df (recall of S0+S28+S40 union)."""
+    stats = {}
+    if overlap_df.empty:
+        return stats
+    stats["s0_s28_overlap_pct_all"] = overlap_df["overlap_pct"].mean()
+    ctrl = overlap_df[overlap_df["group"] == "Control"]["overlap_pct"]
+    els = overlap_df[overlap_df["group"] == "ELS"]["overlap_pct"]
+    if len(ctrl) > 0:
+        stats["s0_s28_overlap_pct_control"] = ctrl.mean()
+        stats["s0_s28_overlap_pct_control_std"] = ctrl.std()
+    if len(els) > 0:
+        stats["s0_s28_overlap_pct_els"] = els.mean()
+        stats["s0_s28_overlap_pct_els_std"] = els.std()
+    return stats
+
+
+def _load_precomputed_overlap(path: Path) -> pd.DataFrame:
+    """Load precomputed per-animal overlap CSV (recording, group, overlap_pct)."""
+    df = pd.read_csv(path)
+    required = {"recording", "group", "overlap_pct"}
+    if not required.issubset(df.columns):
+        raise ValueError(f"{path} must have columns: {sorted(required)}")
+    # Rename overlap_pct -> overlap to match the column expected by plot_figure
+    return df.rename(columns={"overlap_pct": "overlap"})
+
+
+def _compute_source_data_figure2(
+    freezing_long: pd.DataFrame,
+    time_summary: pd.DataFrame,
+    overlap_stats: dict,
+    metrics_df: pd.DataFrame,
+    panel_g_reference_labels: list[str] | None = None,
+) -> pd.DataFrame:
+    """Build source_data_figure2 CSV with all reported statistics."""
+    rows = []
+
+    # Assign experiment (1 = SGK_2024, 3 = SG_2024) from cluster_frequency_per_animal.csv
+    _freq_csv = SOURCE_DATA_DIR / "cluster_frequency_per_animal.csv"
+    if _freq_csv.exists():
+        _exp_map = (
+            pd.read_csv(_freq_csv)[["animal_id", "experiment"]]
+            .drop_duplicates()
+            .set_index("animal_id")["experiment"]
+            .to_dict()
+        )
+        def _to_exp(a):
+            sid = _short_id(str(a))
+            try:
+                return _exp_map.get(float(sid), 3)
+            except (ValueError, TypeError):
+                return 3
+        freezing_long["experiment"] = freezing_long["animal"].map(_to_exp)
+    elif panel_g_reference_labels:
+        exp1_labels = set(panel_g_reference_labels)
+        freezing_long["label"] = freezing_long["animal"].map(_short_id)
+        freezing_long["experiment"] = freezing_long["label"].map(
+            lambda l: 1 if l in exp1_labels else 3
+        )
+    else:
+        raise RuntimeError(
+            "Cannot assign experiments: cluster_frequency_per_animal.csv not found "
+            "and no panel_g_reference_svg provided."
+        )
+
+    # Fit MixedLM for all experiments in one call (Exp1, Exp3, and Combined)
+    all_freezing = freezing_long.copy()
+    all_freezing["freezing_pct"] = all_freezing["freezing_percent"] * 100.0
+    try:
+        subset_time = all_freezing[["animal", "group", "experiment", "time_bin", "freezing_pct"]].copy()
+        subset_time.columns = ["animal_id", "group", "experiment", "time_bin_numeric", "freezing_pct"]
+        models_result = fit_mixed_models(subset_time, "freezing_pct")
+
+        # Pre-compute per-animal session-mean freezing for Cohen's d
+        _per_animal = (
+            subset_time.groupby(["animal_id", "group", "experiment"])["freezing_pct"]
+            .mean()
+            .reset_index()
+        )
+        def _cohens_d_for(sub_df: pd.DataFrame) -> float:
+            ctrl = sub_df.loc[sub_df["group"] == "Control", "freezing_pct"]
+            els  = sub_df.loc[sub_df["group"] == "ELS",     "freezing_pct"]
+            if len(ctrl) < 2 or len(els) < 2:
+                return np.nan
+            return cohens_d(ctrl, els)
+
+        _exp_map_num = {"Exp1": 1, "Exp3": 3}
+
+        for exp_name in ["Exp1", "Exp3", "Combined"]:
+            if models_result.empty:
+                break
+            exp_results = models_result[models_result["analysis"] == exp_name]
+
+            if exp_name == "Combined":
+                _sub_pa = _per_animal
+            else:
+                _exp_num = _exp_map_num[exp_name]
+                _sub_pa = _per_animal[_per_animal["experiment"] == _exp_num]
+            _d = _cohens_d_for(_sub_pa)
+
+            for _, row in exp_results.iterrows():
+                if row["parameter"] == "time_bin_numeric":
+                    rows.append({
+                        "metric": f"{exp_name} Freezing Time Effect",
+                        "effect": "time",
+                        "experiment": exp_name,
+                        "beta": row["coef"],
+                        "se": row["std_err"],
+                        "z": row["z"],
+                        "p_value": row["p_value"],
+                        "cohens_d": np.nan,
+                    })
+                elif row["parameter"] == "group[T.ELS]:time_bin_numeric":
+                    rows.append({
+                        "metric": f"{exp_name} Freezing ELS×Time",
+                        "effect": "group:time",
+                        "experiment": exp_name,
+                        "beta": row["coef"],
+                        "se": row["std_err"],
+                        "z": row["z"],
+                        "p_value": row["p_value"],
+                        "cohens_d": _d,
+                    })
+    except Exception as e:
+        print(f"Warning: Failed to fit freezing MixedLM: {e}")
+
+    # Add overlap statistics
+    for key, val in overlap_stats.items():
+        if "pct" in key:
+            rows.append({
+                "metric": key,
+                "effect": "overlap",
+                "experiment": "All",
+                "beta": val,
+                "se": np.nan,
+                "z": np.nan,
+                "p_value": np.nan,
+                "cohens_d": np.nan,
+            })
+
+    # Add syllable timecourse (S0+S28) models
+    # REVIEW: Extracting from time_summary computed earlier
+    if not time_summary.empty:
+        for group in ["Control", "ELS"]:
+            gdata = time_summary[time_summary["group"] == group]
+            if not gdata.empty:
+                rows.append({
+                    "metric": f"S0+S28 {group} Mean Freezing",
+                    "effect": "timecourse",
+                    "experiment": "All",
+                    "beta": gdata["mean"].mean() * 100.0,  # Convert to %
+                    "se": gdata["sem"].mean() * 100.0,
+                    "z": np.nan,
+                    "p_value": np.nan,
+                    "cohens_d": np.nan,
+                })
+
+    df = pd.DataFrame(rows)
+    return df
 
 
 def parse_args() -> argparse.Namespace:
@@ -793,6 +994,12 @@ def main() -> None:
     )
     print(f"Matched recordings: {matched_rec}; missing freezing records: {missing_rec}")
 
+    if PRECOMPUTED_OVERLAP_CSV.exists():
+        print(f"Loading precomputed overlap from {PRECOMPUTED_OVERLAP_CSV}")
+        overlap_df = _load_precomputed_overlap(PRECOMPUTED_OVERLAP_CSV)
+    else:
+        print("Warning: precomputed overlap CSV not found; overlap panel may be inaccurate if using results_pkl source.")
+
     print("Rendering final Figure 2 layout...")
     fig = plot_figure(
         summaries,
@@ -816,6 +1023,21 @@ def main() -> None:
     print(f"Saved: {out_pdf}")
     print(f"Saved: {out_svg}")
     print(f"Saved: {LEGACY_FIGURES_DIR / 'figure2.pdf'}")
+
+    # Compute and export source data
+    print("Computing Figure 2 source statistics...")
+    freezing_long = _build_freezing_long_format(freezing_df, group_map, include_labels)
+    overlap_stats = _compute_overlap_stats(overlap_df.rename(columns={"overlap": "overlap_pct"}) if "overlap" in overlap_df.columns else overlap_df)
+    source_data_df = _compute_source_data_figure2(
+        freezing_long,
+        time_summary,
+        overlap_stats,
+        metrics_df,
+        panel_g_reference_labels=panel_g_reference_labels,
+    )
+    source_csv = FIGURE_OUTPUT_DIR / "source_data_figure2.csv"
+    source_data_df.to_csv(source_csv, index=False)
+    print(f"Saved: {source_csv}")
 
     import os
 

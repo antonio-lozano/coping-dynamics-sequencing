@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Jeniffer Sanguino Gómez and Antonio Lozano
 """Regenerate manuscript Figure 6, the resilience version of Figure 4."""
 
 from __future__ import annotations
@@ -28,6 +30,7 @@ from src.config import (
     FIGURE_DATA_DIR as OUTPUT_DIR,
     SYLLABLE_TIMEBIN_250MS,
 )
+from src.statistics import compute_diversity_metrics
 
 LEGACY_FIGURES_DIR = REPO_ROOT / "figures"
 
@@ -52,9 +55,18 @@ FREQUENCY_METRIC_AXIS_WIDTH_IN = 0.72
 BOUT_METRIC_AXIS_WIDTH_IN = 0.62
 BOUT_YLABEL_X = -0.30
 BOUT_TAG_X = -0.34
+BOUT_TAG_Y = 1.045
+TRANSITION_YLABEL_X = -0.42
+TRANSITION_TAG_X = -0.42
+TRANSITION_TAG_Y = 1.16
 METRIC_BLOCK_DY = -0.022
 METRIC_ROW_EXTRA_GAP = 0.020
 BOUT_BLOCK_DY = -0.020
+SIGNIFICANCE_Y_BASE = 0.875   # inside the plot, below the top y-axis edge
+SIGNIFICANCE_Y_HEIGHT = 0.030 # bracket arm height in axes fraction
+SIGNIFICANCE_Y_STEP = 0.000   # step between non-overlapping brackets (same level)
+SIGNIFICANCE_STAR_PAD = 0.006 # gap between bracket and asterisk in axes fraction
+SIGNIFICANCE_JOIN_GAP = 0.10  # horizontal split between adjacent brackets
 CONTROL = "#F9C74F"
 ELS = "#C37BA0"
 RESILIENT = "#90BE6D"
@@ -399,25 +411,72 @@ def plot_barcode(ax: plt.Axes, pred: pd.DataFrame, animal: str, letter: str, sho
     tag(ax, letter, x=-0.020, y=0.80)
 
 
-def sig_bracket(ax: plt.Axes, x1: float, x2: float, y: float, h: float | None = None) -> None:
-    lo, hi = ax.get_ylim()
-    h = h if h is not None else (hi - lo) * 0.03
-    ax.plot([x1, x1, x2, x2], [y, y + h, y + h, y], color=AXIS, linewidth=0.48, clip_on=False)
-    ax.text((x1 + x2) / 2, y + h * 1.10, "*", ha="center", va="bottom", fontsize=6.2, color=AXIS, clip_on=False)
+def sig_bracket(ax: plt.Axes, x1: float, x2: float, level: int, n_levels: int, y_base: float = SIGNIFICANCE_Y_BASE) -> None:
+    trans = blended_transform_factory(ax.transData, ax.transAxes)
+    if y_base < 0:
+        y_top = y_base - SIGNIFICANCE_Y_STEP * (n_levels - level - 1)
+        y_bot = y_top - SIGNIFICANCE_Y_HEIGHT
+        star_y = y_bot - SIGNIFICANCE_STAR_PAD
+        star_va = "top"
+    else:
+        y_bot = y_base + SIGNIFICANCE_Y_STEP * (n_levels - level - 1)
+        y_top = y_bot + SIGNIFICANCE_Y_HEIGHT
+        star_y = y_top + SIGNIFICANCE_STAR_PAD
+        star_va = "bottom"
+    ax.plot(
+        [x1, x1, x2, x2],
+        [y_bot, y_top, y_top, y_bot],
+        transform=trans,
+        color=AXIS,
+        linewidth=0.48,
+        clip_on=False,
+        zorder=4,
+    )
+    ax.text(
+        (x1 + x2) / 2,
+        star_y,
+        "*",
+        transform=trans,
+        ha="center",
+        va=star_va,
+        fontsize=5.9,
+        color=AXIS,
+        clip_on=False,
+        zorder=5,
+    )
 
 
-def box_scatter(ax: plt.Axes, df: pd.DataFrame, y: str, ylabel: str, letter: str, ylim: tuple[float, float], yticks: list[float], yfmt: str, stars: list[tuple[int, int]] | None = None) -> None:
+def bracket_ylim(ylim: tuple[float, float], n_brackets: int) -> tuple[float, float]:
+    if n_brackets == 0:
+        return ylim
+    lo, hi = ylim
+    return lo, hi + (hi - lo) * 0.18
+
+
+def split_touching_bracket(pair: tuple[int, int], pairs: list[tuple[int, int]]) -> tuple[float, float]:
+    x1, x2 = map(float, pair)
+    if any(other != pair and other[1] == pair[0] for other in pairs):
+        x1 += SIGNIFICANCE_JOIN_GAP
+    if any(other != pair and other[0] == pair[1] for other in pairs):
+        x2 -= SIGNIFICANCE_JOIN_GAP
+    return x1, x2
+
+
+def box_scatter(ax: plt.Axes, df: pd.DataFrame, y: str, ylabel: str, letter: str, ylim: tuple[float, float], yticks: list[float], yfmt: str, stars: list[tuple[int, int]] | None = None, sig_y_base: float = SIGNIFICANCE_Y_BASE) -> None:
     rng = np.random.default_rng(42)
     data = [df[df["group_ext"] == g][y].dropna().to_numpy() for g in GROUP_ORDER]
     bp = ax.boxplot(data, positions=np.arange(3), widths=BOXPLOT_WIDTH, patch_artist=True, showfliers=False)
     for patch, group in zip(bp["boxes"], GROUP_ORDER):
-        patch.set_facecolor((*mcolors.to_rgb(PALETTE[group]), 0.25))
+        patch.set_facecolor((*mcolors.to_rgb(PALETTE[group]), 0.30))
         patch.set_edgecolor(PALETTE[group])
         patch.set_linewidth(0.55)
-    for key in ["whiskers", "caps", "medians"]:
+    for key in ["whiskers", "caps"]:
         for artist in bp[key]:
             artist.set_color(AXIS)
             artist.set_linewidth(0.5)
+    for median, group in zip(bp["medians"], GROUP_ORDER):
+        median.set_color(PALETTE[group])
+        median.set_linewidth(1.2)
     for i, group in enumerate(GROUP_ORDER):
         vals = df[df["group_ext"] == group][y].dropna().to_numpy()
         ax.scatter(rng.normal(i, 0.050, len(vals)), vals, s=3.8, color=PALETTE[group], alpha=0.62, linewidth=0, zorder=3)
@@ -428,10 +487,13 @@ def box_scatter(ax: plt.Axes, df: pd.DataFrame, y: str, ylabel: str, letter: str
     ax.set_yticks(yticks)
     ax.yaxis.set_major_formatter(FormatStrFormatter(yfmt))
     style_axis(ax, labelsize=4.3)
+    ax.tick_params(axis="both", which="major", colors=AXIS, width=0.45, length=2.0)
+    ax.tick_params(axis="x", pad=1.0)
+    ax.yaxis.set_tick_params(left=True)
     if stars:
-        y0 = ylim[1] - (ylim[1] - ylim[0]) * 0.13
         for n, pair in enumerate(stars):
-            sig_bracket(ax, pair[0], pair[1], y0 + n * (ylim[1] - ylim[0]) * 0.08)
+            x1, x2 = split_touching_bracket(pair, stars)
+            sig_bracket(ax, x1, x2, n, len(stars), y_base=sig_y_base)
     tag(ax, letter, x=-0.22, y=1.08)
 
 
@@ -447,9 +509,14 @@ def plot_cumulative(ax: plt.Axes, usage: pd.DataFrame, letter: str) -> None:
     ax.set_yticks(np.arange(0.4, 0.91, 0.1))
     ax.set_xticks(np.arange(len(DISPLAY_ORDER)))
     ax.set_xticklabels([DISPLAY_LABELS.get(c, c) for c in row.index], fontsize=4.7)
-    ax.set_ylabel("Cumulative Usage", fontsize=4.7, labelpad=0.5)
-    ax.legend(loc="lower right", frameon=False, fontsize=4.4, ncol=3, handlelength=1.0, columnspacing=0.6)
+    ax.set_ylabel("Cumulative Usage", fontsize=6.0, labelpad=0.5)
+    handles = [
+        plt.Line2D([0], [0], color=PALETTE[group], marker="o", markersize=2.0, linewidth=0.75, label=group)
+        for group in GROUP_ORDER
+    ]
+    ax.legend(handles=handles, loc="lower right", frameon=False, fontsize=4.4, ncol=3, handlelength=1.0, columnspacing=0.6)
     style_axis(ax, labelsize=4.9)
+    ax.yaxis.set_label_coords(K_TAG_X, 0.5)
     ax.spines[["top", "right"]].set_visible(True)
     for spine in ["top", "right"]:
         ax.spines[spine].set_color(AXIS)
@@ -499,6 +566,26 @@ def set_panel_tag_position(ax: plt.Axes, letter: str, x: float, y: float | None 
             _, old_y = text.get_position()
             text.set_position((x, old_y if y is None else y))
             return
+
+
+def align_panel_tags_to_titles(fig: plt.Figure, axes_and_letters: list[tuple[plt.Axes, str]]) -> None:
+    """Place panel letters at the same vertical height as the axes titles."""
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    fig_inv = fig.transFigure.inverted()
+    y_offset = 0.006
+    for ax, letter in axes_and_letters:
+        tag_text = next((text for text in ax.texts if text.get_text() == letter), None)
+        if tag_text is None:
+            continue
+        title_box = ax.title.get_window_extent(renderer=renderer)
+        tag_x_display = tag_text.get_transform().transform(tag_text.get_position())[0]
+        x_fig = fig_inv.transform((tag_x_display, title_box.y1))[0]
+        y_fig = fig_inv.transform((tag_x_display, title_box.y1))[1] + y_offset
+        tag_text.set_transform(fig.transFigure)
+        tag_text.set_position((x_fig, y_fig))
+        tag_text.set_ha("center")
+        tag_text.set_va("top")
 
 
 def set_boxplot_axis_width(fig: plt.Figure, axes: list[plt.Axes], width_in: float) -> None:
@@ -579,6 +666,66 @@ def add_section_label(fig: plt.Figure, axes: list[plt.Axes], label: str) -> None
     label_ax.text(0.5, 0.5, label, rotation=90, ha="center", va="center", fontsize=7.7, color=AXIS)
 
 
+def export_source_data(metrics: pd.DataFrame, bouts: pd.DataFrame, transitions: pd.DataFrame, output_dir: Path) -> None:
+    """Export Figure 6 source data: resilience-stratified diversity, bouts, and transitions."""
+    rows = []
+
+    # Diversity metrics (simpson, shannon, evenness, cui) stratified by resilience group
+    for metric_name in ["simpson", "shannon", "evenness", "cui"]:
+        if metric_name in metrics.columns:
+            for group in ["Control", "ELS", "ELS resilient"]:
+                data = metrics[metrics["group_ext"] == group][metric_name]
+                if len(data) > 0:
+                    rows.append({
+                        "metric_category": "diversity",
+                        "metric": metric_name,
+                        "group": group,
+                        "mean": data.mean(),
+                        "std": data.std(),
+                        "sem": data.sem(),
+                        "n": len(data),
+                    })
+
+    # Bout durations (per cluster, per resilience group)
+    for cluster in DISPLAY_ORDER:
+        cluster_bouts = bouts[bouts["cluster"] == cluster]
+        if not cluster_bouts.empty:
+            for group in ["Control", "ELS", "ELS resilient"]:
+                group_bouts = cluster_bouts[cluster_bouts["group_ext"] == group]["bout_duration"]
+                if len(group_bouts) > 0:
+                    rows.append({
+                        "metric_category": "bout_duration",
+                        "metric": cluster,
+                        "group": group,
+                        "mean": group_bouts.mean(),
+                        "std": group_bouts.std(),
+                        "sem": group_bouts.sem(),
+                        "n": len(group_bouts),
+                    })
+
+    # Transition metrics (lz, recurrence, determinism, markov) stratified by resilience group
+    for metric_name in ["lz", "recurrence", "determinism", "markov"]:
+        if metric_name in transitions.columns:
+            for group in ["Control", "ELS", "ELS resilient"]:
+                data = transitions[transitions["group_ext"] == group][metric_name]
+                if len(data) > 0:
+                    rows.append({
+                        "metric_category": "transition",
+                        "metric": metric_name,
+                        "group": group,
+                        "mean": data.mean(),
+                        "std": data.std(),
+                        "sem": data.sem(),
+                        "n": len(data),
+                    })
+
+    df = pd.DataFrame(rows)
+    if not df.empty:
+        output_csv = output_dir / "source_data_figure6.csv"
+        df.to_csv(output_csv, index=False)
+        print(f"Saved: {output_csv}")
+
+
 def main() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     pred, pred_sequences, full_sequences, meta = load_sequences()
@@ -609,9 +756,10 @@ def main() -> None:
     axJ = fig.add_subplot(metric_grid[1, 1])
     box_axes.extend([axG, axH, axI, axJ])
     box_scatter(axG, metrics, "simpson", "Simpson index", "G", (0.58, 0.80), [0.60, 0.65, 0.70, 0.75, 0.80], "%.2f", stars=[(0, 1), (1, 2)])
-    box_scatter(axH, metrics, "shannon", "Shannon entropy index", "H", (1.20, 1.65), np.arange(1.20, 1.66, 0.10).round(2).tolist(), "%.2f")
+    box_scatter(axH, metrics, "shannon", "Shannon entropy index", "H", (1.20, 1.70), [1.30, 1.40, 1.50, 1.60, 1.70], "%.1f")
     box_scatter(axI, metrics, "evenness", "Evenness index", "I", (0.58, 0.85), [0.60, 0.65, 0.70, 0.75, 0.80, 0.85], "%.2f")
-    box_scatter(axJ, metrics, "cui", "Cumulative usage index", "J", (-0.25, 0.72), np.arange(-0.2, 0.71, 0.2).round(1).tolist(), "%.1f", stars=[(0, 1), (1, 2)])
+    # CUI resilient-vs-vulnerable p=0.393 -> not significant; only vuln-vs-control is starred.
+    box_scatter(axJ, metrics, "cui", "Cumulative usage index", "J", (-0.25, 0.80), [-0.2, 0.0, 0.2, 0.4, 0.6, 0.8], "%.1f", stars=[(0, 1)])
 
     axK = fig.add_subplot(gs[3, 4:11])
     plot_cumulative(axK, usage, "K")
@@ -629,45 +777,47 @@ def main() -> None:
     cluster_means = bouts[bouts["cluster"].isin(DISPLAY_ORDER)].groupby(["Animal", "group_ext", "cluster"], as_index=False)["bout_duration"].mean()
     bout_specs = [
         ("Overall", overall, (0, 3.0), [0, 1, 2, 3], "%.0f", [(0, 1)]),
-        ("Freeze", cluster_means[cluster_means["cluster"] == "Freezing"], (0, 2.0), [0, 0.5, 1, 1.5, 2], "%.1f", [(0, 1), (1, 2)]),
+        ("Freeze", cluster_means[cluster_means["cluster"] == "Freezing"], (0, 2.5), [0, 0.5, 1, 1.5, 2, 2.5], "%.1f", [(0, 1), (1, 2)]),
         ("Sniff", cluster_means[cluster_means["cluster"] == "Sniffing"], (0, 4.0), [0, 1, 2, 3, 4], "%.0f", [(0, 1)]),
         ("Groom", cluster_means[cluster_means["cluster"] == "Grooming"], (0, 0.6), [0, 0.2, 0.4, 0.6], "%.1f", [(0, 1)]),
-        ("Turn", cluster_means[cluster_means["cluster"] == "Turn"], (0, 2.5), [0, 0.5, 1, 1.5, 2, 2.5], "%.1f", [(0, 1), (1, 2)]),
-        ("Locomotion", cluster_means[cluster_means["cluster"] == "Locomotion"], (0, 0.85), [0, 0.2, 0.4, 0.6, 0.8], "%.1f", None),
+        ("Turn", cluster_means[cluster_means["cluster"] == "Turn"], (0, 3.0), [0, 0.5, 1, 1.5, 2, 2.5, 3], "%.1f", [(0, 1), (1, 2)]),
+        ("Locomotion", cluster_means[cluster_means["cluster"] == "Locomotion"], (0, 0.8), [0, 0.2, 0.4, 0.6, 0.8], "%.1f", None),
         ("Climb", cluster_means[cluster_means["cluster"] == "Climbing"], (0, 2.0), [0, 0.5, 1, 1.5, 2], "%.1f", None),
-        ("Jump", cluster_means[cluster_means["cluster"] == "Jump"], (0, 1.25), [0, 0.5, 1.0, 1.25], "%.2f", None),
+        ("Jump", cluster_means[cluster_means["cluster"] == "Jump"], (0, 1.20), [0, 0.4, 0.8, 1.2], "%.1f", None),
     ]
     for i, (title, data, ylim, yticks, yfmt, stars) in enumerate(bout_specs):
         ax = fig.add_subplot(bout_grid[i])
         bout_axes.append(ax)
         box_axes.append(ax)
         box_scatter(ax, data.rename(columns={"bout_duration": "value"}), "value", "Mean Bout Duration (s)", chr(ord("L") + i), ylim, yticks, yfmt, stars=stars)
-        ax.set_title(title, fontsize=5.5, color=AXIS, pad=6)
+        ax.set_title(title, fontsize=5.4, color=AXIS, pad=3)
 
     axT = fig.add_subplot(gs[5, 0:3])
     axU = fig.add_subplot(gs[5, 3:6])
     axV = fig.add_subplot(gs[5, 6:9])
     for ax, group, letter in [(axT, "Control", "T"), (axU, "ELS", "U"), (axV, "ELS resilient", "V")]:
         plot_chord(ax, full_sequences, meta, group, letter)
-    shift_axes([axT], dx=-0.012, scale_w=0.96, scale_h=0.96)
-    shift_axes([axU], scale_w=0.96, scale_h=0.96)
-    shift_axes([axV], dx=0.012, scale_w=0.96, scale_h=0.96)
+    shift_axes([axT], dx=-0.012, scale_w=1.04, scale_h=1.04)
+    shift_axes([axU], scale_w=1.04, scale_h=1.04)
+    shift_axes([axV], dx=0.012, scale_w=1.04, scale_h=1.04)
 
-    trans_grid = gs[5, 10:14].subgridspec(2, 2, hspace=0.42, wspace=0.64)
+    trans_grid = gs[5, 10:14].subgridspec(2, 2, hspace=0.72, wspace=0.64)
     axW = fig.add_subplot(trans_grid[0, 0])
     axX = fig.add_subplot(trans_grid[0, 1])
     axY = fig.add_subplot(trans_grid[1, 0])
     axZ = fig.add_subplot(trans_grid[1, 1])
     box_axes.extend([axW, axX, axY, axZ])
     box_scatter(axW, transitions, "lz", "Lempel-Ziv complexity", "W", (100, 260), list(range(100, 261, 40)), "%.0f")
-    box_scatter(axX, transitions, "recurrence", "Recurrence Rate", "X", (0.24, 0.43), [0.25, 0.30, 0.35, 0.40, 0.43], "%.3f", stars=[(0, 1), (1, 2)])
-    box_scatter(axY, transitions, "determinism", "Determinism", "Y", (0.72, 0.90), [0.725, 0.775, 0.825, 0.875, 0.900], "%.3f", stars=[(0, 1)])
-    box_scatter(axZ, transitions, "markov", "Markov Entropy", "Z", (0.7, 1.5), np.arange(0.7, 1.51, 0.2).round(1).tolist(), "%.1f", stars=[(0, 1)])
+    box_scatter(axX, transitions, "recurrence", "Recurrence Rate", "X", (0.24, 0.450), [0.250, 0.275, 0.300, 0.325, 0.350, 0.375, 0.400, 0.425, 0.450], "%.3f", stars=[(0, 1), (1, 2)])
+    box_scatter(axY, transitions, "determinism", "Determinism", "Y", (0.70, 1.00), [0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 1.00], "%.2f", stars=[(0, 1)])
+    box_scatter(axZ, transitions, "markov", "Markov Entropy", "Z", (0.7, 1.5), np.arange(0.7, 1.51, 0.2).round(1).tolist(), "%.1f", stars=[(0, 1)], sig_y_base=0.930)
 
     equalize_boxplot_heights(box_axes)
     set_boxplot_axis_width(fig, [axG, axH, axI, axJ], FREQUENCY_METRIC_AXIS_WIDTH_IN)
     set_boxplot_axis_width(fig, bout_axes, BOUT_METRIC_AXIS_WIDTH_IN)
     shift_axes(bout_axes, dy=BOUT_BLOCK_DY)
+    shift_axes([axW, axX], dy=0.010)
+    shift_axes([axY, axZ], dy=-0.010)
     shift_axes([axG, axH, axI, axJ], dy=METRIC_BLOCK_DY)
     widen_metric_row_gap([axG, axH], [axI, axJ])
     aligned_left = top_axes["Control"][0].get_position().x0
@@ -681,9 +831,14 @@ def main() -> None:
         ax.yaxis.set_label_coords(FREQUENCY_YLABEL_X, 0.5)
     for ax, letter in zip(bout_axes, [chr(ord("L") + i) for i in range(len(bout_axes))]):
         ax.yaxis.set_label_coords(BOUT_YLABEL_X, 0.5)
-        set_panel_tag_position(ax, letter, BOUT_TAG_X)
+        set_panel_tag_position(ax, letter, BOUT_TAG_X, BOUT_TAG_Y)
+    for ax, letter in [(axW, "W"), (axX, "X"), (axY, "Y"), (axZ, "Z")]:
+        ax.yaxis.set_label_coords(TRANSITION_YLABEL_X, 0.5)
+        set_panel_tag_position(ax, letter, TRANSITION_TAG_X, TRANSITION_TAG_Y)
     set_cumulative_layout(fig, axK, side_axes, axH, axJ)
     set_panel_tag_position(axK, "K", K_TAG_X, K_TAG_Y)
+    align_panel_tags_to_titles(fig, list(zip(bout_axes, [chr(ord("L") + i) for i in range(len(bout_axes))])))
+    align_panel_tags_to_titles(fig, [(axW, "W"), (axX, "X"), (axY, "Y"), (axZ, "Z")])
 
     pdf = OUTPUT_DIR / "figure_6_resilience_diversity.pdf"
     svg = OUTPUT_DIR / "figure_6_resilience_diversity.svg"
@@ -701,6 +856,10 @@ def main() -> None:
     print(f"Saved {png}")
     print(f"Saved {LEGACY_FIGURES_DIR / 'figure6.pdf'}")
     print("Representatives: " + "; ".join(f"{g}: {a}" for g, a in reps.items()))
+
+    # Export source data
+    print("Computing Figure 6 source statistics...")
+    export_source_data(metrics, bouts, transitions, OUTPUT_DIR)
 
 
 if __name__ == "__main__":

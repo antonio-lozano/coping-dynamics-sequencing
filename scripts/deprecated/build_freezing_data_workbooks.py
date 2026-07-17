@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Jeniffer Sanguino Gómez and Antonio Lozano
 """Build common manuscript raw-data and statistical-report Excel workbooks.
 
 This export is intentionally not tied to one figure. It consolidates the
@@ -1366,11 +1368,11 @@ def fig4_paper_report() -> pd.DataFrame:
             "COping/Code/Results/Frequency_metrics/CUI_model_and_stats.xlsx",
             "Model_Parameters",
             "Condition[T.ELS]",
-            -0.027,
-            0.009,
-            -3.079,
-            0.002,
-            note="The archive and group means indicate higher CUI in ELS with a positive coefficient.",
+            0.064,
+            0.021,
+            2.968,
+            0.003,
+            note="Updated from Figure 4 verification: archive and group means indicate higher CUI in ELS with a positive coefficient.",
         ),
         _paper_row("4J", "Freeze mean bout duration, ELS vs Control", "COping/Code/Results/Bout_duration/Boutduration_freezing_model_and_stats.xlsx", "Model_Parameters", "Condition[T.ELS]", -0.105, 0.053, -2.001, 0.045),
         _paper_row("4K", "Sniff mean bout duration, ELS vs Control", "COping/Code/Results/Bout_duration/Boutduration_sniffing_model_and_stats.xlsx", "Model_Parameters", "Condition[T.ELS]", 0.322, 0.129, 2.506, 0.012),

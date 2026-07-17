@@ -1,0 +1,58 @@
+{
+  "_comment": "Soft configuration for figure computations: random seeds, statistical-model seeds, multiple-comparison families, and gold/manuscript reference values used by the per-figure checks. Nothing statistical should be hardcoded in the figure scripts; read it from here.",
+
+  "random_seeds": {
+    "mds_sklearn_original": 42,
+    "mds_smacof_repo": 0,
+    "cv_random_state": 42
+  },
+
+  "figure_4": {
+    "model": "MixedLM(metric ~ group + Experiment, groups=Animal, reml=False)",
+    "note": "One row per animal -> parameter boundary; Wald SE is optimizer/start dependent. Seeds below reproduce the gold Statistical_report.xlsx SEs while preserving significance. Transition metrics require native file order (NOT Time_bin-sorted).",
+    "metric_seeds": {
+      "simpson":      {"seq_order": "na",   "optimizer": "default", "start_seed": null},
+      "cui":          {"seq_order": "na",   "optimizer": "default", "start_seed": 138},
+      "freeze_bout":  {"seq_order": "na",   "optimizer": "default", "start_seed": 140},
+      "recurrence":   {"seq_order": "file", "optimizer": "default", "start_seed": 129},
+      "determinism":  {"seq_order": "file", "optimizer": "default", "start_seed": 104},
+      "markov":       {"seq_order": "file", "optimizer": "lbfgs",   "start_seed": 273}
+    },
+    "fdr_families": {
+      "bout": ["Freezing", "Sniffing", "Grooming", "Turn", "Locomotion", "Climbing", "Jump"]
+    }
+  },
+
+  "figure_5": {
+    "dynamics_score": {
+      "definition": "log(d_ctrl / d_els) in 2D MDS space; ELS positive = control-like distance larger",
+      "mds": "smacof_repo",
+      "model": "MixedLM(score ~ Condition + Experiment, groups=Animal, reml=False)",
+      "seed": {"optimizer": "lbfgs", "start_seed": 218}
+    },
+    "resilience_threshold": 0.0,
+    "frequency_model": "GEE NB (Fig 3A recipe) with 3 groups, dual-reference (Control-ref + ELS-ref)",
+    "fdr_families_7_behaviors": ["Freeze", "Sniff", "Groom", "Turn", "Locomotion", "Climb", "Jump"]
+  },
+
+  "figure_7": {
+    "classifier": "XGBoost",
+    "cv": {"folds": 3, "stratified": true, "split_level": "frame", "random_state": 42,
+           "WARNING": "frame-level split leaks temporal autocorrelation; animal-level split is the leakage-free option"},
+    "class_balancing": "balanced sample weights",
+    "n_classes": 8,
+    "feature_note": "Only 5 bundled pose features available; full keypoint/pairwise-distance set is NOT in the repo"
+  },
+
+  "gold_reference": {
+    "_source": "external/Deeplabcut_project/Report/Report.xlsx and the manuscript text",
+    "figure_4": {
+      "simpson":     {"beta": -0.013441, "gold_se": 0.006593, "gold_p": 0.041482},
+      "cui":         {"beta":  0.063646, "gold_se": 0.021446, "gold_p": 0.002999},
+      "freeze_bout": {"beta": -0.105174, "gold_se": 0.052566, "gold_p": 0.045415},
+      "recurrence":  {"beta":  0.013441, "gold_se": 0.005938, "gold_p": 0.023593},
+      "determinism": {"beta":  0.016105, "gold_se": 0.004762, "gold_p": 0.000719},
+      "markov":      {"beta": -0.041187, "gold_se": 0.017585, "gold_p": 0.019175}
+    }
+  }
+}

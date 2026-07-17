@@ -1,0 +1,16 @@
+metric,contrast,beta,SE,z,p,p_BH_FDR,sig_BH
+Entropy,vuln_vs_control,-0.0245,0.0198,-1.2375,0.2159,0.3418,False
+Entropy,resilient_vs_control,0.0197,0.0276,0.712,0.4764,0.7283,False
+Entropy,resilient_vs_vuln,0.0442,0.0291,1.5151,0.1298,0.3244,False
+Evenness,vuln_vs_control,-0.0117,0.0109,-1.0749,0.2824,0.3418,False
+Evenness,resilient_vs_control,0.0061,0.015,0.4054,0.6852,0.7283,False
+Evenness,resilient_vs_vuln,0.0178,0.0158,1.1263,0.26,0.325,False
+Simpson,vuln_vs_control,-0.022,0.0078,-2.8349,0.0046,0.0229,True
+Simpson,resilient_vs_control,0.0072,0.0106,0.682,0.4952,0.7283,False
+Simpson,resilient_vs_vuln,0.0292,0.0111,2.6274,0.0086,0.043,True
+CUI,vuln_vs_control,0.0119,0.0125,0.9506,0.3418,0.3418,False
+CUI,resilient_vs_control,-0.0092,0.0167,-0.5483,0.5835,0.7283,False
+CUI,resilient_vs_vuln,-0.021,0.0172,-1.2215,0.2219,0.325,False
+MarkovEntropy,vuln_vs_control,-0.049,0.029,-1.6903,0.091,0.2274,False
+MarkovEntropy,resilient_vs_control,-0.0137,0.0394,-0.3474,0.7283,0.7283,False
+MarkovEntropy,resilient_vs_vuln,0.0353,0.0383,0.9213,0.3569,0.3569,False

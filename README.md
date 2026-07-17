@@ -32,6 +32,8 @@ tables / intermediate renders to `results/figure_data/`.
 | Figure 4 — Diversity dynamics | `scripts/generate_figures/figure_4_diversity_dynamics.py` |
 | Figure 5 — Resilience dynamics | `scripts/generate_figures/figure_5_resilience_dynamics.py` |
 | Figure 6 — Resilience diversity | `scripts/generate_figures/figure_6_resilience_diversity.py` |
+| Figure 7 — Imported assembled PDF | `scripts/generate_figures/figure_7_import_pdf.py` |
+| Supplementary Figure 1 — Tracking clusters | `scripts/generate_figures/supplementary_figure_1_tracking_clusters.py` |
 | Supplementary Figure 3 — Distance metrics | `scripts/generate_figures/supplementary_figure_3_distances.py` |
 
 Regenerate all figures at once:
@@ -52,7 +54,7 @@ python scripts/run_all_figures.py
 |-- figures/                # Canonical manuscript figures (figureN.*)
 |-- results/figure_data/    # Supporting tables, audits, intermediate renders
 |-- scripts/
-|   |-- generate_figures/   # One script per manuscript figure (figure_2..6, supplementary_figure_3)
+|   |-- generate_figures/   # One script per manuscript figure (figure_2..7, supplementary figures)
 |   |-- data_exports/       # Manuscript data-workbook exporter
 |   `-- run_all_figures.py  # Regenerate every figure
 |-- src/

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Jeniffer Sanguino Gómez and Antonio Lozano
 """Regenerate Supplementary Figure 3 distance-metric controls for Figure 5."""
 
 from __future__ import annotations
@@ -36,10 +38,18 @@ CONTROL = "#F9C74F"
 ELS = "#C37BA0"
 RESILIENT = "#90BE6D"
 PALETTE = {"Control": CONTROL, "ELS": ELS}
+BOX_YLABEL_X = -0.58
+BOX_TAG_X = -0.58
+BOX_TOP_LIMITS = {
+    "Correlation": 1.5,
+    "Cosine": 1.3,
+    "Minkowski": 1.5,
+    "Manhattan": 2.0,
+}
 METRICS = [
     ("Correlation", correlation, "A", "B"),
     ("Cosine", cosine, "C", "D"),
-    ("Minkowski p=2.5", lambda a, b: float(np.sum(np.abs(a - b) ** 2.5) ** (1.0 / 2.5)), "F", "G"),
+    ("Minkowski", lambda a, b: float(np.sum(np.abs(a - b) ** 2.5) ** (1.0 / 2.5)), "F", "G"),
     ("Manhattan", cityblock, "H", "I"),
 ]
 FIG5_RESILIENT = {
@@ -155,6 +165,74 @@ def load_feature_matrix() -> tuple[pd.DataFrame, np.ndarray]:
         )
         features.append(feature)
     return pd.DataFrame(rows), np.asarray(features, dtype=float)
+
+
+def load_transition_features() -> tuple[pd.DataFrame, np.ndarray]:
+    """Per-animal first-order transition-probability matrix (7x7) between behavioral
+    clusters, flattened to a 49-dim feature (von Ziegler-style behavioural flow).
+    Consecutive identical frames are collapsed to a bout-level state sequence."""
+    if ORIGINAL_EQUIPO_RESULTS.exists():
+        opener = gzip.open if ORIGINAL_EQUIPO_RESULTS.suffix == ".gz" else open
+        with opener(ORIGINAL_EQUIPO_RESULTS, "rb") as f:
+            results = pickle.load(f)
+    else:
+        results = read_zip_pickle(COPING_DATA2, COPING2_MEMBER_UPDATED_RESULTS)
+
+    codes = list(range(1, 8))
+    bin_size = 25 * 30
+    rows = []
+    features = []
+    for rec, payload in results.items():
+        seq = np.asarray(payload.get("syllable", []))
+        if len(seq) // bin_size == 0:
+            continue
+        valid = seq[np.isin(seq, codes)]
+        mat = np.zeros((7, 7), dtype=float)
+        if len(valid) >= 2:
+            collapsed = valid[np.concatenate(([True], valid[1:] != valid[:-1]))]
+            for a, b in zip(collapsed[:-1], collapsed[1:]):
+                mat[int(a) - 1, int(b) - 1] += 1
+        row_sums = mat.sum(axis=1, keepdims=True)
+        row_sums[row_sums == 0] = 1.0
+        rows.append(
+            {
+                "recording": str(rec),
+                "animal": str(payload.get("Animal")),
+                "group": str(payload.get("Condition")),
+            }
+        )
+        features.append((mat / row_sums).flatten())
+    return pd.DataFrame(rows), np.asarray(features, dtype=float)
+
+
+def profile_from_distance(meta: pd.DataFrame, dist: np.ndarray, metric_name: str) -> tuple[pd.DataFrame, dict]:
+    """Build an MDS dynamics-score profile + summary row from a precomputed distance matrix."""
+    coords = metric_mds_smacof(dist, random_state=42)
+    prof = meta.copy()
+    prof["metric"] = metric_name
+    prof[["mds1", "mds2"]] = coords
+    median_ctrl = prof.loc[prof["group"] == "Control", ["mds1", "mds2"]].median().to_numpy()
+    median_els = prof.loc[prof["group"] == "ELS", ["mds1", "mds2"]].median().to_numpy()
+    d_ctrl = np.linalg.norm(coords - median_ctrl, axis=1)
+    d_els = np.linalg.norm(coords - median_els, axis=1)
+    prof["dynamics_score"] = np.log((d_ctrl + 1e-9) / (d_els + 1e-9))
+    prof["resilient_by_zero"] = (prof["group"] == "ELS") & (prof["dynamics_score"] < 0)
+    loocv = loocv_logistic(coords, meta["group"].to_numpy())
+    prof["loocv_accuracy"] = loocv
+    ctrl = prof.loc[prof["group"] == "Control", "dynamics_score"]
+    els = prof.loc[prof["group"] == "ELS", "dynamics_score"]
+    t_stat, p_value = ttest_ind(ctrl, els, equal_var=False, nan_policy="omit")
+    summary = {
+        "metric": metric_name,
+        "loocv_accuracy": loocv,
+        "control_n": int(ctrl.count()),
+        "els_n": int(els.count()),
+        "control_mean_score": float(ctrl.mean()),
+        "els_mean_score": float(els.mean()),
+        "welch_t_control_vs_els": float(t_stat),
+        "welch_p_value": float(p_value),
+    }
+    return prof, summary
 
 
 def pairwise_distance(features: np.ndarray, metric_name: str, func) -> np.ndarray:
@@ -293,10 +371,10 @@ def plot_mds(ax: plt.Axes, data: pd.DataFrame, metric_name: str, letter: str) ->
         for group in ["Control", "ELS"]
     ]
     ax.legend(handles=handles, loc="upper right", frameon=True, facecolor="white", edgecolor="#D0D0D0", fontsize=5.1, borderpad=0.16, handlelength=0.55, handletextpad=0.38)
-    cax = ax.inset_axes([1.04, 0.0, 0.045, 1.0])
+    cax = ax.inset_axes([1.05, 0.0, 0.042, 1.0])
     cbar = plt.colorbar(cf, cax=cax)
     cbar.ax.yaxis.set_label_position("left")
-    cbar.set_label("Dynamic Similarity Score", fontsize=4.8, color=AXIS, labelpad=1.2)
+    cbar.set_label("Dynamic Similarity Score", fontsize=4.8, color=AXIS, labelpad=1.8)
     cbar.ax.tick_params(labelsize=4.4, width=0.35, length=1.5, colors=AXIS)
     cbar.outline.set_linewidth(0.35)
     ax.text(0.985, -0.145, f"LOOCV Acc:\n{data['loocv_accuracy'].iloc[0]*100:.1f}%", transform=ax.transAxes, ha="right", va="top", fontsize=4.6, color=AXIS, clip_on=False, bbox=dict(facecolor="white", edgecolor="#BDBDBD", linewidth=0.35, pad=1.4))
@@ -313,7 +391,7 @@ def plot_box(ax: plt.Axes, data: pd.DataFrame, metric_name: str, letter: str) ->
     y_min = np.nanmin(data["dynamics_score"])
     pad = (y_max - y_min) * 0.18
     y0 = y_min - pad
-    y1 = y_max + pad
+    y1 = BOX_TOP_LIMITS.get(metric_name, y_max + pad)
     resilient_vals = data.loc[(data["group"] == "ELS") & (data["dynamics_score"] < 0), "dynamics_score"].dropna()
     if not resilient_vals.empty:
         rect_pad = (y1 - y0) * 0.018
@@ -349,11 +427,15 @@ def plot_box(ax: plt.Axes, data: pd.DataFrame, metric_name: str, letter: str) ->
         jitter = rng.normal(i, 0.024, len(vals))
         ax.scatter(jitter, vals, s=6.5, color=color, alpha=0.78, linewidth=0, zorder=3)
     ax.set_ylim(y0, y1)
+    ticks = [tick for tick in ax.get_yticks() if y0 <= tick <= y1]
+    if y1 not in ticks:
+        ticks.append(y1)
+    ax.set_yticks(sorted(ticks))
     ax.set_xticks([0, 1])
     ax.set_xticklabels(groups, fontsize=5.8)
     ax.tick_params(axis="x", pad=4)
     ax.set_ylabel(f"log ({metric_name} score)", fontsize=5.0, labelpad=4.5)
-    ax.yaxis.set_label_coords(-0.48, 0.5)
+    ax.yaxis.set_label_coords(BOX_YLABEL_X, 0.5)
     style_axis(ax, labelsize=5.0)
     p_value = ttest_ind(
         data[data["group"] == "Control"]["dynamics_score"],
@@ -366,13 +448,27 @@ def plot_box(ax: plt.Axes, data: pd.DataFrame, metric_name: str, letter: str) ->
         h = pad * 0.18
         ax.plot([0, 0, 1, 1], [y, y + h, y + h, y], color=AXIS, linewidth=0.55, clip_on=False)
         ax.text(0.5, y + h * 1.1, "*", ha="center", va="bottom", fontsize=8.5, fontweight="bold", color=AXIS, clip_on=False)
-    tag(ax, letter, x=-0.28)
+    tag(ax, letter, x=BOX_TAG_X)
 
 
 def main() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     meta, features = load_feature_matrix()
     profiles, summary = metric_profiles(meta, features)
+
+    # Transition-probability MDS (panels J-K): von Ziegler-style behavioural flow.
+    tmeta, tfeatures = load_transition_features()
+    tprof, tsummary = profile_from_distance(tmeta, pairwise_euclidean(tfeatures), "Transition")
+    trans_res = set(tprof.loc[tprof["resilient_by_zero"], "animal"])
+    overlap = len(trans_res & FIG5_RESILIENT) / len(FIG5_RESILIENT) * 100.0
+    tsummary["overlap_pct_with_fig5_euclidean"] = overlap
+    print(
+        f"Transition MDS: resilient n={len(trans_res)}, "
+        f"overlap with Fig 5 Euclidean classification = {overlap:.1f}%"
+    )
+    profiles = pd.concat([profiles, tprof], ignore_index=True)
+    summary = pd.concat([summary, pd.DataFrame([tsummary])], ignore_index=True)
+
     profiles.to_csv(OUTPUT_DIR / "supplementary_figure_3_distance_scores.csv", index=False)
     summary.to_csv(OUTPUT_DIR / "supplementary_figure_3_distance_summary.csv", index=False)
     threshold_audit(profiles).to_csv(OUTPUT_DIR / "supplementary_figure_3_threshold_audit.csv", index=False)
@@ -383,11 +479,11 @@ def main() -> None:
         ncols=4,
         left=0.075,
         right=0.955,
-        top=0.955,
-        bottom=0.595,
-        wspace=0.60,
-        hspace=0.58,
-        width_ratios=[2.42, 0.74, 2.42, 0.74],
+        top=0.965,
+        bottom=0.66,
+        wspace=0.78,
+        hspace=0.30,
+        width_ratios=[2.02, 0.74, 2.02, 0.74],
     )
     positions = [(0, 0), (0, 2), (1, 0), (1, 2)]
     for (metric_name, _, mds_letter, box_letter), (row, col) in zip(METRICS, positions):
@@ -397,6 +493,24 @@ def main() -> None:
         plot_mds(mds_ax, sub, metric_name, mds_letter)
         plot_box(box_ax, sub, metric_name, box_letter)
         align_box_to_mds(mds_ax, box_ax)
+
+    # Transition-probability panels (J, K) on a new row below.
+    gs_trans = fig.add_gridspec(
+        nrows=1,
+        ncols=4,
+        left=0.075,
+        right=0.955,
+        top=0.625,
+        bottom=0.47,
+        wspace=0.78,
+        width_ratios=[2.02, 0.74, 2.02, 0.74],
+    )
+    trans_sub = profiles[profiles["metric"] == "Transition"].copy()
+    trans_mds_ax = fig.add_subplot(gs_trans[0, 0])
+    trans_box_ax = fig.add_subplot(gs_trans[0, 1])
+    plot_mds(trans_mds_ax, trans_sub, "Transition Prob., Euclidean", "J")
+    plot_box(trans_box_ax, trans_sub, "Transition", "K")
+    align_box_to_mds(trans_mds_ax, trans_box_ax)
 
     pdf = OUTPUT_DIR / "supplementary_figure_3_distances.pdf"
     svg = OUTPUT_DIR / "supplementary_figure_3_distances.svg"

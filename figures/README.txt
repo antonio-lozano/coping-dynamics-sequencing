@@ -12,6 +12,8 @@ Files:
   figure4.*                -> figure_4_diversity_dynamics.py
   figure5.*                -> figure_5_resilience_dynamics.py
   figure6.*                -> figure_6_resilience_diversity.py
+  figure7.*                -> figure_7_import_pdf.py
+  supplementary_figure1.*  -> supplementary_figure_1_tracking_clusters.py
   supplementary_figure3.*  -> supplementary_figure_3_distances.py
 
 Regenerate everything with:

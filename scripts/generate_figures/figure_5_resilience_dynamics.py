@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Jeniffer Sanguino Gómez and Antonio Lozano
 """Regenerate manuscript Figure 5 in the final Figure 3/4 A4 style."""
 
 from __future__ import annotations
@@ -32,6 +34,7 @@ from src.config import (
     SYLLABLE_TIMEBIN_30S,
     UPDATED_RESULTS_PKL as ORIGINAL_EQUIPO_RESULTS,
 )
+from src.statistics import fit_mixed_models
 
 LEGACY_FIGURES_DIR = REPO_ROOT / "figures"
 
@@ -529,11 +532,13 @@ def plot_frequency(ax: plt.Axes, freq: pd.DataFrame) -> None:
     ax.legend(handles=legend_boxes(GROUP_ORDER), loc="upper right", ncol=3, frameon=False, fontsize=5.5, handlelength=1.0, handletextpad=0.35, columnspacing=0.75)
     style_axis(ax)
     tag(ax, "C", x=-0.08, y=1.10)
+    bracket_gap = 0.045
     for idx in [0, 1, 3]:
         y = float(summary[summary["cluster"] == ORDER[idx]]["mean"].max() + summary[summary["cluster"] == ORDER[idx]]["sem"].max() + 8)
-        sig_bracket(ax, idx - width, idx, y, h=5)
+        right_edge = idx - bracket_gap if idx in [0, 3] else idx
+        sig_bracket(ax, idx - width, right_edge, y, h=5)
         if idx in [0, 3]:
-            sig_bracket(ax, idx, idx + width, y + 18, h=5)
+            sig_bracket(ax, idx + bracket_gap, idx + width, y, h=5)
 
 
 def plot_time(ax: plt.Axes, summary: pd.DataFrame, cluster: str, letter: str, ylim: tuple[float, float], yticks: list[float], star_x: float | None = None, legend_corner: str = "upper_right") -> None:
@@ -557,6 +562,51 @@ def plot_time(ax: plt.Axes, summary: pd.DataFrame, cluster: str, letter: str, yl
     style_axis(ax, labelsize=5.4)
     time_panel_legend(ax, legend_corner)
     tag(ax, letter, x=-0.14, y=1.10)
+
+
+def export_source_data(prof: pd.DataFrame, freq: pd.DataFrame, output_dir: Path) -> None:
+    """Export Figure 5 source data: behavioral dynamics, resilience classification, and frequencies."""
+    rows = []
+
+    # Add dynamics score summary (from prof dataframe)
+    if "dynamics_score" in prof.columns and "group" in prof.columns:
+        for group in prof["group"].unique():
+            group_data = prof[prof["group"] == group]["dynamics_score"]
+            if len(group_data) > 0:
+                rows.append({
+                    "metric": "Behavioral dynamics score",
+                    "group": group,
+                    "mean": group_data.mean(),
+                    "std": group_data.std(),
+                    "sem": group_data.sem(),
+                    "n": len(group_data),
+                })
+
+    # Add behavior frequency summary (from freq dataframe)
+    # freq has columns: Animal, group_ext, cluster, seconds
+    if not freq.empty and "cluster" in freq.columns and "group_ext" in freq.columns:
+        for cluster in freq["cluster"].unique():
+            for group in ["Control", "ELS", "ELS resilient"]:
+                group_freq = freq[(freq["cluster"] == cluster) & (freq["group_ext"] == group)]
+                if not group_freq.empty and "seconds" in group_freq.columns:
+                    freq_vals = group_freq["seconds"]
+                    if len(freq_vals) > 0:
+                        rows.append({
+                            "metric": f"{cluster} frequency",
+                            "group": group,
+                            "mean_seconds": freq_vals.mean(),
+                            "std_seconds": freq_vals.std() if len(freq_vals) > 1 else 0,
+                            "sem_seconds": freq_vals.sem() if len(freq_vals) > 1 else 0,
+                            "n": len(freq_vals),
+                        })
+
+    df = pd.DataFrame(rows)
+    if not df.empty:
+        output_csv = output_dir / "source_data_figure5.csv"
+        df.to_csv(output_csv, index=False)
+        print(f"Saved: {output_csv}")
+    else:
+        print("Warning: No source data generated for Figure 5")
 
 
 def main() -> None:
@@ -597,10 +647,12 @@ def main() -> None:
     boxplot_dynamic_score(axB, prof)
     plot_frequency(axC, freq)
     plot_time(axD, time_summary, "Freeze", "D", (0, 70), list(range(0, 71, 10)), star_x=4.0, legend_corner="lower_right")
-    plot_time(axE, time_summary, "Sniff", "E", (0, 25), list(range(0, 26, 5)), star_x=4.0)
+    # Sniff: p=0.047 but BH_FDR=0.109 -> not significant after correction, no star.
+    plot_time(axE, time_summary, "Sniff", "E", (0, 25), list(range(0, 26, 5)))
     plot_time(axF, time_summary, "Groom", "F", (0, 0.5), [0, 0.1, 0.2, 0.3, 0.4, 0.5])
     plot_time(axG, time_summary, "Turn", "G", (0, 70), list(range(0, 71, 10)), star_x=4.0, legend_corner="lower_right")
-    plot_time(axH, time_summary, "Locomotion", "H", (0, 14), list(range(0, 15, 2)), star_x=4.0)
+    # Locomotion: no corresponding contrast reported in the manuscript, no star.
+    plot_time(axH, time_summary, "Locomotion", "H", (0, 14), list(range(0, 15, 2)))
     plot_time(axI, time_summary, "Climb", "I", (0, 14), list(range(0, 15, 2)))
     plot_time(axJ, time_summary, "Jump", "J", (0, 4), [0, 1, 2, 3, 4])
 
@@ -619,6 +671,10 @@ def main() -> None:
     print(f"Saved {svg}")
     print(f"Saved {png}")
     print(f"Saved {LEGACY_FIGURES_DIR / 'figure5.pdf'}")
+
+    # Export source data
+    print("Computing Figure 5 source statistics...")
+    export_source_data(prof, freq, OUTPUT_DIR)
 
 
 if __name__ == "__main__":

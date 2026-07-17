@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Jeniffer Sanguino Gómez and Antonio Lozano
 """Plotting helpers (shared styles and visualization functions)."""
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors

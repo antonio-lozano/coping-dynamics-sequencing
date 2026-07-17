@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Jeniffer Sanguino Gómez and Antonio Lozano
 """
 Regenerate manuscript Figure 3 from the archived MoSeq cluster time-bin data.
 
@@ -28,6 +30,7 @@ from src.config import (
     FIGURE_DATA_DIR as OUTPUT_DIR,
     SYLLABLE_TIMEBIN_30S,
 )
+from src.statistics import fit_mixed_models
 
 LEGACY_FIGURES_DIR = REPO_ROOT / "figures"
 
@@ -145,8 +148,8 @@ def style_axis(ax: plt.Axes) -> None:
     ax.title.set_color(AXIS_COLOR)
 
 
-def panel_letter(ax: plt.Axes, letter: str, x: float = -0.17, y: float = 1.16) -> None:
-    ax.text(
+def panel_letter(ax: plt.Axes, letter: str, x: float = -0.17, y: float = 1.16) -> plt.Text:
+    return ax.text(
         x,
         y,
         letter,
@@ -159,12 +162,26 @@ def panel_letter(ax: plt.Axes, letter: str, x: float = -0.17, y: float = 1.16) -
     )
 
 
+def align_panel_letters_to_ylabels(fig: plt.Figure, letter_artists: list[tuple[plt.Axes, plt.Text]]) -> None:
+    """Align panel letters to each panel's y-axis title column."""
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    fig_inv = fig.transFigure.inverted()
+    for ax, text in letter_artists:
+        ylabel_box = ax.yaxis.label.get_window_extent(renderer=renderer)
+        axes_box = ax.get_window_extent(renderer=renderer)
+        x_fig = fig_inv.transform((ylabel_box.x0, ylabel_box.y0))[0]
+        y_fig = fig_inv.transform((axes_box.x0, axes_box.y1))[1] + 0.012
+        text.set_transform(fig.transFigure)
+        text.set_position((x_fig, y_fig))
+
+
 def add_shock_shading(ax: plt.Axes) -> None:
     for start in [3.5, 5.0, 6.5]:
         ax.axvspan(start, start + 0.5, color=SHADE_COLOR, zorder=0)
 
 
-def plot_bar_panel(ax: plt.Axes, total_summary: pd.DataFrame) -> None:
+def plot_bar_panel(ax: plt.Axes, total_summary: pd.DataFrame) -> plt.Text:
     x = np.arange(len(PANEL_ORDER))
     width = 0.34
     for offset, group in [(-width / 2, "Control"), (width / 2, "ELS")]:
@@ -181,7 +198,7 @@ def plot_bar_panel(ax: plt.Axes, total_summary: pd.DataFrame) -> None:
             error_kw={"elinewidth": 0.8, "ecolor": AXIS_COLOR},
             label=group,
         )
-    ax.set_ylabel("Frequency (s)", fontsize=8, labelpad=8)
+    ax.set_ylabel("Frequency (s)", fontsize=8, labelpad=12)
     ax.set_xticks(x)
     ax.set_xticklabels(PANEL_ORDER, fontsize=5.6)
     ax.set_ylim(0, 300)
@@ -195,7 +212,7 @@ def plot_bar_panel(ax: plt.Axes, total_summary: pd.DataFrame) -> None:
                 color=AXIS_COLOR, linewidth=0.8)
         ax.text(idx, y + 7, "*", ha="center", va="bottom", color=AXIS_COLOR, fontsize=9, fontweight="bold")
     style_axis(ax)
-    panel_letter(ax, "A", x=-0.10, y=1.10)
+    return panel_letter(ax, "A", x=-0.10, y=1.10)
 
 
 def plot_time_panel(
@@ -205,7 +222,7 @@ def plot_time_panel(
     letter: str,
     star: bool = False,
     legend_loc: str = "upper right",
-) -> None:
+) -> plt.Text:
     add_shock_shading(ax)
     data = summary[summary["cluster"] == cluster]
     for group in ["Control", "ELS"]:
@@ -216,12 +233,12 @@ def plot_time_panel(
         ax.plot(x, mean, color=COLORS[group], marker="o", markersize=2.3, linewidth=1.4, label=group)
         ax.fill_between(x, mean - err, mean + err, color=COLORS[group], alpha=0.22, linewidth=0)
     ymax = Y_LIMITS[cluster]
-    ax.set_title(cluster, fontsize=7, pad=5, y=1.03)
+    ax.set_title(cluster, fontsize=7, pad=5, y=1.075)
     ax.set_xlim(0.5, 7.5)
     ax.set_ylim(0, ymax)
     ax.set_xticks(np.arange(1, 8))
     ax.set_xlabel("Time (minutes)", fontsize=6.5, labelpad=2)
-    ax.set_ylabel("% of time in cluster", fontsize=7, labelpad=3)
+    ax.set_ylabel("% of time in cluster", fontsize=7, labelpad=7)
     if cluster == "Groom":
         ax.set_yticks(np.arange(0, 0.401, 0.05))
     elif cluster == "Jump":
@@ -234,9 +251,129 @@ def plot_time_panel(
         ax.set_yticks(np.arange(0, ymax + 1, 10))
     ax.legend(frameon=False, loc=legend_loc, fontsize=6.5, ncol=2, handlelength=1.2, columnspacing=0.5)
     if star:
-        ax.text(4.0, ymax * 0.96, "*", ha="center", va="center", color=AXIS_COLOR, fontsize=11, fontweight="bold")
+        ax.text(
+            4.0,
+            0.992,
+            "*",
+            transform=ax.get_xaxis_transform(),
+            ha="center",
+            va="bottom",
+            color=AXIS_COLOR,
+            fontsize=11,
+            fontweight="bold",
+        )
     style_axis(ax)
-    panel_letter(ax, letter)
+    return panel_letter(ax, letter)
+
+
+def compute_and_export_source_data(cluster_df: pd.DataFrame, time_summary: pd.DataFrame, total_summary: pd.DataFrame, output_dir: Path) -> None:
+    """Compute Figure 3 source statistics and export to CSV."""
+    import statsmodels.formula.api as smf
+    import statsmodels.api as sm
+
+    rows = []
+
+    # Extract per-cluster, per-group summary statistics from total_summary
+    for cluster in PANEL_ORDER:
+        for group in ["Control", "ELS"]:
+            data = total_summary[(total_summary["cluster"] == cluster) & (total_summary["group"] == group)]
+            if not data.empty:
+                row = data.iloc[0]
+                rows.append({
+                    "metric": f"{cluster} {group} frequency",
+                    "cluster": cluster,
+                    "group": group,
+                    "mean_seconds": row["mean"],
+                    "sem_seconds": row["sem"],
+                    "n_animals": row["n"],
+                })
+
+    # Extract timecourse summaries (mean, SEM per time bin and group)
+    for cluster in PANEL_ORDER:
+        cluster_time = time_summary[time_summary["cluster"] == cluster]
+        if cluster_time.empty:
+            continue
+        for group in ["Control", "ELS"]:
+            group_time = cluster_time[cluster_time["group"] == group]
+            if not group_time.empty:
+                rows.append({
+                    "metric": f"{cluster} {group} timecourse mean",
+                    "cluster": cluster,
+                    "group": group,
+                    "mean_pct": group_time["mean"].mean(),
+                    "sem_pct": group_time["sem"].mean(),
+                    "n_timebins": len(group_time),
+                })
+
+    df = pd.DataFrame(rows)
+    if not df.empty:
+        output_csv = output_dir / "source_data_figure3.csv"
+        df.to_csv(output_csv, index=False)
+        print(f"Saved: {output_csv}")
+    else:
+        print("Warning: No source data generated for Figure 3")
+
+    # --- GEE Negative Binomial for Fig 3A cluster frequency ---
+    freq_csv = REPO_ROOT / "data" / "source" / "cluster_frequency_per_animal.csv"
+    gee_rows: list[dict] = []
+    if freq_csv.exists():
+        freq_df = pd.read_csv(freq_csv)
+        freq_df["group"] = pd.Categorical(freq_df["group"], categories=["Control", "ELS"])
+        for cluster in PANEL_ORDER:
+            sub = freq_df[freq_df["cluster"] == cluster].dropna(subset=["frequency_seconds"])
+            if sub.empty or sub["frequency_seconds"].std() == 0:
+                continue
+            try:
+                model = smf.gee(
+                    "frequency_seconds ~ C(group, Treatment('Control')) + experiment",
+                    data=sub,
+                    groups=sub["animal_id"],
+                    family=sm.families.NegativeBinomial(alpha=1.0),
+                    cov_struct=sm.cov_struct.Exchangeable(),
+                ).fit()
+                ci = model.conf_int()
+                for param in model.params.index:
+                    gee_rows.append({
+                        "figure": "3A",
+                        "cluster": cluster,
+                        "parameter": param,
+                        "beta": model.params[param],
+                        "se": model.bse[param],
+                        "z": model.tvalues[param],
+                        "p_value": model.pvalues[param],
+                        "ci_low": ci.loc[param, 0],
+                        "ci_high": ci.loc[param, 1],
+                    })
+            except Exception as e:
+                print(f"GEE NegBin failed for {cluster}: {e}")
+    else:
+        print(f"Warning: {freq_csv} not found — skipping GEE for Fig 3A")
+
+    if gee_rows:
+        gee_path = output_dir / "stats_figure3A_GEE.csv"
+        pd.DataFrame(gee_rows).to_csv(gee_path, index=False)
+        print(f"Saved: {gee_path}")
+
+    # --- MixedLM for overtime panels (Fig 3B-H, 30s timebins) ---
+    mm_frames: list[pd.DataFrame] = []
+    for cluster in PANEL_ORDER:
+        sub = cluster_df[cluster_df["cluster"] == cluster].copy()
+        sub = sub.rename(columns={
+            "Animal": "animal_id",
+            "Experiment": "experiment",
+            "time_bin": "time_bin_numeric",
+        })
+        try:
+            results = fit_mixed_models(sub, "Percentage")
+            results.insert(0, "cluster", cluster)
+            mm_frames.append(results)
+        except Exception as e:
+            print(f"MixedLM failed for {cluster}: {e}")
+
+    if mm_frames:
+        mm_path = output_dir / "stats_figure3_overtime.csv"
+        pd.concat(mm_frames, ignore_index=True).to_csv(mm_path, index=False)
+        print(f"Saved: {mm_path}")
 
 
 def main() -> None:
@@ -269,17 +406,27 @@ def main() -> None:
         "Jump": fig.add_subplot(gs[2, 10:14]),
     }
 
-    plot_bar_panel(ax_a, total_summary)
+    letter_artists = [(ax_a, plot_bar_panel(ax_a, total_summary))]
     for cluster, letter, star, legend_loc in [
         ("Freeze", "B", True, "lower right"),
-        ("Sniff", "C", False, "upper right"),
-        ("Groom", "D", True, "upper right"),
+        ("Sniff", "C", True, "upper right"),
+        ("Groom", "D", False, "upper right"),
         ("Turn", "E", True, "lower left"),
-        ("Locomotion", "F", True, "lower right"),
+        ("Locomotion", "F", True, "upper right"),
         ("Climb", "G", False, "upper right"),
         ("Jump", "H", False, "upper right"),
     ]:
-        plot_time_panel(axes[cluster], time_summary, cluster, letter, star=star, legend_loc=legend_loc)
+        letter_artist = plot_time_panel(
+            axes[cluster],
+            time_summary,
+            cluster,
+            letter,
+            star=star,
+            legend_loc=legend_loc,
+        )
+        letter_artists.append((axes[cluster], letter_artist))
+
+    align_panel_letters_to_ylabels(fig, letter_artists)
 
     pdf_path = OUTPUT_DIR / "figure_3_behavior_clusters.pdf"
     svg_path = OUTPUT_DIR / "figure_3_behavior_clusters.svg"
@@ -294,6 +441,10 @@ def main() -> None:
     print(f"Saved {svg_path}")
     print(f"Saved {LEGACY_FIGURES_DIR / 'figure3.pdf'}")
     print(f"Animals used: {raw['Animal'].nunique()} ({raw.groupby(['Experiment', 'group'])['Animal'].nunique().to_dict()})")
+
+    # Compute and export source data
+    print("Computing Figure 3 source statistics...")
+    compute_and_export_source_data(cluster_df, time_summary, total_summary, OUTPUT_DIR)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,196 @@
+You are continuing a manuscript statistics verification workflow for the paper:
+"Detecting dynamic coping strategies and resilience profiles after early life
+adversity revealed by behavioral sequencing"
+by Jeniffer Sanguino-Gomez.
+
+Working directory: d:/coping-dynamics-sequencing
+Python: C:\Users\jenif\anaconda3\python.exe
+R: C:\Program Files\R\R-4.5.2\bin\Rscript.exe
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WORKFLOW (do this for every paragraph / figure)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Open Report.xlsx (gold standard, read-only):
+   E:\#Deeplabcut_project\Report\Report.xlsx
+   Find the relevant sheet, copy the exact beta/SE/z/p/N from it.
+
+2. Run the statistical model in Python or R using the canonical
+   pipeline (described below) on the source data in
+   d:/coping-dynamics-sequencing/data/source/
+
+3. Compare model output to manuscript text AND to Report.xlsx.
+   Tag each value: CONFIRMED / CLOSE / NOT REPRODUCED.
+
+4. Add a styled Excel sheet to:
+   d:/coping-dynamics-sequencing/results/statistical_reports/Statistical_report.xlsx
+   using the openxlsx R package.
+   See build_fig3_report.R for the full style / layout infrastructure.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DATA SOURCES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+All source CSVs are in d:/coping-dynamics-sequencing/data/source/
+
+  cluster_timecourse_per_animal.csv
+    cols: animal_id, group, experiment, cluster, time_s, pct
+    82 animals (48.6 excluded), n=41 Control / n=41 ELS
+    Exp1=50 animals, Exp3=32 animals (separate cohorts)
+    clusters: Freeze, Sniff, Groom, Turn, Locomotion, Climb, Jump
+    time_s: 30, 60, ..., 450 (15 bins x 30s @ 25fps = 750 frames/bin)
+
+  cluster_frequency_per_animal.csv
+    cols: animal_id, group, experiment, cluster, frequency_seconds
+    Per-animal total frequency (used for GEE in figure_3.py)
+
+  syllable_usage_per_timebin_30s.csv
+    cols: Animal, Condition, Experiment, Syllable, Time Bin, Percentage
+    Raw syllable-level data (48.6 must be excluded, it's in the file)
+    Syllable->cluster mapping (for custom cluster aggregation):
+      Inaccurate tracking: {2,4,8,9,22,31,32,33}
+      Mix behaviors:       {7,13,17}
+
+  Raw_data.xlsx  (d:/coping-dynamics-sequencing/data/)
+    Sheet "Supp_cluster_time": wide format, header row 3,
+    cols: animal_id, group, project, experiment, cluster, t_30..t_450
+    82 animals x 2 clusters (Inaccurate tracking, Mix behaviors) x 15 bins
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CANONICAL STATISTICAL MODELS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Fig 3A — GEE Negative Binomial (cluster frequency)
+  Python statsmodels, per cluster:
+    response  = frames_in_bin = (pct/100) * 750  (integer frame count)
+    predictors = [const, stress(0=Ctrl/1=ELS), exp_bin(0=Exp1/1=Exp3)]
+    GEE(endog, exog, groups=animal_id,
+        family=NegativeBinomial(alpha=1.0),
+        cov_struct=Exchangeable())
+  Script: d:/coping-dynamics-sequencing/scripts/build_fig3a_gee_results.py
+  Results CSV: results/statistical_reports/gee_freq_results.csv
+
+Fig 3B-H and Supp Fig 1 — Mixed LMM timecourse
+  Python src/statistics.py :: fit_mixed_models(df, response_col)
+    Per-experiment:
+      smf.mixedlm("pct ~ condition * time_bin_numeric",
+                  sub, groups=sub["animal_id"],
+                  re_formula="1").fit(reml=False)
+    Combined (both experiments):
+      same + vc_formula={"experiment": "0 + C(experiment)"}
+    condition reference = "Control"; time_bin_numeric in SECONDS (30...450)
+    Returns: analysis, parameter, coef, std_err, z, p_value, ci_low, ci_high,
+             n_observations, n_animals
+
+  R equivalent (used in build_fig3_report.R for Excel output):
+    Per-exp:  lmer(pct ~ group * time_s + (1|animal_id), REML=FALSE)
+    Combined: lmer(pct ~ group * time_s + (1|animal_id) + (1|experiment), REML=FALSE)
+    Key label: "groupELS:time_s" = "Stress x time" -- this is what's reported in
+               Fig 3B-H manuscript (not the stress main effect)
+
+  For Supp Fig 1 (Inaccurate tracking / Mix behaviors):
+    Same pipeline BUT time is CENTERED at mean (240s) so that the stress main
+    effect (groupELS) = ELS-Control difference at the MEAN timepoint:
+      lmer(pct ~ group * time_c + (1|animal_id) + (0+1|experiment), REML=FALSE)
+      where time_c = time_bin - 240
+    Confirmed: groupELS beta=-2.341 (exact match to manuscript).
+    SE=0.942 NOT REPRODUCED by any model -- our best gives SE=1.183.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHAT IS ALREADY DONE (do not redo these)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Statistical_report.xlsx currently has these sheets:
+  Fig.2A-C_freezing_SimBA    <- verified, complete
+  Fig.2H_S0S28_MoSeq         <- verified, complete
+  Supp.Fig1_tracking         <- timecourse LMM, both clusters, centered time
+  Fig.3A_Clusters_GEE        <- GEE NB, all 7 clusters, one sheet
+  Fig.3B-H_Clusters_overtime <- stacked LMM timecourse, all 7 clusters, one sheet
+
+Confirmed manuscript values (all already checked):
+  Supp Fig 1 -- Inaccurate tracking:
+    beta=-2.341 CONFIRMED, SE=0.942 NOT REPRODUCED, direction confirmed
+  Fig 3A Freeze:  beta=-0.204, SE=0.081, z=-2.510, p=0.012  CONFIRMED
+  Fig 3A Sniff:   beta=+0.622, SE=0.231, z=+2.695, p=0.007  CONFIRMED (ms rounds to 0.621)
+  Fig 3A Turn:    beta=+0.100, SE=0.032, z=+3.099, p=0.002  CONFIRMED
+  Fig 3A Sniff beta=-0.068 in old manuscript = TRANSCRIPTION ERROR (wrong row copied)
+  Fig 3B Freeze:  beta=-0.023, SE=0.005, z=-4.262, p<0.001  CONFIRMED (n=82 corrected)
+    NOTE: old manuscript had z=-4.241 (n=81, animal 88.3 missing). n=82 is correct.
+  Fig 3C Sniff:   beta=-0.014, SE=0.004, z=-3.656, p<0.001  CONFIRMED
+  Fig 3E Turn:    beta=+0.026, SE=0.007, z=+3.610, p<0.001  CONFIRMED
+  Fig 3F Loco:    beta=+0.005, SE=0.002, z=+2.553, p=0.011  CONFIRMED
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EXCEL REPORT INFRASTRUCTURE (build_fig3_report.R)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Script: d:/coping-dynamics-sequencing/scripts/build_fig3_report.R
+  - make_styles(): returns list(title, header, data, data_wrap, sig)
+    sig style = red #C0392B for p<0.05
+    textDecoration="italic" (NOT italic=TRUE -- that crashes openxlsx)
+  - write_3section_sheet(wb, sheet, sections, dep_var, row_offset, set_col_widths)
+    3 sections side-by-side at cols 1, 19, 37 (each 15 cols + 3-col gap)
+    Section structure: LMM(A-G) | Posthoc Bonferroni(I-L) | Metadata(N-O)
+    row_offset allows stacking multiple clusters in one sheet
+  - build_fig3a_sheet(): GEE summary table, sheet = "Fig.3A_Clusters_GEE"
+  - build_fig3bh_sheet(): stacks all 7 cluster blocks with dark banners
+  - build_suppfig1_sheet(): two-cluster timecourse + manuscript comparison
+  To add new figure sheets: load the workbook, build your function, saveWorkbook.
+  Pattern:
+    wb <- loadWorkbook("d:/coping-dynamics-sequencing/results/statistical_reports/Statistical_report.xlsx")
+    # add your sheet
+    saveWorkbook(wb, OUT_FILE, overwrite=TRUE)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NEXT TASK: FIGURE 4
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Figure 4 covers DIVERSITY of behavioral repertoire dynamics.
+
+Steps to take:
+
+1. Read the Figure 4 paragraph from the manuscript (ask Jeniffer to paste it).
+   OR inspect the figure scripts:
+     d:/coping-dynamics-sequencing/scripts/generate_figures/figure_4_*.py
+
+2. Check Report.xlsx for Figure 4 relevant sheets:
+   Likely candidates (inspect with openpyxl to see column layout):
+     "Frequency_metrics"      (col structure unknown -- read first)
+     "Bout_duration"
+     "Transition_metrics"
+   Open like:
+     import openpyxl
+     wb = openpyxl.load_workbook("E:/#Deeplabcut_project/Report/Report.xlsx",
+                                  read_only=True, data_only=True)
+     ws = wb["Frequency_metrics"]
+     for row in ws.iter_rows(min_row=1, max_row=3, values_only=True): print(row)
+
+3. Find source data for Fig 4. Check what figure_4_*.py reads:
+     d:/coping-dynamics-sequencing/data/source/  (list all CSVs)
+   Candidates may include diversity/entropy metrics per animal.
+
+4. Reproduce each statistic using the same pipeline as above.
+   - Group x time LMM -> fit_mixed_models from src/statistics.py
+   - Simple group comparison -> lmer(y ~ group + (1|experiment))
+   - GEE -> adapt build_fig3a_gee_results.py
+
+5. Compare to manuscript values, tag CONFIRMED / NOT REPRODUCED.
+
+6. Add sheet(s) "Fig.4_*" to Statistical_report.xlsx using R infrastructure.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+KEY GOTCHAS LEARNED FROM FIG 2-3 (do not repeat these)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Animal "48.6" must ALWAYS be excluded (it's in the raw data files).
+- n=82 is the correct full sample (41 Control / 41 ELS).
+  n=81 values in old manuscript = missing animal 88.3. Use n=82.
+  Only Freeze timecourse z differs meaningfully between n=81 and n=82.
+- time_bin_numeric in Python fit_mixed_models is in SECONDS (30, 60...450),
+  NOT bin indices. This matters for interpreting the stress main effect at t=0.
+- Centering time at 240s (mean) makes groupELS = group difference at mean timepoint,
+  which equals the per-animal mean difference.
+- openxlsx createStyle: use textDecoration="italic", NOT italic=TRUE.
+- GEE response must be frame COUNT (pct/100 x 750), not percentage.
+- The Sniff GEE beta is POSITIVE (+0.622, more sniff in ELS). An earlier
+  manuscript version had beta=-0.068 which was a transcription error.
+- PowerShell inline Python with complex strings (quotes, formulas) fails.
+  Always write complex Python code to a .py file first, then run it.
+- Unicode symbols (checkmarks, arrows) in Python print statements cause
+  encoding errors on Windows. Use ASCII alternatives in script files.
+- Fig 3D (Groom), 3G (Climb), 3H (Jump) were not significant and the
+  manuscript does not report specific stats for them -- this is expected.

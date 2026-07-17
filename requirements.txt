@@ -10,6 +10,12 @@ openpyxl>=3.1.0,<4.0.0
 # Visualization
 matplotlib>=3.4.0,<4.0.0
 seaborn>=0.11.0,<1.0.0
+pymupdf>=1.24.0,<2.0.0
 
 # Statistical analysis (manuscript data workbooks)
 statsmodels>=0.13.0,<1.0.0
+
+# Fig. 7 behavior classifier
+scikit-learn>=1.0.0,<2.0.0
+xgboost>=1.7.0,<3.0.0
+joblib>=1.1.0,<2.0.0

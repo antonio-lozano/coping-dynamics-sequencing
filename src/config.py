@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Jeniffer Sanguino Gómez and Antonio Lozano
 """
 Centralized path configuration for coping-dynamics-sequencing.
 Uses environment variables to allow relocation of data without code edits.
