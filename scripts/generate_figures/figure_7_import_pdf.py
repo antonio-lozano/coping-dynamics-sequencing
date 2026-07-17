@@ -23,7 +23,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 FIGURES_DIR = REPO_ROOT / "figures"
 FIGURE_DATA_DIR = REPO_ROOT / "results" / "figure_data"
 
-BUNDLED_SOURCE = REPO_ROOT / "data" / "source" / "figure7.pdf"
+BUNDLED_SOURCE = REPO_ROOT / "dataset" / "source" / "figure7.pdf"
 LOCAL_FALLBACK_SOURCE = Path(r"C:\Users\jenif\Downloads\Copying_dynamics_paper2\Figure7.pdf")
 PANEL_A_UNASSIGNED_RECT = (19.5, 123.0, 46.5, 131.5)
 PANEL_A_UNASSIGNED_ORIGIN = (20.582500457763672, 128.6944580078125)

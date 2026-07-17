@@ -3,11 +3,11 @@ import pandas as pd
 from pathlib import Path
 
 REPO = Path(__file__).parent.parent
-SRC  = REPO / "data" / "source" / "syllable_usage_per_timebin_30s.csv"
-AG   = REPO / "data" / "source" / "animal_groups.csv"
+SRC  = REPO / "dataset" / "source" / "syllable_usage_per_timebin_30s.csv"
+AG   = REPO / "dataset" / "source" / "animal_groups.csv"
 
-OUT_FREQ = REPO / "data" / "source" / "cluster_frequency_per_animal.csv"
-OUT_TIME = REPO / "data" / "source" / "cluster_timecourse_per_animal.csv"
+OUT_FREQ = REPO / "dataset" / "source" / "cluster_frequency_per_animal.csv"
+OUT_TIME = REPO / "dataset" / "source" / "cluster_timecourse_per_animal.csv"
 
 CLUSTER_MAP = {
     "Freeze":     [0, 28],

@@ -314,7 +314,7 @@ def compute_and_export_source_data(cluster_df: pd.DataFrame, time_summary: pd.Da
         print("Warning: No source data generated for Figure 3")
 
     # --- GEE Negative Binomial for Fig 3A cluster frequency ---
-    freq_csv = REPO_ROOT / "data" / "source" / "cluster_frequency_per_animal.csv"
+    freq_csv = REPO_ROOT / "dataset" / "source" / "cluster_frequency_per_animal.csv"
     gee_rows: list[dict] = []
     if freq_csv.exists():
         freq_df = pd.read_csv(freq_csv)

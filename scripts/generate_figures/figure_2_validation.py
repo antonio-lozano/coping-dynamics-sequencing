@@ -48,7 +48,7 @@ EVENT_SPAN_STARTS_MIN = [3.5, 4.5, 5.5]
 EVENT_SPAN_WIDTH_MIN = 0.5
 
 
-# Prefer files dropped into data/source/; fall back to original-machine paths.
+# Prefer files dropped into dataset/source/; fall back to original-machine paths.
 _REF_CSV_CANDIDATES = [
     SOURCE_DATA_DIR / "syllable_classification_metrics.csv",
     Path(r"H:\antonio\keypoint_moseq_project\code\syllable_recall_precision_f1_usage.csv"),
@@ -65,7 +65,7 @@ PANEL_G_REFERENCE_SVG: Path | None = next((p for p in _PANEL_G_SVG_CANDIDATES if
 
 PRECOMPUTED_OVERLAP_CSV: Path = SOURCE_DATA_DIR / "freezing_overlap_by_group.csv"
 
-# Prefer inputs extracted into data/source/; fall back to config (external) paths.
+# Prefer inputs extracted into dataset/source/; fall back to config (external) paths.
 _FREEZING_DIR_DEFAULT = next(
     (p for p in [SOURCE_DATA_DIR / "freezing_predictions", FREEZING_DIR] if p.exists()),
     FREEZING_DIR,
@@ -441,7 +441,7 @@ def _resolve_moseq_df_path(explicit: Path | None, results_pkl: Path, index_csv: 
         [
             rp.parent / "moseq_df.csv",
             SOURCE_DATA_DIR / "moseq_syllables_per_frame.csv.gz",
-            repo_root / "data" / "processed" / "moseq_df.csv",
+            repo_root / "dataset" / "processed" / "moseq_df.csv",
             Path(r"C:\Users\admin\keypoint_moseq\keypoint_moseq_project\code\equipo_project\2025_01_24-16_44_21\moseq_df.csv"),
             Path(r"C:\Users\admin\keypoint_moseq\keypoint_moseq_project\equipo_project_data\moseq_df.csv"),
             Path(r"C:\Users\admin\keypoint_moseq\keypoint_moseq_project\code\moseq_df.csv"),
