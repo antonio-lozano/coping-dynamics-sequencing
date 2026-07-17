@@ -9,7 +9,7 @@ Starts from the curated template shape and:
 
 Run:  python scripts/build_statistical_report.py
 """
-import sys, shutil, warnings
+import os, sys, shutil, warnings
 from pathlib import Path
 warnings.filterwarnings("ignore")
 import numpy as np
@@ -21,7 +21,7 @@ from openpyxl.cell.cell import MergedCell
 import importlib.util
 
 REPO = Path(__file__).resolve().parents[1]
-TEMPLATE = Path(r"C:\Users\jenif\Downloads\STATISTICAL_REPORT_FINAL.xlsx")
+TEMPLATE = Path(os.getenv("COPING_DYNAMICS_REPORT_TEMPLATE", REPO / "report" / "STATISTICAL_REPORT_TEMPLATE.xlsx"))
 OUT = REPO / "report" / "STATISTICAL_REPORT_FINAL.xlsx"
 
 # ---- house style ----
@@ -155,6 +155,11 @@ def restyle_all(wb, skip):
 
 
 def main():
+    if not TEMPLATE.exists():
+        raise FileNotFoundError(
+            f"Report template not found: {TEMPLATE}. "
+            "Set COPING_DYNAMICS_REPORT_TEMPLATE to an existing workbook."
+        )
     OUT.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy(TEMPLATE, OUT)
     wb = openpyxl.load_workbook(OUT)

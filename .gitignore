@@ -1,15 +1,10 @@
-# Data (kept out of git)
-data/*
-!data/README.md
-!data/Raw_data.xlsx
-!data/Statistical_report.xlsx
-# Extracted figure source data (small CSV/XLSX + compressed moseq tracked)
-!data/source/
-!data/source/**
-# moseq per-frame table is tracked compressed (.csv.gz); ignore raw re-extractions
-data/source/moseq_syllables_per_frame.csv
+# Dataset (tracked curated inputs; ignore only raw re-extractions)
+dataset/source/moseq_syllables_per_frame.csv
+dataset/**/*.pkl
+dataset/**/*.parquet
+dataset/**/*.npy
 
-# Manuscript figures are the tracked canonical output (figures/ + figures/data/)
+# Manuscript figures and curated report workbooks are tracked canonical outputs.
 
 # Data files
 *.pkl
@@ -24,8 +19,14 @@ __pycache__/
 # IDE / OS
 .vscode/
 .idea/
+.claude/settings.local.json
 .DS_Store
 Thumbs.db
 
 # Local overrides
 config/paths.py
+
+# Local scratch logs / rebuild experiments
+*.log
+*_test.xlsx
+*_rebuilt.xlsx

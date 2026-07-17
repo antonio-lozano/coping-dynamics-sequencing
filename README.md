@@ -17,7 +17,7 @@ conda activate coping-dynamics
 pip install -r requirements.txt
 ```
 
-All figure inputs are bundled under `data/source/` (see `data/README.md`), so the
+All figure inputs are bundled under `dataset/source/` (see `dataset/README.md`), so the
 figures regenerate out of the box with no external data.
 
 ## Running figures
@@ -46,16 +46,18 @@ python scripts/run_all_figures.py
 
 ## Project structure
 ```
-|-- data/
+|-- dataset/
 |   |-- source/             # Bundled figure inputs (CSV/XLSX/SVG + compressed tables)
-|   |-- Raw_data.xlsx       # Manuscript data workbooks
-|   `-- Statistical_report.xlsx
+|   `-- Raw_data.xlsx       # Manuscript raw-data workbook
 |-- docs/                   # Figure provenance / replication notes
 |-- figures/                # Canonical manuscript figures (figureN.*)
+|-- report/                 # Final styled statistical workbook
 |-- results/figure_data/    # Supporting tables, audits, intermediate renders
+|-- results/statistical_reports/
+|                           # Reproducible statistical CSVs and manuscript audit notes
 |-- scripts/
 |   |-- generate_figures/   # One script per manuscript figure (figure_2..7, supplementary figures)
-|   |-- data_exports/       # Manuscript data-workbook exporter
+|   |-- build_statistical_report.py
 |   `-- run_all_figures.py  # Regenerate every figure
 |-- src/
 |   |-- config.py           # Centralized paths, source-data resolution, constants
@@ -66,7 +68,7 @@ python scripts/run_all_figures.py
 ```
 
 ## Data
-All required figure inputs are self-contained in `data/source/` (the large 
+All required figure inputs are self-contained in `dataset/source/` (the large
 per-frame syllable table and results pickle are stored gzip-compressed). The 
 figures regenerate reproducibly without any external dependencies.
 
@@ -75,7 +77,16 @@ For reproducibility extensions or re-extraction from source archives, override p
 - `COPING_DYNAMICS_DOWNLOADS` — directory containing `Coping_data.zip`/`Coping_data2.zip`
 - `COPING_DATA_ZIP`, `COPING_DATA2_ZIP` — specific archive paths
 
-See `data/README.md` for the full inventory of bundled inputs.
+The final report workbook is `report/STATISTICAL_REPORT_FINAL.xlsx`. Rebuild it with:
+
+```bash
+python scripts/build_statistical_report.py
+```
+
+Figure 4 uses the final no-seed MixedLM analysis. The seeded analysis is recoverable
+from tag `pre-noseed-seeded` or branch `backup-seeded-analysis`.
+
+See `dataset/README.md` for the full inventory of bundled inputs.
 
 ## License
 See `LICENSE`.

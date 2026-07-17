@@ -1,12 +1,12 @@
 # Data
 
 All inputs needed to regenerate the manuscript figures are bundled here under
-`data/source/` and tracked in git, so the figures reproduce with no external
+`dataset/source/` and tracked in git, so the figures reproduce with no external
 data. The two large inputs (a per-frame syllable table and a results pickle) are
 stored gzip-compressed to stay within GitHub's file-size limits; pandas and the
 scripts read the compressed forms transparently.
 
-## Figure source data (`data/source/`)
+## Figure source data (`dataset/source/`)
 
 | File | Original source | Used by |
 | --- | --- | --- |
@@ -23,7 +23,7 @@ scripts read the compressed forms transparently.
 The optional `Behavioral_clusters.json` is not bundled — Fig 4 & 6 fall back to
 the built-in `CLUSTER_MAP` in each script when it is absent.
 
-The scripts resolve these files from `data/source/` first; if a file is missing
+The scripts resolve these files from `dataset/source/` first; if a file is missing
 they fall back to the original `Coping_data.zip` / `Coping_data2.zip` archives.
 Override locations with `COPING_DYNAMICS_SOURCE_DIR`, `COPING_DYNAMICS_DOWNLOADS`,
 `COPING_DATA_ZIP`, `COPING_DATA2_ZIP`.
@@ -36,15 +36,10 @@ python scripts\run_all_figures.py
 
 ## Manuscript data workbooks
 
-`Raw_data.xlsx` and `Statistical_report.xlsx` are compact manuscript-facing
-exports (raw tabular values + statistical summaries: SimBA validation, freezing
-time-course, cluster frequency/time-course, Figure 4 & 6 dynamics metrics,
-Supplementary Figure 3 distance metrics, syllable/freezing overlap, and archived
-statistical reports). Regenerate them with:
+`Raw_data.xlsx` is the compact manuscript-facing raw-data workbook. The final
+styled statistical workbook lives at `report/STATISTICAL_REPORT_FINAL.xlsx` and
+is rebuilt by:
 
 ```powershell
-python scripts\data_exports\build_freezing_data_workbooks.py
+python scripts\build_statistical_report.py
 ```
-
-The exporter reads from the same source archives (`Coping_data.zip` /
-`Coping_data2.zip`) and stores only curated tabular values in the repo.

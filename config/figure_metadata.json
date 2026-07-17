@@ -1,5 +1,5 @@
 {
-  "_comment": "Soft configuration for figure computations: random seeds, statistical-model seeds, multiple-comparison families, and gold/manuscript reference values used by the per-figure checks. Nothing statistical should be hardcoded in the figure scripts; read it from here.",
+  "_comment": "Soft configuration for figure computations, multiple-comparison families, and historical manuscript reference values used by checks. Figure 4 is finalized on the plain no-seed MixedLM fits in the current branch.",
 
   "random_seeds": {
     "mds_sklearn_original": 42,
@@ -9,14 +9,15 @@
 
   "figure_4": {
     "model": "MixedLM(metric ~ group + Experiment, groups=Animal, reml=False)",
-    "note": "One row per animal -> parameter boundary; Wald SE is optimizer/start dependent. Seeds below reproduce the gold Statistical_report.xlsx SEs while preserving significance. Transition metrics require native file order (NOT Time_bin-sorted).",
-    "metric_seeds": {
-      "simpson":      {"seq_order": "na",   "optimizer": "default", "start_seed": null},
-      "cui":          {"seq_order": "na",   "optimizer": "default", "start_seed": 138},
-      "freeze_bout":  {"seq_order": "na",   "optimizer": "default", "start_seed": 140},
-      "recurrence":   {"seq_order": "file", "optimizer": "default", "start_seed": 129},
-      "determinism":  {"seq_order": "file", "optimizer": "default", "start_seed": 104},
-      "markov":       {"seq_order": "file", "optimizer": "lbfgs",   "start_seed": 273}
+    "note": "Final current-branch policy: default optimizer, no start_params seed. Effect estimates are seed-independent; SE/z/p report the default no-seed fit. The old seeded recipe is recoverable from tag pre-noseed-seeded / branch backup-seeded-analysis.",
+    "fit_policy": {"optimizer": "default", "start_seed": null},
+    "no_seed_key_results": {
+      "simpson": {"beta": -0.013441, "se": 0.007018, "p": 0.055463},
+      "cui": {"beta": 0.063646, "se": 0.028292, "p": 0.024474},
+      "freeze_bout": {"beta": -0.093847, "se": 0.033234, "p": 0.004746},
+      "recurrence": {"beta": 0.013441, "se": 0.007043, "p": 0.056337},
+      "determinism": {"beta": 0.016105, "se": 0.007433, "p": 0.030266},
+      "markov": {"beta": -0.041187, "se": 0.025152, "p": 0.101525}
     },
     "fdr_families": {
       "bout": ["Freezing", "Sniffing", "Grooming", "Turn", "Locomotion", "Climbing", "Jump"]
@@ -45,7 +46,7 @@
   },
 
   "gold_reference": {
-    "_source": "external/Deeplabcut_project/Report/Report.xlsx and the manuscript text",
+    "_source": "Historical seeded/gold reference only; not the current no-seed reporting policy.",
     "figure_4": {
       "simpson":     {"beta": -0.013441, "gold_se": 0.006593, "gold_p": 0.041482},
       "cui":         {"beta":  0.063646, "gold_se": 0.021446, "gold_p": 0.002999},
