@@ -5,7 +5,7 @@ Regenerate Supplementary Figure 1 on a full A4 page.
 
 The figure shows the two supplementary syllable clusters that were omitted from
 the main Figure 3 behavior panels: mixed behaviors and inaccurate tracking.
-Values are animal-level percentages per 30 s bin from the manuscript workbook.
+Values are animal-level percentages per 30 s bin from the bundled source CSV.
 """
 
 from __future__ import annotations
@@ -23,10 +23,10 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.config import FIGURE_DATA_DIR, FIGURES_DIR, DATA_DIR
+from src.config import FIGURE_DATA_DIR, FIGURES_DIR, SOURCE_DATA_DIR
 
 
-RAW_WORKBOOK = DATA_DIR / "Raw_data.xlsx"
+SOURCE_CSV = SOURCE_DATA_DIR / "supplementary_figure1_tracking_clusters.csv"
 
 COLORS = {"Control": "#F9C74F", "ELS": "#C37BA0"}
 AXIS_COLOR = "#4D4D4D"
@@ -61,24 +61,16 @@ def sem(values: pd.Series) -> float:
 
 
 def load_supplementary_time_data() -> pd.DataFrame:
-    if not RAW_WORKBOOK.exists():
-        raise FileNotFoundError(f"Missing manuscript workbook: {RAW_WORKBOOK}")
+    if not SOURCE_CSV.exists():
+        raise FileNotFoundError(f"Missing source table: {SOURCE_CSV}")
 
-    wide = pd.read_excel(RAW_WORKBOOK, sheet_name="Supp_cluster_time", header=2)
-    wide = wide.dropna(subset=["animal_id", "group", "cluster"]).copy()
-    time_cols = [col for col in wide.columns if str(col).startswith("t_")]
-    if not time_cols:
-        raise ValueError("No t_* time-bin columns found in Supp_cluster_time.")
-
-    long = wide.melt(
-        id_vars=["animal_id", "group", "project", "experiment", "cluster"],
-        value_vars=time_cols,
-        var_name="time_bin",
-        value_name="percentage",
-    )
-    long["seconds"] = long["time_bin"].str.extract(r"(\d+)").astype(int)
-    long["time_min"] = long["seconds"] / 60.0
+    long = pd.read_csv(SOURCE_CSV)
+    required = {"animal_id", "group", "project", "experiment", "cluster", "time_bin", "percentage", "seconds", "time_min"}
+    missing = required.difference(long.columns)
+    if missing:
+        raise ValueError(f"Missing columns in {SOURCE_CSV.name}: {sorted(missing)}")
     long["percentage"] = pd.to_numeric(long["percentage"], errors="coerce")
+    long["time_min"] = pd.to_numeric(long["time_min"], errors="coerce")
     long = long[long["cluster"].isin([spec["cluster"] for spec in PANEL_SPECS])]
     long = long[long["group"].isin(["Control", "ELS"])]
     return long
@@ -162,12 +154,8 @@ def plot_time_panel(ax: plt.Axes, summary: pd.DataFrame, spec: dict[str, object]
     panel_letter(ax, str(spec["letter"]))
 
 
-def export_source_tables(long: pd.DataFrame, summary: pd.DataFrame) -> None:
+def export_source_tables(summary: pd.DataFrame) -> None:
     FIGURE_DATA_DIR.mkdir(parents=True, exist_ok=True)
-    long.sort_values(["cluster", "group", "animal_id", "time_min"]).to_csv(
-        FIGURE_DATA_DIR / "source_data_supplementary_figure1.csv",
-        index=False,
-    )
     summary.sort_values(["cluster", "group", "time_min"]).to_csv(
         FIGURE_DATA_DIR / "supplementary_figure1_time_summary.csv",
         index=False,
@@ -210,7 +198,7 @@ def main() -> None:
     fig.savefig(png_path, dpi=600, bbox_inches=None, facecolor="white")
     plt.close(fig)
 
-    export_source_tables(long, summary)
+    export_source_tables(summary)
     print(f"Saved {pdf_path}")
     print(f"Saved {svg_path}")
     print(f"Saved {png_path}")

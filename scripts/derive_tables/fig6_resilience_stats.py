@@ -15,7 +15,7 @@ Benjamini-Hochberg FDR is applied within each contrast type:
   - diversity metrics: across the 6 metrics
   - bout duration:     across the 7 clusters   (matches the manuscript Fig 6M/N/P values)
 
-Run:  python scripts/reproduce_fig6_resilience_stats.py
+Run:  python scripts/derive_tables/fig6_resilience_stats.py
 Writes results/statistical_reports/fig6_diversity_resilience_stats.csv
        results/statistical_reports/fig6_bout_resilience_stats.csv
 """
