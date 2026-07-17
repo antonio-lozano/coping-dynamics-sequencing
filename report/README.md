@@ -1,5 +1,7 @@
 # Report Workbooks
 
+`RAW_DATA.xlsx` is the manuscript-facing raw data workbook.
+
 `STATISTICAL_REPORT_FINAL.xlsx` is the current manuscript statistical report.
 
 Rebuild it from the tracked template with:

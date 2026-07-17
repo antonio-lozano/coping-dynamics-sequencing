@@ -19,8 +19,17 @@ Using pip:
 pip install -r requirements.txt
 ```
 
-All figure inputs are bundled under `dataset/source/` (see
-`dataset/README.md`), so the data-derived figures regenerate out of the box.
+All figure inputs are bundled under `data/source/` (see
+`data/README.md`), so the data-derived figures regenerate out of the box.
+
+## Reproducibility Check
+
+Before rerunning analyses, verify that the repository has all required data,
+figures, reports, intermediate CSVs, and checksums:
+
+```bash
+python scripts/check_reproducibility.py
+```
 
 ## Running Figures
 
@@ -50,7 +59,7 @@ as a canonical assembled manuscript figure in `figures/`.
 ## Project Structure
 
 ```text
-|-- dataset/
+|-- data/
 |   `-- source/             # Bundled figure inputs
 |-- docs/                   # Figure provenance / replication notes
 |-- figures/                # Canonical manuscript figures
@@ -71,7 +80,7 @@ as a canonical assembled manuscript figure in `figures/`.
 
 ## Data And Reports
 
-All required figure inputs are self-contained in `dataset/source/`. The large
+All required figure inputs are self-contained in `data/source/`. The large
 per-frame syllable table and results pickle are gzip-compressed.
 
 The final report workbook is `report/STATISTICAL_REPORT_FINAL.xlsx`. Rebuild it
@@ -83,6 +92,14 @@ python scripts/build_statistical_report.py
 
 Figure 4 uses the default MixedLM analysis implemented in the figure generator
 and mirrored in the final statistical report.
+
+Manuscript-facing workbook outputs are:
+
+- `report/RAW_DATA.xlsx`
+- `report/STATISTICAL_REPORT_FINAL.xlsx`
+
+See `REPRODUCIBILITY.md`, `DATA_AVAILABILITY.md`, and `CODE_AVAILABILITY.md`
+for publication and repository-release notes.
 
 ## License
 

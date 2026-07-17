@@ -48,7 +48,7 @@ EVENT_SPAN_STARTS_MIN = [3.5, 4.5, 5.5]
 EVENT_SPAN_WIDTH_MIN = 0.5
 
 
-# Prefer files bundled into dataset/source/.
+# Prefer files bundled into data/source/.
 _REF_CSV_CANDIDATES = [
     SOURCE_DATA_DIR / "syllable_classification_metrics.csv",
 ]
@@ -61,7 +61,7 @@ PANEL_G_REFERENCE_SVG: Path | None = next((p for p in _PANEL_G_SVG_CANDIDATES if
 
 PRECOMPUTED_OVERLAP_CSV: Path = SOURCE_DATA_DIR / "freezing_overlap_by_group.csv"
 
-# Prefer inputs extracted into dataset/source/; fall back to configured paths.
+# Prefer inputs extracted into data/source/; fall back to configured paths.
 _FREEZING_DIR_DEFAULT = next(
     (p for p in [SOURCE_DATA_DIR / "freezing_predictions", FREEZING_DIR] if p.exists()),
     FREEZING_DIR,
@@ -437,7 +437,7 @@ def _resolve_moseq_df_path(explicit: Path | None, results_pkl: Path, index_csv: 
         [
             rp.parent / "moseq_df.csv",
             SOURCE_DATA_DIR / "moseq_syllables_per_frame.csv.gz",
-            repo_root / "dataset" / "processed" / "moseq_df.csv",
+            repo_root / "data" / "processed" / "moseq_df.csv",
         ]
     )
     for path in candidates:
@@ -846,7 +846,7 @@ def plot_figure(
     summary_a, summary_b, summary_all = summaries
     _plot_freezing_panel(axA, summary_a, "Sanguino-Gomez and Krugers, 2024", "A")
     _plot_freezing_panel(axB, summary_b, "Sanguino-Gomez et al., 2024", "B")
-    _plot_freezing_panel(axC, summary_all, "Combined datasets", "C")
+    _plot_freezing_panel(axC, summary_all, "Combined datas", "C")
 
     # Panel D: original keypoint-moseq code uses value_counts().sort_values on moseq_df.
     if usage_df is not None:

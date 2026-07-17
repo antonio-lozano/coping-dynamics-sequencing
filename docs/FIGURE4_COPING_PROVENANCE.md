@@ -6,7 +6,7 @@ This note records the checked data path for manuscript Figure 4.
 
 The current repository is self-contained. Figure 4 is regenerated from:
 
-- `dataset/source/syllable_usage_per_timebin_250ms.csv`
+- `data/source/syllable_usage_per_timebin_250ms.csv`
 - the built-in behavioral cluster map in
   `scripts/generate_figures/figure_4_diversity_dynamics.py`
 

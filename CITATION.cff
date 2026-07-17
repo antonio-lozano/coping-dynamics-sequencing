@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use this repository, please cite the associated manuscript and archived repository release."
+title: "Coping Dynamics Sequencing"
+authors:
+  - family-names: "Sanguino Gomez"
+    given-names: "Jeniffer"
+  - family-names: "Lozano"
+    given-names: "Antonio"
+license: "MIT"
+type: "software"
+version: "1.0.0"
+date-released: "2026-07-17"

@@ -3,7 +3,7 @@
 """
 Centralized path configuration for coping-dynamics-sequencing.
 Uses environment variables to allow relocation of data without code edits.
-All manuscript figures are self-contained within dataset/source/.
+All manuscript figures are self-contained within data/source/.
 """
 import os
 from pathlib import Path
@@ -23,10 +23,10 @@ def _first_existing(candidates, fallback):
 PROJECT_ROOT = Path(os.getenv("COPING_DYNAMICS_ROOT", Path(__file__).resolve().parents[1]))
 
 # Data directory (repo-bundled source); override with COPING_DYNAMICS_DATA
-DATA_DIR = Path(os.getenv("COPING_DYNAMICS_DATA", PROJECT_ROOT / "dataset"))
+DATA_DIR = Path(os.getenv("COPING_DYNAMICS_DATA", PROJECT_ROOT / "data"))
 
 # Freezing predictions directory; override with COPING_DYNAMICS_FREEZING_DIR
-# (Bundled in dataset/source/freezing_predictions/ for self-contained operation)
+# (Bundled in data/source/freezing_predictions/ for self-contained operation)
 FREEZING_DIR = Path(os.getenv("COPING_DYNAMICS_FREEZING_DIR", DATA_DIR / "source" / "freezing_predictions"))
 
 # Optional external directories (for reproducibility extensions, not required)
@@ -53,7 +53,7 @@ RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 # ==============================================================================
 # Manuscript figure source data
 # ==============================================================================
-# Extracted source files live under dataset/source/ (all figures are self-contained
+# Extracted source files live under data/source/ (all figures are self-contained
 # and do not require external data). Original archives are searched in Downloads
 # as a fallback only. Override with:
 #   COPING_DYNAMICS_SOURCE_DIR  (extracted source directory)
@@ -73,7 +73,7 @@ COPING_DATA2_ZIP = _first_existing(
     _downloads_dir / "Coping_data2.zip",
 )
 
-# Extracted source files (all bundled in dataset/source/ for reproducibility)
+# Extracted source files (all bundled in data/source/ for reproducibility)
 SYLLABLE_TIMEBIN_30S = SOURCE_DATA_DIR / "syllable_usage_per_timebin_30s.csv"
 SYLLABLE_TIMEBIN_250MS = SOURCE_DATA_DIR / "syllable_usage_per_timebin_250ms.csv"
 BFL_SCORES_XLSX = SOURCE_DATA_DIR / "bfl_scores.xlsx"

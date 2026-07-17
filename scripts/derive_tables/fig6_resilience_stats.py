@@ -29,7 +29,7 @@ from statsmodels.stats.multitest import multipletests
 from scipy.stats import entropy
 
 REPO = Path(__file__).resolve().parents[1]
-CSV  = REPO / "dataset" / "source" / "syllable_usage_per_timebin_250ms.csv"
+CSV  = REPO / "data" / "source" / "syllable_usage_per_timebin_250ms.csv"
 OUT_DIV  = REPO / "results" / "statistical_reports" / "fig6_diversity_resilience_stats.csv"
 OUT_BOUT = REPO / "results" / "statistical_reports" / "fig6_bout_resilience_stats.csv"
 OUT_TRANS = REPO / "results" / "statistical_reports" / "fig6_transition_resilience_stats.csv"

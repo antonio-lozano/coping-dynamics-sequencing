@@ -3,8 +3,8 @@ import pandas as pd
 from pathlib import Path
 
 REPO = Path(__file__).parent.parent
-SRC  = REPO / "dataset" / "source" / "syllable_usage_per_timebin_30s.csv"
-OUT  = REPO / "dataset" / "source" / "tracking_exclusions_per_animal.csv"
+SRC  = REPO / "data" / "source" / "syllable_usage_per_timebin_30s.csv"
+OUT  = REPO / "data" / "source" / "tracking_exclusions_per_animal.csv"
 
 INACCURATE_TRACKING = {2, 4, 8, 9, 22, 31, 32, 33}
 MIX_BEHAVIORS       = {7, 13, 17}

@@ -1,8 +1,8 @@
-# Dataset (tracked curated inputs; ignore only raw re-extractions)
-dataset/source/moseq_syllables_per_frame.csv
-dataset/**/*.pkl
-dataset/**/*.parquet
-dataset/**/*.npy
+# Data (tracked curated inputs; ignore only raw re-extractions)
+data/source/moseq_syllables_per_frame.csv
+data/**/*.pkl
+data/**/*.parquet
+data/**/*.npy
 
 # Manuscript figures and curated report workbooks are tracked canonical outputs.
 

@@ -1,7 +1,7 @@
-# Dataset
+# Data
 
 All inputs needed to regenerate the data-derived manuscript figures are bundled
-under `dataset/source/` and tracked in git. The two large inputs, a per-frame
+under `data/source/` and tracked in git. The two large inputs, a per-frame
 syllable table and a results pickle, are stored gzip-compressed; pandas reads
 them transparently.
 
