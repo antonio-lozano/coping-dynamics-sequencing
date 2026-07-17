@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Jeniffer Sanguino Gómez and Antonio Lozano
 """
 Regenerate manuscript Figure 4 from the COping MoSeq analysis context.
 
@@ -36,6 +38,7 @@ from src.config import (
     FIGURE_DATA_DIR as OUTPUT_DIR,
     SYLLABLE_TIMEBIN_250MS,
 )
+from src.statistics import compute_diversity_metrics, compute_bout_duration
 
 plt.rcParams["axes.grid"] = False
 
@@ -113,7 +116,7 @@ def load_sequences() -> tuple[pd.DataFrame, dict[str, list[str]], dict[str, list
     raw["_row_order"] = np.arange(len(raw))
 
     full_sequences = {
-        str(animal): group.sort_values("time_bin")["cluster"].tolist()
+        str(animal): group["cluster"].tolist()
         for animal, group in raw.groupby("Animal", sort=False)
     }
 
@@ -468,8 +471,8 @@ def box_scatter(
     ax.yaxis.set_label_coords(BOX_LABEL_X, 0.5)
     if star:
         trans = blended_transform_factory(ax.transData, ax.transAxes)
-        ax.plot([0.18, 0.18, 0.82, 0.82], [1.035, 1.065, 1.065, 1.035], color=AXIS, linewidth=0.45, transform=trans, clip_on=False)
-        ax.text(0.5, 1.075, "*", transform=trans, ha="center", va="bottom", fontsize=7.0, color=AXIS, clip_on=False)
+        ax.plot([0.0, 0.0, 1.0, 1.0], [1.005, 1.025, 1.025, 1.005], color=AXIS, linewidth=0.45, transform=trans, clip_on=False)
+        ax.text(0.5, 1.018, "*", transform=trans, ha="center", va="bottom", fontsize=7.0, color=AXIS, clip_on=False)
     if yticks is not None:
         ax.set_yticks(yticks)
     if yfmt is not None:
@@ -506,7 +509,11 @@ def plot_cumulative(ax: plt.Axes, usage: pd.DataFrame, letter: str) -> None:
     ax.yaxis.set_label_coords(-0.11, 0.5)
     ax.set_ylim(0.4, 0.92)
     ax.set_yticks(np.arange(0.4, 1.0, 0.1))
-    ax.legend(frameon=False, fontsize=5.4, loc="lower right", ncol=2, columnspacing=0.9, handletextpad=0.35)
+    handles = [
+        plt.Line2D([0], [0], color=PALETTE[group], marker="o", markersize=2.0, linewidth=0.75, label=group)
+        for group in ["Control", "ELS"]
+    ]
+    ax.legend(handles=handles, frameon=False, fontsize=5.4, loc="lower right", ncol=2, columnspacing=0.9, handletextpad=0.35)
     style_axis(ax, labelsize=5.4)
     ax.spines[["top", "right"]].set_visible(True)
     for spine in ["top", "right"]:
@@ -589,6 +596,168 @@ def expand_axes_left(axes: list[plt.Axes], amount: float) -> None:
         ax.set_position([pos.x0 - amount, pos.y0, pos.width + amount, pos.height])
 
 
+def export_source_data(metrics: pd.DataFrame, bouts: pd.DataFrame, transitions: pd.DataFrame, output_dir: Path) -> None:
+    """Export Figure 4 source data: diversity metrics, bout durations, and transitions."""
+    import statsmodels.formula.api as smf
+
+    rows = []
+
+    # Descriptive stats: diversity metrics
+    for metric_name in ["simpson", "shannon", "evenness", "cui"]:
+        if metric_name in metrics.columns:
+            for group in ["Control", "ELS"]:
+                data = metrics[metrics["group"] == group][metric_name]
+                if len(data) > 0:
+                    rows.append({
+                        "metric_category": "diversity",
+                        "metric": metric_name,
+                        "group": group,
+                        "mean": data.mean(),
+                        "std": data.std(),
+                        "sem": data.sem(),
+                        "n": len(data),
+                    })
+
+    # Descriptive stats: bout durations (per cluster)
+    for cluster in ["Freezing", "Sniffing", "Grooming", "Turn", "Locomotion", "Climbing", "Jump"]:
+        cluster_bouts = bouts[bouts["cluster"] == cluster]
+        if not cluster_bouts.empty:
+            for group in ["Control", "ELS"]:
+                group_bouts = cluster_bouts[cluster_bouts["group"] == group]["bout_duration"]
+                if len(group_bouts) > 0:
+                    rows.append({
+                        "metric_category": "bout_duration",
+                        "metric": cluster,
+                        "group": group,
+                        "mean": group_bouts.mean(),
+                        "std": group_bouts.std(),
+                        "sem": group_bouts.sem(),
+                        "n": len(group_bouts),
+                    })
+
+    # Descriptive stats: transition metrics
+    for metric_name in ["lz", "recurrence", "determinism", "markov"]:
+        if metric_name in transitions.columns:
+            for group in ["Control", "ELS"]:
+                data = transitions[transitions["group"] == group][metric_name]
+                if len(data) > 0:
+                    rows.append({
+                        "metric_category": "transition",
+                        "metric": metric_name,
+                        "group": group,
+                        "mean": data.mean(),
+                        "std": data.std(),
+                        "sem": data.sem(),
+                        "n": len(data),
+                    })
+
+    df = pd.DataFrame(rows)
+    if not df.empty:
+        output_csv = output_dir / "source_data_figure4.csv"
+        df.to_csv(output_csv, index=False)
+        print(f"Saved: {output_csv}")
+
+    # --- MixedLM for diversity metrics (default optimizer, no seed) ---
+    # No start_params seed: the plain MixedLM fit is reported. beta is seed-independent;
+    # SE/z/p are the default-optimizer values (no-seed finalization).
+    DIVERSITY_METRICS = ["simpson", "shannon", "evenness", "cui"]
+    div_rows: list[dict] = []
+    for metric_name in DIVERSITY_METRICS:
+        if metric_name not in metrics.columns:
+            continue
+        sub = metrics.dropna(subset=[metric_name]).copy()
+        sub["Condition"] = pd.Categorical(sub["group"], categories=["Control", "ELS"])
+        formula = f"{metric_name} ~ Condition + Experiment"
+        try:
+            model = smf.mixedlm(formula, sub, groups=sub["Animal"]).fit(reml=False)
+            pk = "Condition[T.ELS]"
+            conf = model.conf_int()
+            div_rows.append({
+                "metric": metric_name,
+                "parameter": pk,
+                "coef": float(model.params[pk]),
+                "se": float(model.bse[pk]),
+                "z": float(model.tvalues[pk]),
+                "p_value": float(model.pvalues[pk]),
+                "ci_low": float(conf.loc[pk, 0]),
+                "ci_high": float(conf.loc[pk, 1]),
+                "n_obs": int(model.nobs),
+            })
+        except Exception as e:
+            print(f"MixedLM failed for {metric_name}: {e}")
+    if div_rows:
+        path = output_dir / "stats_figure4_diversity_MixedLM.csv"
+        pd.DataFrame(div_rows).to_csv(path, index=False)
+        print(f"Saved: {path}")
+
+    # --- MixedLM for bout durations (mean per animal per cluster) ---
+    BOUT_CLUSTERS = ["Freezing", "Sniffing", "Grooming", "Turn", "Locomotion", "Climbing", "Jump"]
+    mean_bouts = (
+        bouts[bouts["cluster"].isin(BOUT_CLUSTERS)]
+        .groupby(["Animal", "group", "Experiment", "cluster"], as_index=False)["bout_duration"]
+        .mean()
+    )
+    mean_bouts["Condition"] = pd.Categorical(mean_bouts["group"], categories=["Control", "ELS"])
+    bout_rows: list[dict] = []
+    for cluster in BOUT_CLUSTERS:
+        sub = mean_bouts[mean_bouts["cluster"] == cluster].dropna(subset=["bout_duration"]).copy()
+        if sub.empty:
+            continue
+        formula = "bout_duration ~ Condition + Experiment"
+        try:
+            model = smf.mixedlm(formula, sub, groups=sub["Animal"]).fit(reml=False)
+            pk = "Condition[T.ELS]"
+            conf = model.conf_int()
+            bout_rows.append({
+                "cluster": cluster,
+                "parameter": pk,
+                "coef": float(model.params[pk]),
+                "se": float(model.bse[pk]),
+                "z": float(model.tvalues[pk]),
+                "p_value": float(model.pvalues[pk]),
+                "ci_low": float(conf.loc[pk, 0]),
+                "ci_high": float(conf.loc[pk, 1]),
+                "n_obs": int(model.nobs),
+            })
+        except Exception as e:
+            print(f"MixedLM failed for {cluster} bouts: {e}")
+    if bout_rows:
+        path = output_dir / "stats_figure4_bouts_MixedLM.csv"
+        pd.DataFrame(bout_rows).to_csv(path, index=False)
+        print(f"Saved: {path}")
+
+    # --- MixedLM for transition metrics ---
+    TRANSITION_METRICS = ["lz", "recurrence", "determinism", "markov"]
+    trans_rows: list[dict] = []
+    for metric_name in TRANSITION_METRICS:
+        if metric_name not in transitions.columns:
+            continue
+        sub = transitions.dropna(subset=[metric_name]).copy()
+        sub["Condition"] = pd.Categorical(sub["group"], categories=["Control", "ELS"])
+        formula = f"{metric_name} ~ Condition + Experiment"
+        try:
+            model = smf.mixedlm(formula, sub, groups=sub["Animal"]).fit(reml=False)
+            pk = "Condition[T.ELS]"
+            conf = model.conf_int()
+            trans_rows.append({
+                "metric": metric_name,
+                "parameter": pk,
+                "coef": float(model.params[pk]),
+                "se": float(model.bse[pk]),
+                "z": float(model.tvalues[pk]),
+                "p_value": float(model.pvalues[pk]),
+                "ci_low": float(conf.loc[pk, 0]),
+                "ci_high": float(conf.loc[pk, 1]),
+                "n_obs": int(model.nobs),
+            })
+        except Exception as e:
+            print(f"MixedLM failed for {metric_name}: {e}")
+    if trans_rows:
+        path = output_dir / "stats_figure4_transition_MixedLM.csv"
+        pd.DataFrame(trans_rows).to_csv(path, index=False)
+        print(f"Saved: {path}")
+
+
 def main() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     pred, pred_sequences, full_sequences, meta = load_sequences()
@@ -629,10 +798,10 @@ def main() -> None:
     axF = fig.add_subplot(freq_grid[0, 1]); box_axes.append(axF)
     axG = fig.add_subplot(freq_grid[1, 0]); box_axes.append(axG)
     axH = fig.add_subplot(freq_grid[1, 1]); box_axes.append(axH)
-    box_scatter(axE, metrics, "simpson", "Simpson index", "E", (0.58, 0.80), yticks=[0.60, 0.65, 0.70, 0.75, 0.80], yfmt="%.2f", star=True)
+    box_scatter(axE, metrics, "simpson", "Simpson index", "E", (0.58, 0.80), yticks=[0.60, 0.65, 0.70, 0.75, 0.80], yfmt="%.2f", star=False)
     box_scatter(axF, metrics, "shannon", "Shannon entropy index", "F", (1.20, 1.65), yticks=np.arange(1.20, 1.66, 0.05).round(2).tolist(), yfmt="%.2f")
     box_scatter(axG, metrics, "evenness", "Evenness index", "G", (0.58, 0.85), yticks=[0.60, 0.65, 0.70, 0.75, 0.80, 0.85], yfmt="%.2f")
-    box_scatter(axH, metrics, "cui", "Cumulative usage index", "H", (-0.25, 0.60), yticks=np.arange(-0.2, 0.61, 0.1).round(1).tolist(), yfmt="%.1f")
+    box_scatter(axH, metrics, "cui", "Cumulative usage index", "H", (-0.25, 0.60), yticks=np.arange(-0.2, 0.61, 0.1).round(1).tolist(), yfmt="%.1f", star=True)
     axI = fig.add_subplot(gs[2, 5:10])
     plot_cumulative(axI, usage, "I")
     shift_axes([axI], dx=0.016)
@@ -649,11 +818,13 @@ def main() -> None:
     )
     for ax_i, (label, data, ylim, yticks, yfmt, star) in enumerate(
         [
-            ("Overall", overall, (0, 2.0), [0, 0.5, 1.0, 1.5, 2.0], "%.1f", True),
+            # star flags reflect no-seed stats_figure4_bouts_MixedLM.csv (BH-FDR across 7 clusters):
+            # Freezing BH=0.016, Sniffing BH=0.026, Turn BH=0.016 -> significant; others n.s.
+            ("Overall", overall, (0, 2.0), [0, 0.5, 1.0, 1.5, 2.0], "%.1f", False),
             ("Freeze", cluster_means[cluster_means["cluster"] == "Freezing"], (0, 2.0), [0, 0.5, 1.0, 1.5, 2.0], "%.1f", True),
-            ("Sniff", cluster_means[cluster_means["cluster"] == "Sniffing"], (0, 4.0), [0, 1, 2, 3, 4], "%.0f", False),
-            ("Groom", cluster_means[cluster_means["cluster"] == "Grooming"], (0, 0.6), [0, 0.2, 0.4, 0.6], "%.1f", True),
-            ("Turn", cluster_means[cluster_means["cluster"] == "Turn"], (0, 2.5), [0, 0.5, 1.0, 1.5, 2.0, 2.5], "%.1f", False),
+            ("Sniff", cluster_means[cluster_means["cluster"] == "Sniffing"], (0, 4.0), [0, 1, 2, 3, 4], "%.0f", True),
+            ("Groom", cluster_means[cluster_means["cluster"] == "Grooming"], (0, 0.6), [0, 0.2, 0.4, 0.6], "%.1f", False),
+            ("Turn", cluster_means[cluster_means["cluster"] == "Turn"], (0, 2.5), [0, 0.5, 1.0, 1.5, 2.0, 2.5], "%.1f", True),
             ("Locomotion", cluster_means[cluster_means["cluster"] == "Locomotion"], (0, 0.85), [0, 0.2, 0.4, 0.6, 0.8], "%.1f", False),
             ("Climb", cluster_means[cluster_means["cluster"] == "Climbing"], (0, 2.0), [0, 0.5, 1.0, 1.5, 2.0], "%.1f", False),
             ("Jump", cluster_means[cluster_means["cluster"] == "Jump"], (0, 1.25), [0, 0.25, 0.50, 0.75, 1.00, 1.25], "%.2f", False),
@@ -676,9 +847,9 @@ def main() -> None:
     axV = fig.add_subplot(metric_grid[1, 0]); box_axes.append(axV)
     axW = fig.add_subplot(metric_grid[1, 1]); box_axes.append(axW)
     box_scatter(axT, transitions, "lz", "Lempel-Ziv complexity", "T", (100, 260), yticks=list(range(100, 261, 20)), yfmt="%.0f")
-    box_scatter(axU, transitions, "recurrence", "Recurrence Rate", "U", (0.24, 0.43), yticks=[0.250, 0.275, 0.300, 0.325, 0.350, 0.375, 0.400, 0.430], yfmt="%.3f", star=True)
+    box_scatter(axU, transitions, "recurrence", "Recurrence Rate", "U", (0.24, 0.43), yticks=[0.250, 0.275, 0.300, 0.325, 0.350, 0.375, 0.400, 0.430], yfmt="%.3f", star=False)
     box_scatter(axV, transitions, "determinism", "Determinism", "V", (0.72, 0.90), yticks=np.arange(0.700, 0.901, 0.025).round(3).tolist(), yfmt="%.3f", star=True)
-    box_scatter(axW, transitions, "markov", "Markov Entropy", "W", (0.7, 1.5), yticks=np.arange(0.7, 1.51, 0.1).round(1).tolist(), yfmt="%.1f", star=True)
+    box_scatter(axW, transitions, "markov", "Markov Entropy", "W", (0.7, 1.5), yticks=np.arange(0.7, 1.51, 0.1).round(1).tolist(), yfmt="%.1f", star=False)
 
     equalize_boxplot_heights(box_axes)
 
@@ -698,6 +869,10 @@ def main() -> None:
     print(f"Saved {png}")
     print(f"Saved {LEGACY_FIGURES_DIR / 'figure4.pdf'}")
     print(f"Representative Control: {ctrl_rep}; ELS: {els_rep}")
+
+    # Export source data
+    print("Computing Figure 4 source statistics...")
+    export_source_data(metrics, bouts, transitions, OUTPUT_DIR)
 
 
 if __name__ == "__main__":
