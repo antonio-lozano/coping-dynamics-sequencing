@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2026 Jeniffer Sanguino Gómez and Antonio Lozano
+# Copyright (c) 2026 Jeniffer Sanguino Gomez and Antonio Lozano
 """Centralized path configuration for coping-dynamics-sequencing.
 
 The repository separates immutable inputs from generated artifacts:
@@ -10,45 +10,36 @@ The repository separates immutable inputs from generated artifacts:
 - results/statistics: statistical model outputs
 - results/intermediate: helper tables and non-canonical renders
 """
-import os
 from pathlib import Path
+import os
 
 
-def _first_existing(candidates, fallback):
-    """Return first existing path from candidates, or fallback if none exist."""
-    for candidate in candidates:
-        if not candidate:
-            continue
-        path = Path(candidate)
-        if path.exists():
-            return path
-    return Path(fallback)
+def _env_path(name: str, default: Path) -> Path:
+    value = os.getenv(name)
+    return Path(value) if value else default
 
-# Project root (defaults to repo root); override with COPING_DYNAMICS_ROOT
-PROJECT_ROOT = Path(os.getenv("COPING_DYNAMICS_ROOT", Path(__file__).resolve().parents[1]))
+# Project root defaults to this repository root.
+PROJECT_ROOT = _env_path("COPING_DYNAMICS_ROOT", Path(__file__).resolve().parents[1])
 
-# Data directory; override with COPING_DYNAMICS_DATA
-DATA_DIR = Path(os.getenv("COPING_DYNAMICS_DATA", PROJECT_ROOT / "data"))
-RAW_DATA_DIR = Path(os.getenv("COPING_DYNAMICS_RAW_DIR", DATA_DIR / "raw"))
-DERIVED_DATA_DIR = Path(os.getenv("COPING_DYNAMICS_DERIVED_DIR", DATA_DIR / "derived"))
+DATA_DIR = _env_path("COPING_DYNAMICS_DATA", PROJECT_ROOT / "data")
+RAW_DATA_DIR = _env_path("COPING_DYNAMICS_RAW_DIR", DATA_DIR / "raw")
+DERIVED_DATA_DIR = _env_path("COPING_DYNAMICS_DERIVED_DIR", DATA_DIR / "derived")
 
-# Freezing predictions directory; override with COPING_DYNAMICS_FREEZING_DIR
-# (Bundled in data/raw/freezing_predictions/ for self-contained operation)
-FREEZING_DIR = Path(os.getenv("COPING_DYNAMICS_FREEZING_DIR", RAW_DATA_DIR / "freezing_predictions"))
+FREEZING_DIR = _env_path("COPING_DYNAMICS_FREEZING_DIR", RAW_DATA_DIR / "freezing_predictions")
 
-# Optional external directories (for reproducibility extensions, not required)
-DLC_DIR = Path(os.getenv("COPING_DYNAMICS_DLC_DIR", DATA_DIR / "CSVs_all"))
-PROCESSED_DIR = Path(os.getenv("COPING_DYNAMICS_PROCESSED_DIR", DATA_DIR / "processed"))
-METADATA_DIR = Path(os.getenv("COPING_DYNAMICS_METADATA_DIR", DATA_DIR / "metadata"))
+# Optional development directories (not required for repository reproduction)
+DLC_DIR = _env_path("COPING_DYNAMICS_DLC_DIR", DATA_DIR / "CSVs_all")
+PROCESSED_DIR = _env_path("COPING_DYNAMICS_PROCESSED_DIR", DATA_DIR / "processed")
+METADATA_DIR = _env_path("COPING_DYNAMICS_METADATA_DIR", DATA_DIR / "metadata")
 
 # Processed data artifacts (optional)
-RESULTS_CLUSTERS_PKL = Path(os.getenv("COPING_DYNAMICS_RESULTS_CLUSTERS_PKL", PROCESSED_DIR / "new_results_clusters.pkl"))
-RESULTS_RAW_PKL = Path(os.getenv("COPING_DYNAMICS_RESULTS_RAW_PKL", PROCESSED_DIR / "new_results.pkl"))
-POSE_FEATURES_PARQUET = Path(os.getenv("COPING_DYNAMICS_POSE_FEATURES_PARQUET", PROCESSED_DIR / "pose_features_with_clusters.parquet"))
+RESULTS_CLUSTERS_PKL = _env_path("COPING_DYNAMICS_RESULTS_CLUSTERS_PKL", PROCESSED_DIR / "new_results_clusters.pkl")
+RESULTS_RAW_PKL = _env_path("COPING_DYNAMICS_RESULTS_RAW_PKL", PROCESSED_DIR / "new_results.pkl")
+POSE_FEATURES_PARQUET = _env_path("COPING_DYNAMICS_POSE_FEATURES_PARQUET", PROCESSED_DIR / "pose_features_with_clusters.parquet")
 
 # Metadata
-INDEX_CSV = Path(os.getenv("COPING_DYNAMICS_INDEX_CSV", DATA_DIR / "index.csv"))
-CONFIG_YML = Path(os.getenv("COPING_DYNAMICS_CONFIG_YML", METADATA_DIR / "config.yml"))
+INDEX_CSV = _env_path("COPING_DYNAMICS_INDEX_CSV", DATA_DIR / "index.csv")
+CONFIG_YML = _env_path("COPING_DYNAMICS_CONFIG_YML", METADATA_DIR / "config.yml")
 
 # Outputs
 FIGURES_DIR = PROJECT_ROOT / "figures"
@@ -60,26 +51,8 @@ RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 # ==============================================================================
 # Manuscript figure source data
 # ==============================================================================
-# Extracted source files live under data/raw/ (all figures are self-contained
-# and do not require external data). Original archives are searched in Downloads
-# as a fallback only. Override with:
-#   COPING_DYNAMICS_RAW_DIR     (tracked raw input directory)
-#   COPING_DYNAMICS_SOURCE_DIR  (legacy alias for tracked raw input directory)
-#   COPING_DYNAMICS_DOWNLOADS   (downloads directory for archives)
-#   COPING_DATA_ZIP, COPING_DATA2_ZIP  (specific archive locations)
-#   COPING_DYNAMICS_CLUSTER_JSON  (optional hand-curated cluster map)
-SOURCE_DATA_DIR = Path(os.getenv("COPING_DYNAMICS_SOURCE_DIR", RAW_DATA_DIR))
-
-_downloads_dir = Path(os.getenv("COPING_DYNAMICS_DOWNLOADS", Path.home() / "Downloads"))
-
-COPING_DATA_ZIP = _first_existing(
-    [os.getenv("COPING_DATA_ZIP"), _downloads_dir / "Coping_data.zip"],
-    _downloads_dir / "Coping_data.zip",
-)
-COPING_DATA2_ZIP = _first_existing(
-    [os.getenv("COPING_DATA2_ZIP"), _downloads_dir / "Coping_data2.zip"],
-    _downloads_dir / "Coping_data2.zip",
-)
+# Source files live under data/raw/ for self-contained operation.
+SOURCE_DATA_DIR = _env_path("COPING_DYNAMICS_SOURCE_DIR", RAW_DATA_DIR)
 
 # Raw input files (all bundled in data/raw/ for reproducibility)
 SYLLABLE_TIMEBIN_30S = SOURCE_DATA_DIR / "syllable_usage_per_timebin_30s.csv"
@@ -95,17 +68,8 @@ S0S28_TIMECOURSE_CSV = DERIVED_DATA_DIR / "s0s28_timecourse_per_animal.csv"
 TRACKING_EXCLUSIONS_CSV = DERIVED_DATA_DIR / "tracking_exclusions_per_animal.csv"
 SUPPLEMENTARY_TRACKING_CSV = DERIVED_DATA_DIR / "supplementary_figure1_tracking_clusters.csv"
 
-# Optional hand-curated syllable→cluster JSON; scripts fall back to built-in maps.
-CLUSTER_JSON = _first_existing(
-    [os.getenv("COPING_DYNAMICS_CLUSTER_JSON"), SOURCE_DATA_DIR / "Behavioral_clusters.json"],
-    SOURCE_DATA_DIR / "Behavioral_clusters.json",
-)
-
-# Archive member paths (used when reading directly from the zips).
-COPING2_MEMBER_TIMEBIN_30S = "COping/Syllable_per_timebin_final(30s).csv"
-COPING2_MEMBER_TIMEBIN_250MS = "COping/Syllable_per_timebin_final(250ms).csv"
-COPING2_MEMBER_UPDATED_RESULTS = "COping/updated_results.pkl"
-COPING_MEMBER_BFL_SCORES = "CSVs/BFL_scores.xlsx"
+# Optional hand-curated syllable-to-cluster JSON; scripts fall back to built-in maps.
+CLUSTER_JSON = _env_path("COPING_DYNAMICS_CLUSTER_JSON", SOURCE_DATA_DIR / "Behavioral_clusters.json")
 
 # Supporting outputs (kept out of figures/).
 RESULTS_SOURCE_DATA_DIR = RESULTS_DIR / "source_data"

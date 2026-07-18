@@ -1,132 +1,124 @@
 # Coping Dynamics Sequencing
 
-Reproducible manuscript figures for unsupervised behavioral motif discovery in
-stress coping dynamics. This repository regenerates the data-derived manuscript
-figures from keypoint-MoSeq syllable data and supervised freezing predictions.
+Reproducible manuscript package for behavioral motif and stress-coping dynamics
+analyses from keypoint-MoSeq syllable data and supervised freezing predictions.
+The repository is self-contained: all inputs needed for the data-derived
+figures, statistics, workbooks, and audit tables are tracked in the repository.
 
-## Setup
+## Quick Start
 
-For an exact locked environment with `uv`:
+Use the locked `uv` environment when possible:
 
 ```bash
 uv sync
 uv run python scripts/check_reproducibility.py
 ```
 
-Using conda:
+Conda and pip entry points are also provided:
 
 ```bash
 conda env create -f environment.yml
 conda activate coping-dynamics
 ```
 
-Using pip:
-
 ```bash
-python --version  # use Python 3.9, 3.10, or 3.11
+python --version  # Python 3.9, 3.10, or 3.11
 pip install -r requirements.txt
 ```
 
-All immutable figure inputs are bundled under `data/raw/`; generated
-analysis-ready tables live under `data/derived/` (see `data/README.md`), so the
-data-derived figures regenerate out of the box.
+## Rebuild The Package
 
-## Reproducibility Check
-
-Before rerunning analyses, verify that the repository has all required data,
-figures, reports, intermediate CSVs, and checksums:
-
-```bash
-python scripts/check_reproducibility.py
-```
-
-## Running Figures
-
-Run scripts from the repo root. Each script writes the clean manuscript figure
-to `figures/`. Source-data CSVs go to `results/source_data/`, statistical
-outputs go to `results/statistics/`, and helper tables/renders go to
-`results/intermediate/`.
-
-| Manuscript figure | Script |
-| --- | --- |
-| Figure 2 - Validation (keypoint-MoSeq) | `scripts/generate_figures/figure_2_validation.py` |
-| Figure 3 - Behavior clusters over time | `scripts/generate_figures/figure_3_behavior_clusters.py` |
-| Figure 4 - Diversity dynamics | `scripts/generate_figures/figure_4_diversity_dynamics.py` |
-| Figure 5 - Resilience dynamics | `scripts/generate_figures/figure_5_resilience_dynamics.py` |
-| Figure 6 - Resilience diversity | `scripts/generate_figures/figure_6_resilience_diversity.py` |
-| Supplementary Figure 1 - Tracking clusters | `scripts/generate_figures/supplementary_figure_1_tracking_clusters.py` |
-| Supplementary Figure 3 - Distance metrics | `scripts/generate_figures/supplementary_figure_3_distances.py` |
-
-Regenerate all data-derived figures:
-
-```bash
-python scripts/run_all_figures.py
-```
-
-Regenerate the full manuscript reproducibility package from tracked inputs:
+Run commands from the repository root.
 
 ```bash
 python scripts/run_all.py
 ```
 
-The full rebuild prints task-level progress by default; add `--verbose` to
-stream each child script's model output.
+This rebuilds compact raw freezing-prediction companions, derived tables,
+figures, workbooks, `MANIFEST.csv`, and the reproducibility checks. The command
+prints concise task-level progress by default; add `--verbose` for detailed
+child-script output. Use `--skip-figures` to rebuild tables, reports, manifest,
+and checks without re-rendering the figure panels.
 
-Figure 1 is a hand-made schematic with no repo generator. Figure 7 is supplied
-as a canonical assembled manuscript figure in `figures/`.
-
-## Project Structure
-
-```text
-|-- data/
-|   |-- raw/                # Immutable bundled inputs
-|   `-- derived/            # Tables generated from data/raw
-|-- docs/                   # Figure provenance / replication notes
-|-- figures/                # Canonical manuscript figures
-|-- report/                 # Styled statistical workbook
-|-- results/
-|   |-- source_data/        # Figure source-data CSVs
-|   |-- statistics/         # Model/statistical CSVs and manuscript text audit
-|   |-- intermediate/       # Helper tables and non-canonical renders
-|   `-- models/             # Trained model artifacts
-|-- scripts/
-|   |-- generate_figures/   # Data-derived figure generators
-|   |-- derive_tables/      # Rebuild committed source/statistical tables
-|   |-- build_raw_data_workbook.py
-|   |-- build_statistical_report.py
-|   |-- run_all_figures.py
-|   `-- run_all.py
-|-- src/                    # Shared analysis, plotting, and config code
-|-- environment.yml
-|-- requirements.txt
-`-- README.md
-```
-
-## Data And Reports
-
-All required figure inputs are self-contained in `data/raw/`. The large
-per-frame syllable table and results pickle are gzip-compressed. Generated
-analysis-ready inputs are committed under `data/derived/` and can be rebuilt
-with `scripts/derive_tables/`.
-
-The statistical report workbook is `report/statistical_report.xlsx`. Rebuild it
-with:
+Figure-only rebuild:
 
 ```bash
-python scripts/build_statistical_report.py
+python scripts/run_all_figures.py
 ```
 
-Figure 4 uses the default MixedLM analysis implemented in the figure generator
-and mirrored in the final statistical report.
+Validation-only check:
 
-Manuscript-facing workbook outputs are:
+```bash
+python scripts/check_reproducibility.py
+```
 
-- `report/raw_data.xlsx`
-- `report/statistical_report.xlsx`
+## Repository Contents
 
-See `REPRODUCIBILITY.md`, `DATA_AVAILABILITY.md`, and `CODE_AVAILABILITY.md`
-for publication and repository-release notes.
+```text
+data/raw/                 Immutable analysis inputs bundled with the repo
+data/derived/             Analysis-ready tables rebuilt from data/raw
+docs/                     Repository layout, data dictionary, and provenance notes
+figures/                  Canonical manuscript figure exports
+report/                   Manuscript raw-data and statistical workbooks
+results/source_data/      Figure source-data CSVs
+results/statistics/       Statistical CSV outputs and Results text audit
+results/intermediate/     Helper tables and non-canonical figure renders
+results/models/           Tracked model artifacts used by the classifier entry point
+scripts/                  Rebuild, validation, figure, and derived-table scripts
+src/                      Shared analysis, plotting, statistics, and config code
+```
 
-## License
+Additional documentation:
 
-See `LICENSE`.
+- `docs/REPOSITORY_LAYOUT.md` describes the directory contract.
+- `docs/DATA_DICTIONARY.md` lists the tracked data and generated artifacts.
+- `REPRODUCIBILITY.md` gives the exact rebuild and validation workflow.
+- `DATA_AVAILABILITY.md` and `CODE_AVAILABILITY.md` provide manuscript-facing
+  availability language.
+
+## Data Model
+
+Raw inputs are kept in `data/raw/`. Generated analysis-ready tables are kept in
+`data/derived/`. Figure source-data tables, statistical outputs, helper tables,
+and model artifacts are kept under `results/`.
+
+The raw freezing predictions are included in two forms:
+
+- `data/raw/freezing_predictions/`: original per-animal prediction CSVs.
+- `data/raw/freezing_predictions_light.csv.gz`: compact long-format companion
+  built from those per-animal files.
+- `data/raw/freezing_predictions_index.csv`: file-level index with frame counts,
+  freezing fractions, byte sizes, and SHA-256 checksums.
+
+## Figure Scripts
+
+| Manuscript figure | Script |
+| --- | --- |
+| Figure 2, validation | `scripts/generate_figures/figure_2_validation.py` |
+| Figure 3, behavior clusters over time | `scripts/generate_figures/figure_3_behavior_clusters.py` |
+| Figure 4, diversity dynamics | `scripts/generate_figures/figure_4_diversity_dynamics.py` |
+| Figure 5, resilience dynamics | `scripts/generate_figures/figure_5_resilience_dynamics.py` |
+| Figure 6, resilience diversity | `scripts/generate_figures/figure_6_resilience_diversity.py` |
+| Supplementary Figure 1, tracking clusters | `scripts/generate_figures/supplementary_figure_1_tracking_clusters.py` |
+| Supplementary Figure 3, distance metrics | `scripts/generate_figures/supplementary_figure_3_distances.py` |
+
+Figure 1 is a hand-made schematic. Figure 7 is supplied as a canonical assembled
+manuscript figure in `figures/`; the associated classifier model is tracked in
+`results/models/behavior_classifier/`.
+
+## Quality Controls
+
+- `MANIFEST.csv` records byte sizes and SHA-256 hashes for tracked publication
+  artifacts.
+- `.github/workflows/reproducibility.yml` compiles Python files and runs the
+  reproducibility check on GitHub.
+- `scripts/check_reproducibility.py` verifies required files, expected figure
+  exports, freezing-prediction file count, artifact layout, absence of common
+  scratch files, absence of machine-local absolute paths in text files, and
+  manifest hashes.
+- All configured default paths resolve inside the repository. External paths are
+  only used if explicitly supplied through environment variables.
+
+## Citation And License
+
+Use `CITATION.cff` for software citation metadata. See `LICENSE` for licensing.

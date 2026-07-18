@@ -1,24 +1,25 @@
 # Data Availability
 
-All data required to reproduce the data-derived manuscript figures are included
-in this repository under `data/raw/`. Generated analysis-ready tables derived
-from those inputs are tracked under `data/derived/`.
+All data required to reproduce the data-derived manuscript figures and
+statistical outputs are included in this repository.
 
-The tracked source data include:
+Raw inputs are under `data/raw/` and include keypoint-MoSeq syllable usage
+tables, per-frame MoSeq syllable assignments, supervised freezing predictions,
+behavioral group metadata, BFL scores, validation support tables, and compressed
+MoSeq result objects used by downstream dynamics analyses.
 
-- keypoint-MoSeq syllable usage tables at 30 s and 250 ms resolution
-- per-frame MoSeq syllable assignments
-- supervised freezing predictions
-- behavioral group metadata
-- BFL score table
-- exported validation/supporting source tables
-- compressed keypoint-MoSeq result objects used by downstream analyses
+The freezing predictions are provided as original per-animal CSVs in
+`data/raw/freezing_predictions/`, together with:
 
-Manuscript-facing workbooks are included under `report/`:
+- `data/raw/freezing_predictions_index.csv`
+- `data/raw/freezing_predictions_light.csv.gz`
+
+Generated analysis-ready tables are under `data/derived/`. Figure source-data
+tables, statistical outputs, helper tables, and model artifacts are under
+`results/`. Manuscript-facing workbooks are:
 
 - `report/raw_data.xlsx`
 - `report/statistical_report.xlsx`
 
-For a journal submission or public release, archive this repository on a stable
-repository service such as Zenodo, Figshare, Dryad, or OSF. Once archived, cite
-the repository DOI in the manuscript data availability statement.
+For public release, archive the repository on a persistent platform such as
+Zenodo, Figshare, Dryad, or OSF and cite the archive DOI in the manuscript.

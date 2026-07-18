@@ -1,102 +1,115 @@
-# Reproducibility Guide
+# Reproducibility
 
-This repository is organized as a self-contained manuscript-reproducibility
-package. All data required for the data-derived figures are tracked under
-`data/raw/`; generated analysis-ready tables are tracked under `data/derived/`;
-source-data CSVs, statistics, intermediate helper files, and model artifacts are
-tracked under `results/`; manuscript-facing workbooks are tracked under
-`report/`.
+This repository is intended to run from a clean clone without external data
+downloads. All default paths resolve inside the repository, and all data-derived
+figures and reports are rebuilt from tracked inputs.
 
-## Quick Check
+## Environment
 
-Run the lightweight repository check first:
+Recommended:
+
+```bash
+uv sync
+```
+
+Alternative environments:
+
+```bash
+conda env create -f environment.yml
+conda activate coping-dynamics
+```
+
+```bash
+python --version  # Python 3.9, 3.10, or 3.11
+pip install -r requirements.txt
+```
+
+## Minimum Validation
+
+Run:
 
 ```bash
 python scripts/check_reproducibility.py
 ```
 
-This verifies required files, expected figure exports, intermediate CSVs,
-freezing-prediction file count, absence of common scratch artifacts, absence of
-machine-local absolute paths in text files, and `MANIFEST.csv` checksums.
+The check verifies:
 
-Use Python 3.9, 3.10, or 3.11 for the analysis environment. The conda
-environment pins Python 3.9; the GitHub Actions workflow uses Python 3.11. For
-an exact locked dependency resolution, use `uv sync` with the tracked
-`uv.lock`.
+- required data, figures, reports, scripts, and documentation files
+- exactly 98 raw per-animal freezing prediction CSVs
+- presence of the compact freezing prediction index and light table
+- absence of retired scratch/layout paths
+- absence of common local absolute paths in text files
+- `MANIFEST.csv` byte sizes and SHA-256 hashes
 
-## Rebuild Figures
+The same check runs in `.github/workflows/reproducibility.yml`.
 
-Install dependencies, then run:
+## Full Rebuild
 
-```bash
-python scripts/run_all_figures.py
-```
-
-This regenerates the data-derived figures in `figures/`, source-data CSVs in
-`results/source_data/`, statistics in `results/statistics/`, and helper
-tables/renders in `results/intermediate/`. Figure 1 is a hand-made schematic
-and Figure 7 is a supplied assembled manuscript figure; both are tracked as
-canonical exports in `figures/`.
-
-To rebuild the full package from tracked inputs, including derived tables,
-figures, workbooks, manifest, and checks:
+Run:
 
 ```bash
 python scripts/run_all.py
 ```
 
-The full rebuild is concise by default. Add `--verbose` to stream the detailed
-model output from each child script.
+This executes, in order:
 
-## Rebuild Statistical Report
+1. Build compact freezing prediction companions in `data/raw/`.
+2. Rebuild derived tables in `data/derived/`.
+3. Rebuild Figure 6 statistical tables.
+4. Re-render data-derived manuscript figures.
+5. Rebuild `report/raw_data.xlsx`.
+6. Rebuild `report/statistical_report.xlsx`.
+7. Update `MANIFEST.csv`.
+8. Run `scripts/check_reproducibility.py`.
+
+The command is concise by default. Add `--verbose` to stream child-script
+output. Add `--skip-figures` to rebuild tables, workbooks, manifest, and checks
+without re-rendering figures.
+
+## Targeted Rebuilds
+
+Figures only:
 
 ```bash
-python scripts/build_statistical_report.py
+python scripts/run_all_figures.py
 ```
 
-The statistical report is `report/statistical_report.xlsx`. The manuscript raw
-data workbook is `report/raw_data.xlsx`.
-
-## Rebuild Derived Tables
-
-Utility scripts in `scripts/derive_tables/` rebuild committed intermediate
-tables from the bundled source data:
+Derived tables:
 
 ```bash
+python scripts/derive_tables/freezing_predictions_light.py
 python scripts/derive_tables/cluster_tables.py
 python scripts/derive_tables/tracking_exclusions.py
 python scripts/derive_tables/fig6_resilience_stats.py
 ```
 
-The raw-data workbook can be rebuilt with:
+Reports:
 
 ```bash
 python scripts/build_raw_data_workbook.py
+python scripts/build_statistical_report.py
 ```
 
-## Update Manifest
-
-After intentionally changing tracked data, figures, reports, or results:
+Manifest:
 
 ```bash
 python scripts/update_manifest.py
 python scripts/check_reproducibility.py
 ```
 
-Commit the updated `MANIFEST.csv` with the changed artifacts.
+## Figure Notes
 
-## Expected Repository Controls
+Figures 2-6, Supplementary Figure 1, and Supplementary Figure 3 are generated
+from tracked data. Figure 1 is a hand-made schematic. Figure 7 is tracked as a
+canonical assembled manuscript figure in `figures/`; the associated classifier
+model is tracked in `results/models/behavior_classifier/`.
 
-- All required input data are tracked under `data/raw/`.
-- Generated analysis-ready data are tracked under `data/derived/`.
-- Manuscript figures are tracked under `figures/`.
-- Figure source-data CSVs are tracked under `results/source_data/`.
-- Statistical outputs and manuscript Results text audit are tracked under
-  `results/statistics/`.
-- Helper tables and non-canonical renders are tracked under
-  `results/intermediate/`.
-- Trained model artifacts are tracked under `results/models/`.
-- Manuscript raw-data and statistical workbooks are tracked under `report/`.
-- `MANIFEST.csv` records byte sizes and SHA-256 hashes for publication
-  artifacts.
-- `.github/workflows/reproducibility.yml` runs the lightweight checks on GitHub.
+## Expected Repository State
+
+A publication-ready state should satisfy:
+
+- `git status --short` is clean after committed rebuilds.
+- `python scripts/check_reproducibility.py` passes.
+- `git diff --check` reports no whitespace errors.
+- No default path points to a user-specific directory.
+- `MANIFEST.csv` is committed with the artifacts it describes.

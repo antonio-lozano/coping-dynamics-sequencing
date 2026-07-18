@@ -41,7 +41,7 @@ python scripts\train_behavior_classifier.py train
 
 Outputs:
 
-- `results/behavior_classifier/fig7_behavior_xgb.joblib`
+- `results/models/behavior_classifier/fig7_behavior_xgb.joblib`
 - `results/intermediate/tables/fig7_behavior_classifier_cv_metrics.csv`
 - `results/intermediate/tables/fig7_behavior_classifier_confusion_matrix.csv`
 
@@ -54,14 +54,14 @@ CSVs must contain `frame_index` plus either `syllable` or `behavior_label`.
 python scripts\train_behavior_classifier.py train-from-dlc `
   --dlc-dir path\to\filtered_dlc_tracks `
   --labels-dir path\to\frame_labels `
-  --model results\behavior_classifier\fig7_behavior_xgb.joblib
+  --model results\models\behavior_classifier\fig7_behavior_xgb.joblib
 ```
 
 ## Predict
 
 ```powershell
 python scripts\train_behavior_classifier.py predict `
-  --model results\behavior_classifier\fig7_behavior_xgb.joblib `
+  --model results\models\behavior_classifier\fig7_behavior_xgb.joblib `
   --output results\intermediate\tables\fig7_behavior_classifier_predictions.csv
 ```
 
@@ -74,8 +74,8 @@ tracks into the Fig. 7/SHAP-style pose summaries, then predict behaviors.
 python scripts\train_behavior_classifier.py run-from-raw `
   --video path\to\video.mp4 `
   --dlc-config path\to\dlc_config.yaml `
-  --model results\behavior_classifier\fig7_behavior_xgb.joblib `
-  --output-root results\behavior_classifier\example_video
+  --model results\models\behavior_classifier\fig7_behavior_xgb.joblib `
+  --output-root results\intermediate\tables\fig7_example_video
 ```
 
 If DLC has already produced a filtered CSV/H5 for the video:
@@ -83,6 +83,6 @@ If DLC has already produced a filtered CSV/H5 for the video:
 ```powershell
 python scripts\train_behavior_classifier.py run-from-dlc `
   --dlc-file path\to\filtered_dlc_tracks.csv `
-  --model results\behavior_classifier\fig7_behavior_xgb.joblib `
-  --output-dir results\behavior_classifier\example_video\behavior_predictions
+  --model results\models\behavior_classifier\fig7_behavior_xgb.joblib `
+  --output-dir results\intermediate\tables\fig7_example_video\behavior_predictions
 ```

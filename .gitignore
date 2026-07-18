@@ -1,5 +1,5 @@
 # Data (tracked curated inputs; ignore only raw re-extractions)
-data/source/moseq_syllables_per_frame.csv
+data/raw/moseq_syllables_per_frame.csv
 data/**/*.pkl
 data/**/*.parquet
 data/**/*.npy
@@ -20,7 +20,7 @@ __pycache__/
 # IDE / OS
 .vscode/
 .idea/
-.claude/settings.local.json
+.agents/
 .DS_Store
 Thumbs.db
 
@@ -32,4 +32,4 @@ config/paths.py
 *_test.xlsx
 *_rebuilt.xlsx
 results/behavior_classifier/*_smoke.joblib
-results/figure_data/*_smoke.csv
+results/intermediate/**/*_smoke.csv

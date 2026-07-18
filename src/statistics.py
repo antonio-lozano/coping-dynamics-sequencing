@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2026 Jeniffer Sanguino Gómez and Antonio Lozano
+# Copyright (c) 2026 Jeniffer Sanguino Gomez and Antonio Lozano
 """
 Statistical analysis functions for coping-dynamics-sequencing manuscript.
 

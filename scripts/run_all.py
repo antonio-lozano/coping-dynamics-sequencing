@@ -18,6 +18,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 
 TASKS = [
+    ("build compact freezing prediction inputs", ["scripts/derive_tables/freezing_predictions_light.py"]),
     ("derive cluster tables", ["scripts/derive_tables/cluster_tables.py"]),
     ("derive tracking-exclusion tables", ["scripts/derive_tables/tracking_exclusions.py"]),
     ("derive Figure 6 resilience statistics", ["scripts/derive_tables/fig6_resilience_stats.py"]),

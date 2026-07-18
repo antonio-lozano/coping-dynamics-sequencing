@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2026 Jeniffer Sanguino Gómez and Antonio Lozano
+# Copyright (c) 2026 Jeniffer Sanguino Gomez and Antonio Lozano
 """Regenerate Supplementary Figure 3 distance-metric controls for Figure 5."""
 
 from __future__ import annotations
@@ -8,8 +8,6 @@ from pathlib import Path
 import gzip
 import pickle
 import sys
-import zipfile
-from io import BytesIO
 
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
@@ -25,8 +23,6 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from src.config import (
-    COPING_DATA2_ZIP as COPING_DATA2,
-    COPING2_MEMBER_UPDATED_RESULTS,
     RESULTS_INTERMEDIATE_FIGURES_DIR,
     RESULTS_INTERMEDIATE_TABLES_DIR,
     UPDATED_RESULTS_PKL as ORIGINAL_EQUIPO_RESULTS,
@@ -69,11 +65,6 @@ FIG5_RESILIENT = {
     "150.5",
     "159.4",
 }
-
-
-def read_zip_pickle(zip_path: Path, member: str) -> object:
-    with zipfile.ZipFile(zip_path) as zf:
-        return pickle.loads(zf.read(member))
 
 
 def pairwise_euclidean(x: np.ndarray) -> np.ndarray:
@@ -139,12 +130,11 @@ def loocv_logistic(coords: np.ndarray, labels: np.ndarray, c_value: float = 1.0)
 
 
 def load_feature_matrix() -> tuple[pd.DataFrame, np.ndarray]:
-    if ORIGINAL_EQUIPO_RESULTS.exists():
-        opener = gzip.open if ORIGINAL_EQUIPO_RESULTS.suffix == ".gz" else open
-        with opener(ORIGINAL_EQUIPO_RESULTS, "rb") as f:
-            results = pickle.load(f)
-    else:
-        results = read_zip_pickle(COPING_DATA2, COPING2_MEMBER_UPDATED_RESULTS)
+    if not ORIGINAL_EQUIPO_RESULTS.exists():
+        raise FileNotFoundError(f"Missing bundled raw data: {ORIGINAL_EQUIPO_RESULTS}")
+    opener = gzip.open if ORIGINAL_EQUIPO_RESULTS.suffix == ".gz" else open
+    with opener(ORIGINAL_EQUIPO_RESULTS, "rb") as f:
+        results = pickle.load(f)
 
     valid_codes = list(range(1, 8))
     bin_size = 25 * 30
@@ -174,12 +164,11 @@ def load_transition_features() -> tuple[pd.DataFrame, np.ndarray]:
     """Per-animal first-order transition-probability matrix (7x7) between behavioral
     clusters, flattened to a 49-dim feature (von Ziegler-style behavioural flow).
     Consecutive identical frames are collapsed to a bout-level state sequence."""
-    if ORIGINAL_EQUIPO_RESULTS.exists():
-        opener = gzip.open if ORIGINAL_EQUIPO_RESULTS.suffix == ".gz" else open
-        with opener(ORIGINAL_EQUIPO_RESULTS, "rb") as f:
-            results = pickle.load(f)
-    else:
-        results = read_zip_pickle(COPING_DATA2, COPING2_MEMBER_UPDATED_RESULTS)
+    if not ORIGINAL_EQUIPO_RESULTS.exists():
+        raise FileNotFoundError(f"Missing bundled raw data: {ORIGINAL_EQUIPO_RESULTS}")
+    opener = gzip.open if ORIGINAL_EQUIPO_RESULTS.suffix == ".gz" else open
+    with opener(ORIGINAL_EQUIPO_RESULTS, "rb") as f:
+        results = pickle.load(f)
 
     codes = list(range(1, 8))
     bin_size = 25 * 30

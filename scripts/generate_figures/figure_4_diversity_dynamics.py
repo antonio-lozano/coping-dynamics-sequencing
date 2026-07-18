@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2026 Jeniffer Sanguino Gómez and Antonio Lozano
+# Copyright (c) 2026 Jeniffer Sanguino Gomez and Antonio Lozano
 """
-Regenerate manuscript Figure 4 from the COping MoSeq analysis context.
+Regenerate manuscript Figure 4 from the bundled MoSeq analysis inputs.
 
-This script follows the archived COping code structure for frequency metrics,
+This script follows the manuscript analysis structure for frequency metrics,
 bout duration, representative ethograms/barcodes, and transition metrics, but
 assembles them into the manuscript Figure 4 layout.
 """
@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import math
 import json
-import zipfile
 from pathlib import Path
 
 import matplotlib.colors as mcolors
@@ -33,8 +32,6 @@ if str(REPO_ROOT) not in sys.path:
 from src.plotting import plot_chord_diagram
 from src.config import (
     CLUSTER_JSON,
-    COPING_DATA2_ZIP,
-    COPING2_MEMBER_TIMEBIN_250MS as TIMEBIN_250MS,
     RESULTS_INTERMEDIATE_FIGURES_DIR,
     RESULTS_SOURCE_DATA_DIR,
     RESULTS_STATISTICS_DIR,
@@ -91,12 +88,10 @@ BOX_LABEL_X = -0.52
 BOX_TAG_X = -0.58
 
 
-def read_zip_csv(member: str) -> pd.DataFrame:
-    if SYLLABLE_TIMEBIN_250MS.exists():
-        return pd.read_csv(SYLLABLE_TIMEBIN_250MS)
-    with zipfile.ZipFile(COPING_DATA2_ZIP) as archive:
-        with archive.open(member) as handle:
-            return pd.read_csv(handle)
+def read_timebin_data() -> pd.DataFrame:
+    if not SYLLABLE_TIMEBIN_250MS.exists():
+        raise FileNotFoundError(f"Missing bundled raw data: {SYLLABLE_TIMEBIN_250MS}")
+    return pd.read_csv(SYLLABLE_TIMEBIN_250MS)
 
 
 def syllable_to_cluster() -> dict[int, str]:
@@ -112,7 +107,7 @@ def syllable_to_cluster() -> dict[int, str]:
 
 
 def load_sequences() -> tuple[pd.DataFrame, dict[str, list[str]], dict[str, list[str]], pd.DataFrame]:
-    raw = read_zip_csv(TIMEBIN_250MS)
+    raw = read_timebin_data()
     raw = raw.rename(columns={"Time Bin": "time_bin", "Condition": "group"})
     raw = raw[raw["group"].isin(["Control", "ELS"])].copy()
     raw["Animal"] = raw["Animal"].astype(str)
@@ -125,7 +120,7 @@ def load_sequences() -> tuple[pd.DataFrame, dict[str, list[str]], dict[str, list
         for animal, group in raw.groupby("Animal", sort=False)
     }
 
-    # The 250 ms file can contain several syllables within one bin. The archived
+    # The 250 ms file can contain several syllables within one bin. The
     # ethogram/barcode display used the predominant behavior per bin. The metric
     # scripts, however, run on the full mapped table above.
     idx = raw.groupby(["Animal", "time_bin"])["Percentage"].idxmax()

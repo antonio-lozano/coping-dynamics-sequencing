@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2026 Jeniffer Sanguino Gómez and Antonio Lozano
+# Copyright (c) 2026 Jeniffer Sanguino Gomez and Antonio Lozano
 """coping-dynamics-sequencing source modules.
 
 Keep package imports lightweight so tool-specific entrypoints do not pull

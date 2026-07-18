@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2026 Jeniffer Sanguino Gómez and Antonio Lozano
+# Copyright (c) 2026 Jeniffer Sanguino Gomez and Antonio Lozano
 """Regenerate manuscript Figure 6, the resilience version of Figure 4."""
 
 from __future__ import annotations
@@ -7,7 +7,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import sys
-import zipfile
 
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
@@ -25,8 +24,6 @@ if str(REPO_ROOT) not in sys.path:
 from src.plotting import plot_chord_diagram
 from src.config import (
     CLUSTER_JSON,
-    COPING_DATA2_ZIP,
-    COPING2_MEMBER_TIMEBIN_250MS as TIMEBIN_250MS,
     RESULTS_INTERMEDIATE_FIGURES_DIR,
     RESULTS_SOURCE_DATA_DIR,
     SYLLABLE_TIMEBIN_250MS,
@@ -126,12 +123,10 @@ COLORS = {
 }
 
 
-def read_zip_csv(member: str) -> pd.DataFrame:
-    if SYLLABLE_TIMEBIN_250MS.exists():
-        return pd.read_csv(SYLLABLE_TIMEBIN_250MS)
-    with zipfile.ZipFile(COPING_DATA2_ZIP) as archive:
-        with archive.open(member) as handle:
-            return pd.read_csv(handle)
+def read_timebin_data() -> pd.DataFrame:
+    if not SYLLABLE_TIMEBIN_250MS.exists():
+        raise FileNotFoundError(f"Missing bundled raw data: {SYLLABLE_TIMEBIN_250MS}")
+    return pd.read_csv(SYLLABLE_TIMEBIN_250MS)
 
 
 def group_ext(animal: str, group: str) -> str:
@@ -154,7 +149,7 @@ def syllable_to_cluster() -> dict[int, str]:
 
 
 def load_sequences() -> tuple[pd.DataFrame, dict[str, list[str]], dict[str, list[str]], pd.DataFrame]:
-    raw = read_zip_csv(TIMEBIN_250MS)
+    raw = read_timebin_data()
     raw = raw.rename(columns={"Time Bin": "time_bin", "Condition": "group"})
     raw = raw[raw["group"].isin(["Control", "ELS"])].copy()
     raw["Animal"] = raw["Animal"].astype(str)

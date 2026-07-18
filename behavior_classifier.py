@@ -44,10 +44,10 @@ from src.behavior_classifier.cli import main
 
 # ---------------------------------------------------------------------------
 # TODO — future model build (kept here so the classifier has one home):
-#   [ ] swap/compare estimators (XGBoost → gradient boosting / temporal model)
+#   [ ] swap/compare estimators (XGBoost -> gradient boosting / temporal model)
 #   [ ] hyperparameter search + held-out test split
 #   [ ] persist the fitted model (e.g. models/behavior_classifier.joblib)
-#   [ ] add an `apply` command: load a saved model + new DLC csv → annotations
+#   [ ] add an `apply` command: load a saved model + new DLC csv -> annotations
 #   [ ] calibrate per-cluster thresholds; report per-cluster precision/recall
 # ---------------------------------------------------------------------------
 

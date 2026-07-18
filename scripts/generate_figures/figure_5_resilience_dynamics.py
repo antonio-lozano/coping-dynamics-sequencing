@@ -1,15 +1,13 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2026 Jeniffer Sanguino Gómez and Antonio Lozano
+# Copyright (c) 2026 Jeniffer Sanguino Gomez and Antonio Lozano
 """Regenerate manuscript Figure 5 in the final Figure 3/4 A4 style."""
 
 from __future__ import annotations
 
-from io import BytesIO
 from pathlib import Path
 import gzip
 import pickle
 import sys
-import zipfile
 
 import matplotlib.colors as mcolors
 import matplotlib.patches as mpatches
@@ -25,11 +23,6 @@ if str(REPO_ROOT) not in sys.path:
 
 from src.config import (
     BFL_SCORES_XLSX,
-    COPING_DATA_ZIP as COPING_DATA,
-    COPING_DATA2_ZIP as COPING_DATA2,
-    COPING_MEMBER_BFL_SCORES,
-    COPING2_MEMBER_TIMEBIN_30S,
-    COPING2_MEMBER_UPDATED_RESULTS,
     RESULTS_INTERMEDIATE_FIGURES_DIR,
     RESULTS_INTERMEDIATE_TABLES_DIR,
     RESULTS_SOURCE_DATA_DIR,
@@ -78,21 +71,6 @@ CLUSTER_MAP = {
 ORDER = ["Freeze", "Sniff", "Groom", "Turn", "Locomotion", "Climb", "Jump"]
 
 
-def read_zip_csv(zip_path: Path, member: str) -> pd.DataFrame:
-    with zipfile.ZipFile(zip_path) as zf:
-        return pd.read_csv(BytesIO(zf.read(member)))
-
-
-def read_zip_excel(zip_path: Path, member: str) -> pd.DataFrame:
-    with zipfile.ZipFile(zip_path) as zf:
-        return pd.read_excel(BytesIO(zf.read(member)))
-
-
-def read_zip_pickle(zip_path: Path, member: str) -> object:
-    with zipfile.ZipFile(zip_path) as zf:
-        return pickle.loads(zf.read(member))
-
-
 def group_ext(animal: str, group: str) -> str:
     animal = str(animal)
     if group == "ELS" and animal in ELS_RESILIENT:
@@ -101,10 +79,9 @@ def group_ext(animal: str, group: str) -> str:
 
 
 def load_cluster_time() -> pd.DataFrame:
-    if SYLLABLE_TIMEBIN_30S.exists():
-        raw = pd.read_csv(SYLLABLE_TIMEBIN_30S)
-    else:
-        raw = read_zip_csv(COPING_DATA2, COPING2_MEMBER_TIMEBIN_30S)
+    if not SYLLABLE_TIMEBIN_30S.exists():
+        raise FileNotFoundError(f"Missing bundled raw data: {SYLLABLE_TIMEBIN_30S}")
+    raw = pd.read_csv(SYLLABLE_TIMEBIN_30S)
     raw = raw.rename(columns={"Condition": "group", "Time Bin": "time_bin"})
     raw["Animal"] = raw["Animal"].astype(str)
     raw["Syllable"] = pd.to_numeric(raw["Syllable"], errors="coerce").astype(int)
@@ -125,10 +102,9 @@ def load_cluster_time() -> pd.DataFrame:
 
 
 def load_bfl() -> pd.DataFrame:
-    if BFL_SCORES_XLSX.exists():
-        bfl = pd.read_excel(BFL_SCORES_XLSX)
-    else:
-        bfl = read_zip_excel(COPING_DATA, COPING_MEMBER_BFL_SCORES)
+    if not BFL_SCORES_XLSX.exists():
+        raise FileNotFoundError(f"Missing bundled raw data: {BFL_SCORES_XLSX}")
+    bfl = pd.read_excel(BFL_SCORES_XLSX)
     bfl = bfl[["Animal", "Condition", "Score", "Experiment"]].dropna(subset=["Animal", "Condition", "Score"])
     bfl["animal"] = bfl["Animal"].astype(float).map(lambda v: str(v).rstrip("0").rstrip(".") if "." in str(v) else str(v))
     bfl["animal"] = bfl["Animal"].map(lambda v: f"{float(v):.1f}")
@@ -251,12 +227,11 @@ def loocv_logistic(coords: np.ndarray, labels: np.ndarray, c_value: float = 1.0)
 
 
 def mds_profiles_from_updated_results() -> tuple[pd.DataFrame, np.ndarray, float]:
-    if ORIGINAL_EQUIPO_RESULTS.exists():
-        opener = gzip.open if ORIGINAL_EQUIPO_RESULTS.suffix == ".gz" else open
-        with opener(ORIGINAL_EQUIPO_RESULTS, "rb") as f:
-            results = pickle.load(f)
-    else:
-        results = read_zip_pickle(COPING_DATA2, COPING2_MEMBER_UPDATED_RESULTS)
+    if not ORIGINAL_EQUIPO_RESULTS.exists():
+        raise FileNotFoundError(f"Missing bundled raw data: {ORIGINAL_EQUIPO_RESULTS}")
+    opener = gzip.open if ORIGINAL_EQUIPO_RESULTS.suffix == ".gz" else open
+    with opener(ORIGINAL_EQUIPO_RESULTS, "rb") as f:
+        results = pickle.load(f)
     valid_codes = list(range(1, 8))
     fps = 25
     bin_seconds = 30

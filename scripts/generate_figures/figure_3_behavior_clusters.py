@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2026 Jeniffer Sanguino Gómez and Antonio Lozano
+# Copyright (c) 2026 Jeniffer Sanguino Gomez and Antonio Lozano
 """
-Regenerate manuscript Figure 3 from the archived MoSeq cluster time-bin data.
+Regenerate manuscript Figure 3 from the bundled MoSeq cluster time-bin data.
 
 The figure uses the 82-animal Control/ELS cohort in
 Syllable_per_timebin_final(30s).csv and the hand-curated syllable-to-behavior
@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import math
 import sys
-import zipfile
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -26,8 +25,6 @@ if str(REPO_ROOT) not in sys.path:
 
 from src.config import (
     CLUSTER_FREQUENCY_CSV,
-    COPING_DATA2_ZIP,
-    COPING2_MEMBER_TIMEBIN_30S as ARCHIVE_MEMBER,
     RESULTS_INTERMEDIATE_FIGURES_DIR,
     RESULTS_SOURCE_DATA_DIR,
     RESULTS_STATISTICS_DIR,
@@ -70,17 +67,9 @@ A4_PORTRAIT = (8.27, 11.69)
 
 
 def load_timebin_data() -> pd.DataFrame:
-    if SYLLABLE_TIMEBIN_30S.exists():
-        df = pd.read_csv(SYLLABLE_TIMEBIN_30S)
-    elif COPING_DATA2_ZIP.exists():
-        with zipfile.ZipFile(COPING_DATA2_ZIP) as archive:
-            with archive.open(ARCHIVE_MEMBER) as handle:
-                df = pd.read_csv(handle)
-    else:
-        raise FileNotFoundError(
-            f"Missing source data. Expected {SYLLABLE_TIMEBIN_30S} or member "
-            f"{ARCHIVE_MEMBER} inside {COPING_DATA2_ZIP}."
-        )
+    if not SYLLABLE_TIMEBIN_30S.exists():
+        raise FileNotFoundError(f"Missing bundled raw data: {SYLLABLE_TIMEBIN_30S}")
+    df = pd.read_csv(SYLLABLE_TIMEBIN_30S)
     df = df.rename(columns={"Time Bin": "time_bin", "Condition": "group"})
     df = df[df["group"].isin(["Control", "ELS"])].copy()
     df["Syllable"] = df["Syllable"].astype(int)

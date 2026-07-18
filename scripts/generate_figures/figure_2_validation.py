@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2026 Jeniffer Sanguino Gómez and Antonio Lozano
+# Copyright (c) 2026 Jeniffer Sanguino Gomez and Antonio Lozano
 """
 Figure 2 - manuscript validation, keypoint-moseq compatible regeneration.
 
@@ -101,7 +101,7 @@ def _build_freezing_long_format(
         agg["label"] = agg["animal"].map(_short_id)
         agg = agg[agg["label"].isin(include_labels)].copy()
 
-    # time_bin: 1-indexed integer bins (1–15) matching original manuscript timescale
+    # time_bin: 1-indexed integer bins (1-15) matching original manuscript timescale
     agg["time_bin"] = agg["bin"] + 1
     agg["time_min"] = agg["time_bin"] * BIN_SECONDS / 60.0
 
