@@ -30,25 +30,28 @@ import seaborn as sns
 
 from src.config import (
     BIN_SECONDS,
-    FIGURE_DATA_DIR,
+    CLUSTER_FREQUENCY_CSV,
     FREEZING_DIR,
     FPS,
     INDEX_CSV,
     PALETTE,
+    RESULTS_INTERMEDIATE_FIGURES_DIR,
     RESULTS_RAW_PKL,
+    RESULTS_SOURCE_DATA_DIR,
     SOURCE_DATA_DIR,
 )
 from src.statistics import fit_mixed_models, cohens_d
 
 LEGACY_FIGURES_DIR = repo_root / "figures"
-FIGURE_OUTPUT_DIR = FIGURE_DATA_DIR
+FIGURE_OUTPUT_DIR = RESULTS_INTERMEDIATE_FIGURES_DIR
+SOURCE_OUTPUT_DIR = RESULTS_SOURCE_DATA_DIR
 OVERLAP_SYLLABLES = {0, 28, 40}
 TIMECOURSE_SYLLABLES = {0, 28}
 EVENT_SPAN_STARTS_MIN = [3.5, 4.5, 5.5]
 EVENT_SPAN_WIDTH_MIN = 0.5
 
 
-# Prefer files bundled into data/source/.
+# Prefer files bundled into data/raw/.
 _REF_CSV_CANDIDATES = [
     SOURCE_DATA_DIR / "syllable_classification_metrics.csv",
 ]
@@ -61,7 +64,7 @@ PANEL_G_REFERENCE_SVG: Path | None = next((p for p in _PANEL_G_SVG_CANDIDATES if
 
 PRECOMPUTED_OVERLAP_CSV: Path = SOURCE_DATA_DIR / "freezing_overlap_by_group.csv"
 
-# Prefer inputs extracted into data/source/; fall back to configured paths.
+# Prefer inputs extracted into data/raw/; fall back to configured paths.
 _FREEZING_DIR_DEFAULT = next(
     (p for p in [SOURCE_DATA_DIR / "freezing_predictions", FREEZING_DIR] if p.exists()),
     FREEZING_DIR,
@@ -145,7 +148,7 @@ def _compute_source_data_figure2(
     rows = []
 
     # Assign experiment (1 = SGK_2024, 3 = SG_2024) from cluster_frequency_per_animal.csv
-    _freq_csv = SOURCE_DATA_DIR / "cluster_frequency_per_animal.csv"
+    _freq_csv = CLUSTER_FREQUENCY_CSV
     if _freq_csv.exists():
         _exp_map = (
             pd.read_csv(_freq_csv)[["animal_id", "experiment"]]
@@ -1005,6 +1008,7 @@ def main() -> None:
         panel_g_reference_labels=panel_g_reference_labels,
     )
     FIGURE_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    SOURCE_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     out_pdf = FIGURE_OUTPUT_DIR / "figure_2_validation.pdf"
     out_svg = FIGURE_OUTPUT_DIR / "figure_2_validation.svg"
     fig.savefig(out_pdf, facecolor="white")
@@ -1028,7 +1032,7 @@ def main() -> None:
         metrics_df,
         panel_g_reference_labels=panel_g_reference_labels,
     )
-    source_csv = FIGURE_OUTPUT_DIR / "source_data_figure2.csv"
+    source_csv = SOURCE_OUTPUT_DIR / "source_data_figure2.csv"
     source_data_df.to_csv(source_csv, index=False)
     print(f"Saved: {source_csv}")
 

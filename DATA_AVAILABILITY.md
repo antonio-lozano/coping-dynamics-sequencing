@@ -1,7 +1,8 @@
 # Data Availability
 
 All data required to reproduce the data-derived manuscript figures are included
-in this repository under `data/source/`.
+in this repository under `data/raw/`. Generated analysis-ready tables derived
+from those inputs are tracked under `data/derived/`.
 
 The tracked source data include:
 
@@ -15,8 +16,8 @@ The tracked source data include:
 
 Manuscript-facing workbooks are included under `report/`:
 
-- `report/RAW_DATA.xlsx`
-- `report/STATISTICAL_REPORT.xlsx`
+- `report/raw_data.xlsx`
+- `report/statistical_report.xlsx`
 
 For a journal submission or public release, archive this repository on a stable
 repository service such as Zenodo, Figshare, Dryad, or OSF. Once archived, cite

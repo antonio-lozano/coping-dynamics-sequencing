@@ -22,17 +22,23 @@ def sha256(path: Path) -> str:
 
 def category(path: Path) -> str:
     parts = path.parts
+    if parts[:2] == ("data", "raw"):
+        return "raw_input"
+    if parts[:2] == ("data", "derived"):
+        return "derived_data"
     if parts[0] == "data":
-        return "source_data"
+        return "data_documentation"
     if parts[0] == "figures":
         return "manuscript_figure"
     if parts[0] == "report":
         return "manuscript_report"
-    if parts[:2] == ("results", "figure_data"):
-        return "intermediate_figure_data"
-    if parts[:2] == ("results", "statistical_reports"):
+    if parts[:2] == ("results", "source_data"):
+        return "figure_source_data"
+    if parts[:2] == ("results", "statistics"):
         return "statistical_output"
-    if parts[:2] == ("results", "behavior_classifier"):
+    if parts[:2] == ("results", "intermediate"):
+        return "intermediate_output"
+    if parts[:2] == ("results", "models"):
         return "trained_model"
     return "result"
 

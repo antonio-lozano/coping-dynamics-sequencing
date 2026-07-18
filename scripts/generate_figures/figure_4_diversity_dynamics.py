@@ -35,7 +35,9 @@ from src.config import (
     CLUSTER_JSON,
     COPING_DATA2_ZIP,
     COPING2_MEMBER_TIMEBIN_250MS as TIMEBIN_250MS,
-    FIGURE_DATA_DIR as OUTPUT_DIR,
+    RESULTS_INTERMEDIATE_FIGURES_DIR,
+    RESULTS_SOURCE_DATA_DIR,
+    RESULTS_STATISTICS_DIR,
     SYLLABLE_TIMEBIN_250MS,
 )
 from src.statistics import compute_diversity_metrics, compute_bout_duration
@@ -43,6 +45,9 @@ from src.statistics import compute_diversity_metrics, compute_bout_duration
 plt.rcParams["axes.grid"] = False
 
 LEGACY_FIGURES_DIR = REPO_ROOT / "figures"
+FIGURE_OUTPUT_DIR = RESULTS_INTERMEDIATE_FIGURES_DIR
+SOURCE_OUTPUT_DIR = RESULTS_SOURCE_DATA_DIR
+STATISTICS_OUTPUT_DIR = RESULTS_STATISTICS_DIR
 
 AXIS = "#4D4D4D"
 CONTROL = "#F9C74F"
@@ -596,7 +601,7 @@ def expand_axes_left(axes: list[plt.Axes], amount: float) -> None:
         ax.set_position([pos.x0 - amount, pos.y0, pos.width + amount, pos.height])
 
 
-def export_source_data(metrics: pd.DataFrame, bouts: pd.DataFrame, transitions: pd.DataFrame, output_dir: Path) -> None:
+def export_source_data(metrics: pd.DataFrame, bouts: pd.DataFrame, transitions: pd.DataFrame) -> None:
     """Export Figure 4 source data: diversity metrics, bout durations, and transitions."""
     import statsmodels.formula.api as smf
 
@@ -653,7 +658,8 @@ def export_source_data(metrics: pd.DataFrame, bouts: pd.DataFrame, transitions: 
 
     df = pd.DataFrame(rows)
     if not df.empty:
-        output_csv = output_dir / "source_data_figure4.csv"
+        SOURCE_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        output_csv = SOURCE_OUTPUT_DIR / "source_data_figure4.csv"
         df.to_csv(output_csv, index=False)
         print(f"Saved: {output_csv}")
 
@@ -686,7 +692,8 @@ def export_source_data(metrics: pd.DataFrame, bouts: pd.DataFrame, transitions: 
         except Exception as e:
             print(f"MixedLM failed for {metric_name}: {e}")
     if div_rows:
-        path = output_dir / "stats_figure4_diversity_MixedLM.csv"
+        STATISTICS_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        path = STATISTICS_OUTPUT_DIR / "stats_figure4_diversity_MixedLM.csv"
         pd.DataFrame(div_rows).to_csv(path, index=False)
         print(f"Saved: {path}")
 
@@ -722,7 +729,8 @@ def export_source_data(metrics: pd.DataFrame, bouts: pd.DataFrame, transitions: 
         except Exception as e:
             print(f"MixedLM failed for {cluster} bouts: {e}")
     if bout_rows:
-        path = output_dir / "stats_figure4_bouts_MixedLM.csv"
+        STATISTICS_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        path = STATISTICS_OUTPUT_DIR / "stats_figure4_bouts_MixedLM.csv"
         pd.DataFrame(bout_rows).to_csv(path, index=False)
         print(f"Saved: {path}")
 
@@ -753,13 +761,14 @@ def export_source_data(metrics: pd.DataFrame, bouts: pd.DataFrame, transitions: 
         except Exception as e:
             print(f"MixedLM failed for {metric_name}: {e}")
     if trans_rows:
-        path = output_dir / "stats_figure4_transition_MixedLM.csv"
+        STATISTICS_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        path = STATISTICS_OUTPUT_DIR / "stats_figure4_transition_MixedLM.csv"
         pd.DataFrame(trans_rows).to_csv(path, index=False)
         print(f"Saved: {path}")
 
 
 def main() -> None:
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    FIGURE_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     pred, pred_sequences, full_sequences, meta = load_sequences()
     metrics, usage = compute_frequency_metrics(full_sequences, meta)
     bouts = bout_table(full_sequences, meta)
@@ -853,9 +862,9 @@ def main() -> None:
 
     equalize_boxplot_heights(box_axes)
 
-    pdf = OUTPUT_DIR / "figure_4_diversity_dynamics.pdf"
-    svg = OUTPUT_DIR / "figure_4_diversity_dynamics.svg"
-    png = OUTPUT_DIR / "figure_4_diversity_dynamics.png"
+    pdf = FIGURE_OUTPUT_DIR / "figure_4_diversity_dynamics.pdf"
+    svg = FIGURE_OUTPUT_DIR / "figure_4_diversity_dynamics.svg"
+    png = FIGURE_OUTPUT_DIR / "figure_4_diversity_dynamics.png"
     fig.savefig(pdf, facecolor="white")
     fig.savefig(svg, facecolor="white")
     fig.savefig(png, dpi=600, facecolor="white")
@@ -872,7 +881,7 @@ def main() -> None:
 
     # Export source data
     print("Computing Figure 4 source statistics...")
-    export_source_data(metrics, bouts, transitions, OUTPUT_DIR)
+    export_source_data(metrics, bouts, transitions)
 
 
 if __name__ == "__main__":

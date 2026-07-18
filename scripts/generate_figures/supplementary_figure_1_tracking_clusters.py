@@ -23,10 +23,10 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.config import FIGURE_DATA_DIR, FIGURES_DIR, SOURCE_DATA_DIR
+from src.config import FIGURES_DIR, RESULTS_INTERMEDIATE_TABLES_DIR, SUPPLEMENTARY_TRACKING_CSV
 
 
-SOURCE_CSV = SOURCE_DATA_DIR / "supplementary_figure1_tracking_clusters.csv"
+SOURCE_CSV = SUPPLEMENTARY_TRACKING_CSV
 
 COLORS = {"Control": "#F9C74F", "ELS": "#C37BA0"}
 AXIS_COLOR = "#4D4D4D"
@@ -155,9 +155,9 @@ def plot_time_panel(ax: plt.Axes, summary: pd.DataFrame, spec: dict[str, object]
 
 
 def export_source_tables(summary: pd.DataFrame) -> None:
-    FIGURE_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    RESULTS_INTERMEDIATE_TABLES_DIR.mkdir(parents=True, exist_ok=True)
     summary.sort_values(["cluster", "group", "time_min"]).to_csv(
-        FIGURE_DATA_DIR / "supplementary_figure1_time_summary.csv",
+        RESULTS_INTERMEDIATE_TABLES_DIR / "supplementary_figure1_time_summary.csv",
         index=False,
     )
 

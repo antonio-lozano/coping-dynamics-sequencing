@@ -6,6 +6,8 @@ statistical outputs is included in this repository.
 Primary entry points:
 
 - `scripts/run_all_figures.py`
+- `scripts/run_all.py`
+- `scripts/build_raw_data_workbook.py`
 - `scripts/build_statistical_report.py`
 - `scripts/check_reproducibility.py`
 - `scripts/update_manifest.py`

@@ -28,7 +28,8 @@ Usage
     python behavior_classifier.py train-dlc --help
 
 Outputs (CV metrics, confusion matrix, predictions) are written under
-results/figure_data/ by default; see `src/behavior_classifier/cli.py`.
+results/intermediate/tables/ by default; models are written under
+results/models/ by default. See `src/behavior_classifier/cli.py`.
 """
 from __future__ import annotations
 

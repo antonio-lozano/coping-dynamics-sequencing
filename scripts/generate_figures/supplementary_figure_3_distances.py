@@ -27,11 +27,14 @@ if str(REPO_ROOT) not in sys.path:
 from src.config import (
     COPING_DATA2_ZIP as COPING_DATA2,
     COPING2_MEMBER_UPDATED_RESULTS,
-    FIGURE_DATA_DIR as OUTPUT_DIR,
+    RESULTS_INTERMEDIATE_FIGURES_DIR,
+    RESULTS_INTERMEDIATE_TABLES_DIR,
     UPDATED_RESULTS_PKL as ORIGINAL_EQUIPO_RESULTS,
 )
 
 LEGACY_FIGURES_DIR = REPO_ROOT / "figures"
+FIGURE_OUTPUT_DIR = RESULTS_INTERMEDIATE_FIGURES_DIR
+TABLE_OUTPUT_DIR = RESULTS_INTERMEDIATE_TABLES_DIR
 
 AXIS = "#4D4D4D"
 CONTROL = "#F9C74F"
@@ -452,7 +455,8 @@ def plot_box(ax: plt.Axes, data: pd.DataFrame, metric_name: str, letter: str) ->
 
 
 def main() -> None:
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    FIGURE_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    TABLE_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     meta, features = load_feature_matrix()
     profiles, summary = metric_profiles(meta, features)
 
@@ -469,9 +473,9 @@ def main() -> None:
     profiles = pd.concat([profiles, tprof], ignore_index=True)
     summary = pd.concat([summary, pd.DataFrame([tsummary])], ignore_index=True)
 
-    profiles.to_csv(OUTPUT_DIR / "supplementary_figure_3_distance_scores.csv", index=False)
-    summary.to_csv(OUTPUT_DIR / "supplementary_figure_3_distance_summary.csv", index=False)
-    threshold_audit(profiles).to_csv(OUTPUT_DIR / "supplementary_figure_3_threshold_audit.csv", index=False)
+    profiles.to_csv(TABLE_OUTPUT_DIR / "supplementary_figure_3_distance_scores.csv", index=False)
+    summary.to_csv(TABLE_OUTPUT_DIR / "supplementary_figure_3_distance_summary.csv", index=False)
+    threshold_audit(profiles).to_csv(TABLE_OUTPUT_DIR / "supplementary_figure_3_threshold_audit.csv", index=False)
 
     fig = plt.figure(figsize=(8.27, 11.69), dpi=300, facecolor="white")
     gs = fig.add_gridspec(
@@ -512,9 +516,9 @@ def main() -> None:
     plot_box(trans_box_ax, trans_sub, "Transition", "K")
     align_box_to_mds(trans_mds_ax, trans_box_ax)
 
-    pdf = OUTPUT_DIR / "supplementary_figure_3_distances.pdf"
-    svg = OUTPUT_DIR / "supplementary_figure_3_distances.svg"
-    png = OUTPUT_DIR / "supplementary_figure_3_distances.png"
+    pdf = FIGURE_OUTPUT_DIR / "supplementary_figure_3_distances.pdf"
+    svg = FIGURE_OUTPUT_DIR / "supplementary_figure_3_distances.svg"
+    png = FIGURE_OUTPUT_DIR / "supplementary_figure_3_distances.png"
     fig.savefig(pdf)
     fig.savefig(svg)
     fig.savefig(png, dpi=300)

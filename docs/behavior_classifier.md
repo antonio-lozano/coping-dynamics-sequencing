@@ -42,8 +42,8 @@ python scripts\train_behavior_classifier.py train
 Outputs:
 
 - `results/behavior_classifier/fig7_behavior_xgb.joblib`
-- `results/figure_data/fig7_behavior_classifier_cv_metrics.csv`
-- `results/figure_data/fig7_behavior_classifier_confusion_matrix.csv`
+- `results/intermediate/tables/fig7_behavior_classifier_cv_metrics.csv`
+- `results/intermediate/tables/fig7_behavior_classifier_confusion_matrix.csv`
 
 ## Train From DLC Features
 
@@ -62,7 +62,7 @@ python scripts\train_behavior_classifier.py train-from-dlc `
 ```powershell
 python scripts\train_behavior_classifier.py predict `
   --model results\behavior_classifier\fig7_behavior_xgb.joblib `
-  --output results\figure_data\fig7_behavior_classifier_predictions.csv
+  --output results\intermediate\tables\fig7_behavior_classifier_predictions.csv
 ```
 
 ## Raw Video To Predictions

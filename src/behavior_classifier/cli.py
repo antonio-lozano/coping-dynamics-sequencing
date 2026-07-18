@@ -5,12 +5,12 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from src.config import FIGURE_DATA_DIR, MOSEQ_DF, RESULTS_DIR
+from src.config import MOSEQ_DF, RESULTS_INTERMEDIATE_TABLES_DIR, RESULTS_MODELS_DIR, RESULTS_DIR
 
 
-DEFAULT_MODEL = RESULTS_DIR / "behavior_classifier" / "fig7_behavior_xgb.joblib"
-DEFAULT_METRICS = FIGURE_DATA_DIR / "fig7_behavior_classifier_cv_metrics.csv"
-DEFAULT_CONFUSION = FIGURE_DATA_DIR / "fig7_behavior_classifier_confusion_matrix.csv"
+DEFAULT_MODEL = RESULTS_MODELS_DIR / "behavior_classifier" / "fig7_behavior_xgb.joblib"
+DEFAULT_METRICS = RESULTS_INTERMEDIATE_TABLES_DIR / "fig7_behavior_classifier_cv_metrics.csv"
+DEFAULT_CONFUSION = RESULTS_INTERMEDIATE_TABLES_DIR / "fig7_behavior_classifier_confusion_matrix.csv"
 
 
 def _model_kwargs(args: argparse.Namespace) -> dict[str, int | float]:
@@ -153,17 +153,17 @@ def build_parser() -> argparse.ArgumentParser:
     train_dlc.add_argument(
         "--metrics",
         type=Path,
-        default=FIGURE_DATA_DIR / "fig7_behavior_classifier_dlc_cv_metrics.csv",
+        default=RESULTS_INTERMEDIATE_TABLES_DIR / "fig7_behavior_classifier_dlc_cv_metrics.csv",
     )
     train_dlc.add_argument(
         "--confusion",
         type=Path,
-        default=FIGURE_DATA_DIR / "fig7_behavior_classifier_dlc_confusion_matrix.csv",
+        default=RESULTS_INTERMEDIATE_TABLES_DIR / "fig7_behavior_classifier_dlc_confusion_matrix.csv",
     )
     train_dlc.add_argument(
         "--training-table",
         type=Path,
-        default=FIGURE_DATA_DIR / "fig7_behavior_classifier_dlc_training_table.csv",
+        default=RESULTS_INTERMEDIATE_TABLES_DIR / "fig7_behavior_classifier_dlc_training_table.csv",
     )
     train_dlc.add_argument("--fps", type=float, default=25.0)
     train_dlc.add_argument("--max-frames", type=int, default=None)
@@ -181,7 +181,7 @@ def build_parser() -> argparse.ArgumentParser:
     predict.add_argument(
         "--output",
         type=Path,
-        default=FIGURE_DATA_DIR / "fig7_behavior_classifier_predictions.csv",
+        default=RESULTS_INTERMEDIATE_TABLES_DIR / "fig7_behavior_classifier_predictions.csv",
     )
     predict.set_defaults(func=predict_command)
 

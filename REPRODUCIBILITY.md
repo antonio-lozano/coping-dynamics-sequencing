@@ -2,8 +2,10 @@
 
 This repository is organized as a self-contained manuscript-reproducibility
 package. All data required for the data-derived figures are tracked under
-`data/source/`; generated supporting tables and statistical outputs are tracked
-under `results/`; manuscript-facing workbooks are tracked under `report/`.
+`data/raw/`; generated analysis-ready tables are tracked under `data/derived/`;
+source-data CSVs, statistics, intermediate helper files, and model artifacts are
+tracked under `results/`; manuscript-facing workbooks are tracked under
+`report/`.
 
 ## Quick Check
 
@@ -30,10 +32,21 @@ Install dependencies, then run:
 python scripts/run_all_figures.py
 ```
 
-This regenerates the data-derived figures in `figures/` and writes supporting
-tables to `results/figure_data/`. Figure 1 is a hand-made schematic and Figure
-7 is a supplied assembled manuscript figure; both are tracked as canonical
-exports in `figures/`.
+This regenerates the data-derived figures in `figures/`, source-data CSVs in
+`results/source_data/`, statistics in `results/statistics/`, and helper
+tables/renders in `results/intermediate/`. Figure 1 is a hand-made schematic
+and Figure 7 is a supplied assembled manuscript figure; both are tracked as
+canonical exports in `figures/`.
+
+To rebuild the full package from tracked inputs, including derived tables,
+figures, workbooks, manifest, and checks:
+
+```bash
+python scripts/run_all.py
+```
+
+The full rebuild is concise by default. Add `--verbose` to stream the detailed
+model output from each child script.
 
 ## Rebuild Statistical Report
 
@@ -41,8 +54,8 @@ exports in `figures/`.
 python scripts/build_statistical_report.py
 ```
 
-The statistical report is `report/STATISTICAL_REPORT.xlsx`. The manuscript raw
-data workbook is `report/RAW_DATA.xlsx`.
+The statistical report is `report/statistical_report.xlsx`. The manuscript raw
+data workbook is `report/raw_data.xlsx`.
 
 ## Rebuild Derived Tables
 
@@ -53,6 +66,12 @@ tables from the bundled source data:
 python scripts/derive_tables/cluster_tables.py
 python scripts/derive_tables/tracking_exclusions.py
 python scripts/derive_tables/fig6_resilience_stats.py
+```
+
+The raw-data workbook can be rebuilt with:
+
+```bash
+python scripts/build_raw_data_workbook.py
 ```
 
 ## Update Manifest
@@ -68,11 +87,15 @@ Commit the updated `MANIFEST.csv` with the changed artifacts.
 
 ## Expected Repository Controls
 
-- All required input data are tracked under `data/source/`.
+- All required input data are tracked under `data/raw/`.
+- Generated analysis-ready data are tracked under `data/derived/`.
 - Manuscript figures are tracked under `figures/`.
-- Intermediate analysis tables are tracked under `results/figure_data/`.
+- Figure source-data CSVs are tracked under `results/source_data/`.
 - Statistical outputs and manuscript Results text audit are tracked under
-  `results/statistical_reports/`.
+  `results/statistics/`.
+- Helper tables and non-canonical renders are tracked under
+  `results/intermediate/`.
+- Trained model artifacts are tracked under `results/models/`.
 - Manuscript raw-data and statistical workbooks are tracked under `report/`.
 - `MANIFEST.csv` records byte sizes and SHA-256 hashes for publication
   artifacts.

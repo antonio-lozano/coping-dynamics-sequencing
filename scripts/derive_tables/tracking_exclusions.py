@@ -1,48 +1,121 @@
-"""Compute per-animal tracking exclusion frequency (seconds) from syllable usage CSV."""
-import pandas as pd
+"""Derive tracking-exclusion tables from the raw 30 s syllable table."""
+from __future__ import annotations
+
 from pathlib import Path
 
-REPO = Path(__file__).parent.parent
-SRC  = REPO / "data" / "source" / "syllable_usage_per_timebin_30s.csv"
-OUT  = REPO / "data" / "source" / "tracking_exclusions_per_animal.csv"
+import pandas as pd
+
+
+REPO = Path(__file__).resolve().parents[2]
+RAW = REPO / "data" / "raw" / "syllable_usage_per_timebin_30s.csv"
+DERIVED = REPO / "data" / "derived"
+
+OUT_ANIMAL = DERIVED / "tracking_exclusions_per_animal.csv"
+OUT_TIME = DERIVED / "supplementary_figure1_tracking_clusters.csv"
 
 INACCURATE_TRACKING = {2, 4, 8, 9, 22, 31, 32, 33}
-MIX_BEHAVIORS       = {7, 13, 17}
-BIN_SECONDS         = 30
+MIX_BEHAVIORS = {7, 13, 17}
+BIN_SECONDS = 30
+PROJECT = {
+    1: "Sanguino-Gomez and Krugers, 2024",
+    3: "Sanguino-Gomez et al., 2024",
+}
 
-df = pd.read_csv(SRC)
-df.columns = df.columns.str.strip()
-df["Syllable"] = df["Syllable"].astype(int)
 
-# Separate the two exclusion types
-inac = df[df["Syllable"].isin(INACCURATE_TRACKING)].copy()
-mix  = df[df["Syllable"].isin(MIX_BEHAVIORS)].copy()
+def load_raw() -> pd.DataFrame:
+    df = pd.read_csv(RAW)
+    df.columns = df.columns.str.strip()
+    df["Syllable"] = df["Syllable"].astype(int)
+    df["Percentage"] = pd.to_numeric(df["Percentage"])
+    df["time_start_s"] = pd.to_numeric(df["Time Bin"])
+    df["animal_id"] = df["Animal"].astype(str).str.strip()
+    df["group"] = df["Condition"].astype(str).str.strip()
+    df["experiment"] = pd.to_numeric(df["Experiment"]).astype(int)
+    return df
 
-def sum_seconds(sub):
-    """Sum pct × bin_seconds / 100 per animal across all bins and syllables."""
-    sub["seconds"] = sub["Percentage"] * BIN_SECONDS / 100.0
+
+def subset_seconds(df: pd.DataFrame, syllables: set[int], column: str) -> pd.DataFrame:
+    sub = df[df["Syllable"].isin(syllables)].copy()
+    sub[column] = sub["Percentage"] * BIN_SECONDS / 100.0
     return (
-        sub.groupby(["Animal", "Condition", "Experiment"])["seconds"]
+        sub.groupby(["animal_id", "group", "experiment"], as_index=False)[column]
         .sum()
-        .reset_index()
     )
 
-inac_s = sum_seconds(inac).rename(columns={"seconds": "inaccurate_tracking_seconds"})
-mix_s  = sum_seconds(mix).rename(columns={"seconds": "mix_behaviors_seconds"})
 
-merged = inac_s.merge(mix_s, on=["Animal", "Condition", "Experiment"], how="outer").fillna(0)
-merged["total_excluded_seconds"] = merged["inaccurate_tracking_seconds"] + merged["mix_behaviors_seconds"]
-merged["group"] = merged["Condition"]
-merged["animal_id"] = merged["Animal"].astype(str)
-merged["experiment"] = merged["Experiment"].astype(str)
+def derive_per_animal(df: pd.DataFrame) -> pd.DataFrame:
+    inaccurate = subset_seconds(df, INACCURATE_TRACKING, "inaccurate_tracking_seconds")
+    mixed = subset_seconds(df, MIX_BEHAVIORS, "mix_behaviors_seconds")
+    out = inaccurate.merge(mixed, on=["animal_id", "group", "experiment"], how="outer").fillna(0.0)
+    out["total_excluded_seconds"] = out["inaccurate_tracking_seconds"] + out["mix_behaviors_seconds"]
+    return out[
+        [
+            "animal_id",
+            "group",
+            "experiment",
+            "inaccurate_tracking_seconds",
+            "mix_behaviors_seconds",
+            "total_excluded_seconds",
+        ]
+    ]
 
-out = merged[["animal_id", "group", "experiment",
-              "inaccurate_tracking_seconds", "mix_behaviors_seconds",
-              "total_excluded_seconds"]]
-out.to_csv(OUT, index=False)
-print(f"Saved {len(out)} rows to {OUT}")
 
-# Summary by group
-for col in ["inaccurate_tracking_seconds", "mix_behaviors_seconds", "total_excluded_seconds"]:
-    print(f"\n{col}:")
-    print(out.groupby("group")[col].agg(["mean", "std", "count"]).round(2))
+def derive_supplementary_time(df: pd.DataFrame) -> pd.DataFrame:
+    specs = [
+        ("Inaccurate tracking", INACCURATE_TRACKING),
+        ("Mix behaviors", MIX_BEHAVIORS),
+    ]
+    rows = []
+    base = df[["animal_id", "group", "experiment", "time_start_s"]].drop_duplicates()
+    for cluster, syllables in specs:
+        sub = df[df["Syllable"].isin(syllables)].copy()
+        collapsed = (
+            sub.groupby(["animal_id", "group", "experiment", "time_start_s"], as_index=False)[
+                "Percentage"
+            ]
+            .sum()
+        )
+        merged = base.merge(
+            collapsed,
+            on=["animal_id", "group", "experiment", "time_start_s"],
+            how="left",
+        ).fillna({"Percentage": 0.0})
+        merged["cluster"] = cluster
+        rows.append(merged)
+
+    out = pd.concat(rows, ignore_index=True)
+    out["seconds"] = out["time_start_s"] + BIN_SECONDS
+    out["time_min"] = out["seconds"] / 60.0
+    out["time_bin"] = out["seconds"].map(lambda value: f"t_{int(value):03d}s")
+    out["project"] = out["experiment"].map(PROJECT)
+    out = out.rename(columns={"Percentage": "percentage"})
+    return out[
+        [
+            "animal_id",
+            "group",
+            "project",
+            "experiment",
+            "cluster",
+            "time_bin",
+            "percentage",
+            "seconds",
+            "time_min",
+        ]
+    ].sort_values(["animal_id", "cluster", "seconds"])
+
+
+def main() -> None:
+    DERIVED.mkdir(parents=True, exist_ok=True)
+    raw = load_raw()
+    per_animal = derive_per_animal(raw)
+    supp_time = derive_supplementary_time(raw)
+
+    per_animal.to_csv(OUT_ANIMAL, index=False)
+    supp_time.to_csv(OUT_TIME, index=False)
+
+    print(f"Saved {OUT_ANIMAL.relative_to(REPO)} ({len(per_animal)} rows)")
+    print(f"Saved {OUT_TIME.relative_to(REPO)} ({len(supp_time)} rows)")
+
+
+if __name__ == "__main__":
+    main()

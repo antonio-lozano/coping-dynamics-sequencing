@@ -27,8 +27,9 @@ python --version  # use Python 3.9, 3.10, or 3.11
 pip install -r requirements.txt
 ```
 
-All figure inputs are bundled under `data/source/` (see
-`data/README.md`), so the data-derived figures regenerate out of the box.
+All immutable figure inputs are bundled under `data/raw/`; generated
+analysis-ready tables live under `data/derived/` (see `data/README.md`), so the
+data-derived figures regenerate out of the box.
 
 ## Reproducibility Check
 
@@ -42,8 +43,9 @@ python scripts/check_reproducibility.py
 ## Running Figures
 
 Run scripts from the repo root. Each script writes the clean manuscript figure
-to `figures/` and supporting tables/intermediate renders to
-`results/figure_data/`.
+to `figures/`. Source-data CSVs go to `results/source_data/`, statistical
+outputs go to `results/statistics/`, and helper tables/renders go to
+`results/intermediate/`.
 
 | Manuscript figure | Script |
 | --- | --- |
@@ -61,6 +63,15 @@ Regenerate all data-derived figures:
 python scripts/run_all_figures.py
 ```
 
+Regenerate the full manuscript reproducibility package from tracked inputs:
+
+```bash
+python scripts/run_all.py
+```
+
+The full rebuild prints task-level progress by default; add `--verbose` to
+stream each child script's model output.
+
 Figure 1 is a hand-made schematic with no repo generator. Figure 7 is supplied
 as a canonical assembled manuscript figure in `figures/`.
 
@@ -68,18 +79,23 @@ as a canonical assembled manuscript figure in `figures/`.
 
 ```text
 |-- data/
-|   `-- source/             # Bundled figure inputs
+|   |-- raw/                # Immutable bundled inputs
+|   `-- derived/            # Tables generated from data/raw
 |-- docs/                   # Figure provenance / replication notes
 |-- figures/                # Canonical manuscript figures
 |-- report/                 # Styled statistical workbook
 |-- results/
-|   |-- figure_data/        # Supporting tables and intermediate renders
-|   `-- statistical_reports/# Statistical CSVs and manuscript Results text
+|   |-- source_data/        # Figure source-data CSVs
+|   |-- statistics/         # Model/statistical CSVs and manuscript text audit
+|   |-- intermediate/       # Helper tables and non-canonical renders
+|   `-- models/             # Trained model artifacts
 |-- scripts/
 |   |-- generate_figures/   # Data-derived figure generators
 |   |-- derive_tables/      # Rebuild committed source/statistical tables
+|   |-- build_raw_data_workbook.py
 |   |-- build_statistical_report.py
-|   `-- run_all_figures.py
+|   |-- run_all_figures.py
+|   `-- run_all.py
 |-- src/                    # Shared analysis, plotting, and config code
 |-- environment.yml
 |-- requirements.txt
@@ -88,10 +104,12 @@ as a canonical assembled manuscript figure in `figures/`.
 
 ## Data And Reports
 
-All required figure inputs are self-contained in `data/source/`. The large
-per-frame syllable table and results pickle are gzip-compressed.
+All required figure inputs are self-contained in `data/raw/`. The large
+per-frame syllable table and results pickle are gzip-compressed. Generated
+analysis-ready inputs are committed under `data/derived/` and can be rebuilt
+with `scripts/derive_tables/`.
 
-The statistical report workbook is `report/STATISTICAL_REPORT.xlsx`. Rebuild it
+The statistical report workbook is `report/statistical_report.xlsx`. Rebuild it
 with:
 
 ```bash
@@ -103,8 +121,8 @@ and mirrored in the final statistical report.
 
 Manuscript-facing workbook outputs are:
 
-- `report/RAW_DATA.xlsx`
-- `report/STATISTICAL_REPORT.xlsx`
+- `report/raw_data.xlsx`
+- `report/statistical_report.xlsx`
 
 See `REPRODUCIBILITY.md`, `DATA_AVAILABILITY.md`, and `CODE_AVAILABILITY.md`
 for publication and repository-release notes.

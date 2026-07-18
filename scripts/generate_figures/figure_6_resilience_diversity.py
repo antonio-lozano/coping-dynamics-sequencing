@@ -27,12 +27,15 @@ from src.config import (
     CLUSTER_JSON,
     COPING_DATA2_ZIP,
     COPING2_MEMBER_TIMEBIN_250MS as TIMEBIN_250MS,
-    FIGURE_DATA_DIR as OUTPUT_DIR,
+    RESULTS_INTERMEDIATE_FIGURES_DIR,
+    RESULTS_SOURCE_DATA_DIR,
     SYLLABLE_TIMEBIN_250MS,
 )
 from src.statistics import compute_diversity_metrics
 
 LEGACY_FIGURES_DIR = REPO_ROOT / "figures"
+FIGURE_OUTPUT_DIR = RESULTS_INTERMEDIATE_FIGURES_DIR
+SOURCE_OUTPUT_DIR = RESULTS_SOURCE_DATA_DIR
 
 AXIS = "#4D4D4D"
 # Match the physical boxplot panel dimensions used in Figure 4.
@@ -727,7 +730,8 @@ def export_source_data(metrics: pd.DataFrame, bouts: pd.DataFrame, transitions: 
 
 
 def main() -> None:
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    FIGURE_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    SOURCE_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     pred, pred_sequences, full_sequences, meta = load_sequences()
     metrics, usage = compute_frequency_metrics(full_sequences, meta)
     bouts = bout_table(full_sequences, meta)
@@ -840,9 +844,9 @@ def main() -> None:
     align_panel_tags_to_titles(fig, list(zip(bout_axes, [chr(ord("L") + i) for i in range(len(bout_axes))])))
     align_panel_tags_to_titles(fig, [(axW, "W"), (axX, "X"), (axY, "Y"), (axZ, "Z")])
 
-    pdf = OUTPUT_DIR / "figure_6_resilience_diversity.pdf"
-    svg = OUTPUT_DIR / "figure_6_resilience_diversity.svg"
-    png = OUTPUT_DIR / "figure_6_resilience_diversity.png"
+    pdf = FIGURE_OUTPUT_DIR / "figure_6_resilience_diversity.pdf"
+    svg = FIGURE_OUTPUT_DIR / "figure_6_resilience_diversity.svg"
+    png = FIGURE_OUTPUT_DIR / "figure_6_resilience_diversity.png"
     fig.savefig(pdf)
     fig.savefig(svg)
     fig.savefig(png, dpi=300)
@@ -859,7 +863,7 @@ def main() -> None:
 
     # Export source data
     print("Computing Figure 6 source statistics...")
-    export_source_data(metrics, bouts, transitions, OUTPUT_DIR)
+    export_source_data(metrics, bouts, transitions, SOURCE_OUTPUT_DIR)
 
 
 if __name__ == "__main__":

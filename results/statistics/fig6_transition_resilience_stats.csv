@@ -1,0 +1,13 @@
+metric,contrast,beta,SE,z,p,p_BH_FDR,sig_BH
+LZ_complexity,vuln_vs_control,-8.9654,4.4174,-2.0296,0.0424,0.0424,True
+LZ_complexity,resilient_vs_control,-3.0004,6.1299,-0.4895,0.6245,0.6245,False
+LZ_complexity,resilient_vs_vuln,5.965,6.3454,0.94,0.3472,0.4583,False
+Recurrence,vuln_vs_control,0.0258,0.0085,3.0248,0.0025,0.01,True
+Recurrence,resilient_vs_control,-0.0076,0.0115,-0.6559,0.5119,0.6245,False
+Recurrence,resilient_vs_vuln,-0.0333,0.0121,-2.755,0.0059,0.0235,True
+Determinism,vuln_vs_control,0.0096,0.0034,2.7987,0.0051,0.0103,True
+Determinism,resilient_vs_control,0.0032,0.0049,0.6507,0.5152,0.6245,False
+Determinism,resilient_vs_vuln,-0.0064,0.0049,-1.2948,0.1954,0.3908,False
+MarkovEntropyIdx,vuln_vs_control,-0.0435,0.0207,-2.1002,0.0357,0.0424,True
+MarkovEntropyIdx,resilient_vs_control,-0.0196,0.0314,-0.6256,0.5316,0.6245,False
+MarkovEntropyIdx,resilient_vs_vuln,0.0239,0.0322,0.7417,0.4583,0.4583,False

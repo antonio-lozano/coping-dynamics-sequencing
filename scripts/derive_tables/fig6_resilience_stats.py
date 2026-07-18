@@ -15,9 +15,10 @@ Benjamini-Hochberg FDR is applied within each contrast type:
   - diversity metrics: across the 6 metrics
   - bout duration:     across the 7 clusters   (matches the manuscript Fig 6M/N/P values)
 
-Run:  python scripts/derive_tables/fig6_resilience_stats.py
-Writes results/statistical_reports/fig6_diversity_resilience_stats.csv
-       results/statistical_reports/fig6_bout_resilience_stats.csv
+Run: python scripts/derive_tables/fig6_resilience_stats.py
+Writes results/statistics/fig6_diversity_resilience_stats.csv
+       results/statistics/fig6_bout_resilience_stats.csv
+       results/statistics/fig6_transition_resilience_stats.csv
 """
 import warnings, json
 from pathlib import Path
@@ -28,11 +29,12 @@ import statsmodels.formula.api as smf
 from statsmodels.stats.multitest import multipletests
 from scipy.stats import entropy
 
-REPO = Path(__file__).resolve().parents[1]
-CSV  = REPO / "data" / "source" / "syllable_usage_per_timebin_250ms.csv"
-OUT_DIV  = REPO / "results" / "statistical_reports" / "fig6_diversity_resilience_stats.csv"
-OUT_BOUT = REPO / "results" / "statistical_reports" / "fig6_bout_resilience_stats.csv"
-OUT_TRANS = REPO / "results" / "statistical_reports" / "fig6_transition_resilience_stats.csv"
+REPO = Path(__file__).resolve().parents[2]
+CSV  = REPO / "data" / "raw" / "syllable_usage_per_timebin_250ms.csv"
+OUT_DIR = REPO / "results" / "statistics"
+OUT_DIV  = OUT_DIR / "fig6_diversity_resilience_stats.csv"
+OUT_BOUT = OUT_DIR / "fig6_bout_resilience_stats.csv"
+OUT_TRANS = OUT_DIR / "fig6_transition_resilience_stats.csv"
 
 CLUSTER_MAP = {"Freezing": [0, 28], "Sniffing": [18, 20], "Grooming": [24],
                "Turn": [1, 3, 5, 6, 10, 15, 26, 27],

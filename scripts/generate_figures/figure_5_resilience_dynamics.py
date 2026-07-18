@@ -30,13 +30,18 @@ from src.config import (
     COPING_MEMBER_BFL_SCORES,
     COPING2_MEMBER_TIMEBIN_30S,
     COPING2_MEMBER_UPDATED_RESULTS,
-    FIGURE_DATA_DIR as OUTPUT_DIR,
+    RESULTS_INTERMEDIATE_FIGURES_DIR,
+    RESULTS_INTERMEDIATE_TABLES_DIR,
+    RESULTS_SOURCE_DATA_DIR,
     SYLLABLE_TIMEBIN_30S,
     UPDATED_RESULTS_PKL as ORIGINAL_EQUIPO_RESULTS,
 )
 from src.statistics import fit_mixed_models
 
 LEGACY_FIGURES_DIR = REPO_ROOT / "figures"
+FIGURE_OUTPUT_DIR = RESULTS_INTERMEDIATE_FIGURES_DIR
+TABLE_OUTPUT_DIR = RESULTS_INTERMEDIATE_TABLES_DIR
+SOURCE_OUTPUT_DIR = RESULTS_SOURCE_DATA_DIR
 
 AXIS = "#4D4D4D"
 CONTROL = "#F9C74F"
@@ -610,15 +615,17 @@ def export_source_data(prof: pd.DataFrame, freq: pd.DataFrame, output_dir: Path)
 
 
 def main() -> None:
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    FIGURE_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    TABLE_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    SOURCE_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     cluster_time = load_cluster_time()
     time_summary = summarize_time(cluster_time)
     freq = frequency_points(cluster_time)
     prof, _, loocv = mds_profiles_from_updated_results()
     prof.assign(resilient_by_zero=(prof["group"] == "ELS") & (prof["dynamics_score"] < 0)).to_csv(
-        OUTPUT_DIR / "figure_5_dynamics_scores.csv", index=False
+        TABLE_OUTPUT_DIR / "figure_5_dynamics_scores.csv", index=False
     )
-    threshold_audit(prof).to_csv(OUTPUT_DIR / "figure_5_threshold_audit.csv", index=False)
+    threshold_audit(prof).to_csv(TABLE_OUTPUT_DIR / "figure_5_threshold_audit.csv", index=False)
 
     fig = plt.figure(figsize=(8.27, 11.69), dpi=300, facecolor="white")
     gs = fig.add_gridspec(
@@ -656,9 +663,9 @@ def main() -> None:
     plot_time(axI, time_summary, "Climb", "I", (0, 14), list(range(0, 15, 2)))
     plot_time(axJ, time_summary, "Jump", "J", (0, 4), [0, 1, 2, 3, 4])
 
-    pdf = OUTPUT_DIR / "figure_5_resilience_dynamics.pdf"
-    png = OUTPUT_DIR / "figure_5_resilience_dynamics.png"
-    svg = OUTPUT_DIR / "figure_5_resilience_dynamics.svg"
+    pdf = FIGURE_OUTPUT_DIR / "figure_5_resilience_dynamics.pdf"
+    png = FIGURE_OUTPUT_DIR / "figure_5_resilience_dynamics.png"
+    svg = FIGURE_OUTPUT_DIR / "figure_5_resilience_dynamics.svg"
     fig.savefig(pdf)
     fig.savefig(svg)
     fig.savefig(png, dpi=300)
@@ -674,7 +681,7 @@ def main() -> None:
 
     # Export source data
     print("Computing Figure 5 source statistics...")
-    export_source_data(prof, freq, OUTPUT_DIR)
+    export_source_data(prof, freq, SOURCE_OUTPUT_DIR)
 
 
 if __name__ == "__main__":

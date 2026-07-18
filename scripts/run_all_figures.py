@@ -5,8 +5,9 @@
 Run All Figures - regenerate every manuscript figure from source data.
 
 Each script writes the clean manuscript figure (figureN.pdf/.svg/.png) to the
-top-level ``figures/`` directory and supporting tables/renders to
-``results/figure_data/``.
+top-level ``figures/`` directory. Figure source data go to
+``results/source_data/``; statistics go to ``results/statistics/``; helper
+tables/renders go to ``results/intermediate/``.
 
 Usage:
     python scripts/run_all_figures.py

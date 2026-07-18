@@ -25,14 +25,20 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from src.config import (
+    CLUSTER_FREQUENCY_CSV,
     COPING_DATA2_ZIP,
     COPING2_MEMBER_TIMEBIN_30S as ARCHIVE_MEMBER,
-    FIGURE_DATA_DIR as OUTPUT_DIR,
+    RESULTS_INTERMEDIATE_FIGURES_DIR,
+    RESULTS_SOURCE_DATA_DIR,
+    RESULTS_STATISTICS_DIR,
     SYLLABLE_TIMEBIN_30S,
 )
 from src.statistics import fit_mixed_models
 
 LEGACY_FIGURES_DIR = REPO_ROOT / "figures"
+FIGURE_OUTPUT_DIR = RESULTS_INTERMEDIATE_FIGURES_DIR
+SOURCE_OUTPUT_DIR = RESULTS_SOURCE_DATA_DIR
+STATISTICS_OUTPUT_DIR = RESULTS_STATISTICS_DIR
 
 COLORS = {"Control": "#F9C74F", "ELS": "#C37BA0"}
 AXIS_COLOR = "#4D4D4D"
@@ -266,7 +272,7 @@ def plot_time_panel(
     return panel_letter(ax, letter)
 
 
-def compute_and_export_source_data(cluster_df: pd.DataFrame, time_summary: pd.DataFrame, total_summary: pd.DataFrame, output_dir: Path) -> None:
+def compute_and_export_source_data(cluster_df: pd.DataFrame, time_summary: pd.DataFrame, total_summary: pd.DataFrame) -> None:
     """Compute Figure 3 source statistics and export to CSV."""
     import statsmodels.formula.api as smf
     import statsmodels.api as sm
@@ -307,14 +313,15 @@ def compute_and_export_source_data(cluster_df: pd.DataFrame, time_summary: pd.Da
 
     df = pd.DataFrame(rows)
     if not df.empty:
-        output_csv = output_dir / "source_data_figure3.csv"
+        SOURCE_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        output_csv = SOURCE_OUTPUT_DIR / "source_data_figure3.csv"
         df.to_csv(output_csv, index=False)
         print(f"Saved: {output_csv}")
     else:
         print("Warning: No source data generated for Figure 3")
 
     # --- GEE Negative Binomial for Fig 3A cluster frequency ---
-    freq_csv = REPO_ROOT / "data" / "source" / "cluster_frequency_per_animal.csv"
+    freq_csv = CLUSTER_FREQUENCY_CSV
     gee_rows: list[dict] = []
     if freq_csv.exists():
         freq_df = pd.read_csv(freq_csv)
@@ -350,7 +357,8 @@ def compute_and_export_source_data(cluster_df: pd.DataFrame, time_summary: pd.Da
         print(f"Warning: {freq_csv} not found — skipping GEE for Fig 3A")
 
     if gee_rows:
-        gee_path = output_dir / "stats_figure3A_GEE.csv"
+        STATISTICS_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        gee_path = STATISTICS_OUTPUT_DIR / "stats_figure3A_GEE.csv"
         pd.DataFrame(gee_rows).to_csv(gee_path, index=False)
         print(f"Saved: {gee_path}")
 
@@ -371,13 +379,14 @@ def compute_and_export_source_data(cluster_df: pd.DataFrame, time_summary: pd.Da
             print(f"MixedLM failed for {cluster}: {e}")
 
     if mm_frames:
-        mm_path = output_dir / "stats_figure3_overtime.csv"
+        STATISTICS_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        mm_path = STATISTICS_OUTPUT_DIR / "stats_figure3_overtime.csv"
         pd.concat(mm_frames, ignore_index=True).to_csv(mm_path, index=False)
         print(f"Saved: {mm_path}")
 
 
 def main() -> None:
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    FIGURE_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     raw = load_timebin_data()
     cluster_df = build_cluster_data(raw)
     time_summary = summarize_time(cluster_df)
@@ -428,8 +437,8 @@ def main() -> None:
 
     align_panel_letters_to_ylabels(fig, letter_artists)
 
-    pdf_path = OUTPUT_DIR / "figure_3_behavior_clusters.pdf"
-    svg_path = OUTPUT_DIR / "figure_3_behavior_clusters.svg"
+    pdf_path = FIGURE_OUTPUT_DIR / "figure_3_behavior_clusters.pdf"
+    svg_path = FIGURE_OUTPUT_DIR / "figure_3_behavior_clusters.svg"
     fig.savefig(pdf_path, bbox_inches=None, facecolor="white")
     fig.savefig(svg_path, bbox_inches=None, facecolor="white")
     LEGACY_FIGURES_DIR.mkdir(parents=True, exist_ok=True)
@@ -444,7 +453,7 @@ def main() -> None:
 
     # Compute and export source data
     print("Computing Figure 3 source statistics...")
-    compute_and_export_source_data(cluster_df, time_summary, total_summary, OUTPUT_DIR)
+    compute_and_export_source_data(cluster_df, time_summary, total_summary)
 
 
 if __name__ == "__main__":

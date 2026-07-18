@@ -26,23 +26,24 @@ REQUIRED_FILES = [
     "CODE_AVAILABILITY.md",
     "MANIFEST.csv",
     "data/README.md",
-    "data/source/animal_groups.csv",
-    "data/source/bfl_scores.xlsx",
-    "data/source/cluster_frequency_per_animal.csv",
-    "data/source/cluster_timecourse_per_animal.csv",
-    "data/source/freezing_overlap_by_group.csv",
-    "data/source/moseq_syllables_per_frame.csv.gz",
-    "data/source/s0s28_timecourse_per_animal.csv",
-    "data/source/supplementary_figure1_tracking_clusters.csv",
-    "data/source/syllable_classification_metrics.csv",
-    "data/source/syllable_usage_per_timebin_30s.csv",
-    "data/source/syllable_usage_per_timebin_250ms.csv",
-    "data/source/tracking_exclusions_per_animal.csv",
-    "data/source/updated_results.pkl.gz",
-    "report/RAW_DATA.xlsx",
-    "report/STATISTICAL_REPORT.xlsx",
-    "report/STATISTICAL_REPORT_TEMPLATE.xlsx",
+    "data/raw/animal_groups.csv",
+    "data/raw/bfl_scores.xlsx",
+    "data/raw/freezing_overlap_by_group.csv",
+    "data/raw/moseq_syllables_per_frame.csv.gz",
+    "data/raw/syllable_classification_metrics.csv",
+    "data/raw/syllable_usage_per_timebin_30s.csv",
+    "data/raw/syllable_usage_per_timebin_250ms.csv",
+    "data/raw/updated_results.pkl.gz",
+    "data/derived/cluster_frequency_per_animal.csv",
+    "data/derived/cluster_timecourse_per_animal.csv",
+    "data/derived/s0s28_timecourse_per_animal.csv",
+    "data/derived/supplementary_figure1_tracking_clusters.csv",
+    "data/derived/tracking_exclusions_per_animal.csv",
+    "report/raw_data.xlsx",
+    "report/statistical_report.xlsx",
+    "scripts/run_all.py",
     "scripts/run_all_figures.py",
+    "scripts/build_raw_data_workbook.py",
     "scripts/build_statistical_report.py",
 ]
 
@@ -59,31 +60,41 @@ FIGURE_STEMS = [
 FIGURE_EXTS = (".pdf", ".svg", ".png")
 
 INTERMEDIATE_CSVS = [
-    "results/figure_data/source_data_figure2.csv",
-    "results/figure_data/source_data_figure3.csv",
-    "results/figure_data/source_data_figure4.csv",
-    "results/figure_data/source_data_figure5.csv",
-    "results/figure_data/source_data_figure6.csv",
-    "results/figure_data/stats_figure3A_GEE.csv",
-    "results/figure_data/stats_figure3_overtime.csv",
-    "results/figure_data/stats_figure4_bouts_MixedLM.csv",
-    "results/figure_data/stats_figure4_diversity_MixedLM.csv",
-    "results/figure_data/stats_figure4_transition_MixedLM.csv",
-    "results/statistical_reports/fig4_bout_cluster_per_animal.csv",
-    "results/statistical_reports/fig4_diversity_per_animal.csv",
-    "results/statistical_reports/fig4_transition_per_animal.csv",
-    "results/statistical_reports/fig5_timecourse_mixedlm.csv",
-    "results/statistical_reports/fig6_bout_resilience_stats.csv",
-    "results/statistical_reports/fig6_diversity_resilience_stats.csv",
-    "results/statistical_reports/fig6_transition_resilience_stats.csv",
-    "results/statistical_reports/manuscript_results_text.md",
+    "results/source_data/source_data_figure2.csv",
+    "results/source_data/source_data_figure3.csv",
+    "results/source_data/source_data_figure4.csv",
+    "results/source_data/source_data_figure5.csv",
+    "results/source_data/source_data_figure6.csv",
+    "results/statistics/stats_figure3A_GEE.csv",
+    "results/statistics/stats_figure3_overtime.csv",
+    "results/statistics/stats_figure4_bouts_MixedLM.csv",
+    "results/statistics/stats_figure4_diversity_MixedLM.csv",
+    "results/statistics/stats_figure4_transition_MixedLM.csv",
+    "results/statistics/fig4_bout_cluster_per_animal.csv",
+    "results/statistics/fig4_diversity_per_animal.csv",
+    "results/statistics/fig4_transition_per_animal.csv",
+    "results/statistics/fig5_timecourse_mixedlm.csv",
+    "results/statistics/fig6_bout_resilience_stats.csv",
+    "results/statistics/fig6_diversity_resilience_stats.csv",
+    "results/statistics/fig6_transition_resilience_stats.csv",
+    "results/statistics/manuscript_results_text.md",
+    "results/intermediate/tables/figure_5_dynamics_scores.csv",
+    "results/intermediate/tables/supplementary_figure1_time_summary.csv",
+    "results/models/behavior_classifier/fig7_behavior_xgb.joblib",
 ]
 
 FORBIDDEN_PATHS = [
     "dataset",
     "external",
+    "data/source",
+    "results/figure_data",
+    "results/behavior_classifier",
+    "results/statistical_reports",
     "data/Raw_data.xlsx",
-    "data/source/figure7.pdf",
+    "report/RAW_DATA.xlsx",
+    "report/STATISTICAL_REPORT.xlsx",
+    "report/STATISTICAL_REPORT_TEMPLATE.xlsx",
+    "data/raw/figure7.pdf",
     "results/figure_data/Raw_data.xlsx",
     "results/figure_data/Statistical_report.xlsx",
     "results/figure_data/figure_7_source.pdf",
@@ -108,6 +119,19 @@ def fail(message: str, errors: list[str]) -> None:
     errors.append(message)
 
 
+def path_exists_exact_case(rel: str) -> bool:
+    """Return True only when every path component exists with matching case."""
+    current = ROOT
+    for part in Path(rel).parts:
+        if not current.is_dir():
+            return False
+        entries = {child.name: child for child in current.iterdir()}
+        if part not in entries:
+            return False
+        current = entries[part]
+    return True
+
+
 def check_required(errors: list[str]) -> None:
     for rel in REQUIRED_FILES + INTERMEDIATE_CSVS:
         path = ROOT / rel
@@ -123,7 +147,7 @@ def check_required(errors: list[str]) -> None:
             if not path.is_file():
                 fail(f"missing figure export: {rel}", errors)
 
-    pred_dir = ROOT / "data/source/freezing_predictions"
+    pred_dir = ROOT / "data/raw/freezing_predictions"
     predictions = sorted(pred_dir.glob("*.csv")) if pred_dir.exists() else []
     if len(predictions) != 98:
         fail(f"expected 98 freezing prediction CSVs, found {len(predictions)}", errors)
@@ -131,7 +155,7 @@ def check_required(errors: list[str]) -> None:
 
 def check_forbidden(errors: list[str]) -> None:
     for rel in FORBIDDEN_PATHS:
-        if (ROOT / rel).exists():
+        if path_exists_exact_case(rel):
             fail(f"forbidden scratch/artifact path exists: {rel}", errors)
 
     for path in ROOT.rglob("*"):
