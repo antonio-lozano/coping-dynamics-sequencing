@@ -9,6 +9,8 @@ import gzip
 import pickle
 import sys
 
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import numpy as np
@@ -23,14 +25,13 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from src.config import (
-    RESULTS_INTERMEDIATE_FIGURES_DIR,
-    RESULTS_INTERMEDIATE_TABLES_DIR,
-    UPDATED_RESULTS_PKL as ORIGINAL_EQUIPO_RESULTS,
+    FIGURES_DIR,
+    PROCESSED_DATA_DIR,
+    UPDATED_MOSEQ_PICKLE,
 )
 
-LEGACY_FIGURES_DIR = REPO_ROOT / "figures"
-FIGURE_OUTPUT_DIR = RESULTS_INTERMEDIATE_FIGURES_DIR
-TABLE_OUTPUT_DIR = RESULTS_INTERMEDIATE_TABLES_DIR
+FIGURE_OUTPUT_DIR = FIGURES_DIR
+TABLE_OUTPUT_DIR = PROCESSED_DATA_DIR
 
 AXIS = "#4D4D4D"
 CONTROL = "#F9C74F"
@@ -130,10 +131,10 @@ def loocv_logistic(coords: np.ndarray, labels: np.ndarray, c_value: float = 1.0)
 
 
 def load_feature_matrix() -> tuple[pd.DataFrame, np.ndarray]:
-    if not ORIGINAL_EQUIPO_RESULTS.exists():
-        raise FileNotFoundError(f"Missing bundled raw data: {ORIGINAL_EQUIPO_RESULTS}")
-    opener = gzip.open if ORIGINAL_EQUIPO_RESULTS.suffix == ".gz" else open
-    with opener(ORIGINAL_EQUIPO_RESULTS, "rb") as f:
+    if not UPDATED_MOSEQ_PICKLE.exists():
+        raise FileNotFoundError(f"Missing bundled raw data: {UPDATED_MOSEQ_PICKLE}")
+    opener = gzip.open if UPDATED_MOSEQ_PICKLE.suffix == ".gz" else open
+    with opener(UPDATED_MOSEQ_PICKLE, "rb") as f:
         results = pickle.load(f)
 
     valid_codes = list(range(1, 8))
@@ -164,10 +165,10 @@ def load_transition_features() -> tuple[pd.DataFrame, np.ndarray]:
     """Per-animal first-order transition-probability matrix (7x7) between behavioral
     clusters, flattened to a 49-dim feature (von Ziegler-style behavioural flow).
     Consecutive identical frames are collapsed to a bout-level state sequence."""
-    if not ORIGINAL_EQUIPO_RESULTS.exists():
-        raise FileNotFoundError(f"Missing bundled raw data: {ORIGINAL_EQUIPO_RESULTS}")
-    opener = gzip.open if ORIGINAL_EQUIPO_RESULTS.suffix == ".gz" else open
-    with opener(ORIGINAL_EQUIPO_RESULTS, "rb") as f:
+    if not UPDATED_MOSEQ_PICKLE.exists():
+        raise FileNotFoundError(f"Missing bundled raw data: {UPDATED_MOSEQ_PICKLE}")
+    opener = gzip.open if UPDATED_MOSEQ_PICKLE.suffix == ".gz" else open
+    with opener(UPDATED_MOSEQ_PICKLE, "rb") as f:
         results = pickle.load(f)
 
     codes = list(range(1, 8))
@@ -462,9 +463,9 @@ def main() -> None:
     profiles = pd.concat([profiles, tprof], ignore_index=True)
     summary = pd.concat([summary, pd.DataFrame([tsummary])], ignore_index=True)
 
-    profiles.to_csv(TABLE_OUTPUT_DIR / "supplementary_figure_3_distance_scores.csv", index=False)
-    summary.to_csv(TABLE_OUTPUT_DIR / "supplementary_figure_3_distance_summary.csv", index=False)
-    threshold_audit(profiles).to_csv(TABLE_OUTPUT_DIR / "supplementary_figure_3_threshold_audit.csv", index=False)
+    profiles.to_csv(TABLE_OUTPUT_DIR / "supplementary_figure3_distance_scores.csv", index=False)
+    summary.to_csv(TABLE_OUTPUT_DIR / "supplementary_figure3_distance_summary.csv", index=False)
+    threshold_audit(profiles).to_csv(TABLE_OUTPUT_DIR / "supplementary_figure3_threshold_audit.csv", index=False)
 
     fig = plt.figure(figsize=(8.27, 11.69), dpi=300, facecolor="white")
     gs = fig.add_gridspec(
@@ -505,21 +506,16 @@ def main() -> None:
     plot_box(trans_box_ax, trans_sub, "Transition", "K")
     align_box_to_mds(trans_mds_ax, trans_box_ax)
 
-    pdf = FIGURE_OUTPUT_DIR / "supplementary_figure_3_distances.pdf"
-    svg = FIGURE_OUTPUT_DIR / "supplementary_figure_3_distances.svg"
-    png = FIGURE_OUTPUT_DIR / "supplementary_figure_3_distances.png"
+    pdf = FIGURE_OUTPUT_DIR / "supplementary_figure3.pdf"
+    svg = FIGURE_OUTPUT_DIR / "supplementary_figure3.svg"
+    png = FIGURE_OUTPUT_DIR / "supplementary_figure3.png"
     fig.savefig(pdf)
     fig.savefig(svg)
     fig.savefig(png, dpi=300)
-    LEGACY_FIGURES_DIR.mkdir(parents=True, exist_ok=True)
-    fig.savefig(LEGACY_FIGURES_DIR / "supplementary_figure3.pdf")
-    fig.savefig(LEGACY_FIGURES_DIR / "supplementary_figure3.svg")
-    fig.savefig(LEGACY_FIGURES_DIR / "supplementary_figure3.png", dpi=300)
     plt.close(fig)
     print(f"Saved {pdf}")
     print(f"Saved {svg}")
     print(f"Saved {png}")
-    print(f"Saved {LEGACY_FIGURES_DIR / 'supplementary_figure3.pdf'}")
 
 
 if __name__ == "__main__":

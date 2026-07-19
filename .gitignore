@@ -1,4 +1,4 @@
-# Data (tracked curated inputs; ignore only raw re-extractions)
+# Data (tracked curated inputs; ignore only local re-extractions)
 data/raw/moseq_syllables_per_frame.csv
 data/**/*.pkl
 data/**/*.parquet
@@ -13,14 +13,21 @@ data/**/*.npy
 
 # Python
 .venv/
+.uv-cache/
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
 
 # IDE / OS
 .vscode/
 .idea/
-.agents/
 .DS_Store
 Thumbs.db
 
@@ -31,5 +38,6 @@ config/paths.py
 *.log
 *_test.xlsx
 *_rebuilt.xlsx
-results/behavior_classifier/*_smoke.joblib
-results/intermediate/**/*_smoke.csv
+classifier/outputs/
+classifier/*_smoke.joblib
+data/processed/**/*_smoke.csv

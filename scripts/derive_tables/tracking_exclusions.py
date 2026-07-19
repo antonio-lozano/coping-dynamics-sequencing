@@ -8,10 +8,10 @@ import pandas as pd
 
 REPO = Path(__file__).resolve().parents[2]
 RAW = REPO / "data" / "raw" / "syllable_usage_per_timebin_30s.csv"
-DERIVED = REPO / "data" / "derived"
+PROCESSED = REPO / "data" / "processed"
 
-OUT_ANIMAL = DERIVED / "tracking_exclusions_per_animal.csv"
-OUT_TIME = DERIVED / "supplementary_figure1_tracking_clusters.csv"
+OUT_ANIMAL = PROCESSED / "tracking_exclusions_per_animal.csv"
+OUT_TIME = PROCESSED / "supplementary_figure1_tracking_clusters.csv"
 
 INACCURATE_TRACKING = {2, 4, 8, 9, 22, 31, 32, 33}
 MIX_BEHAVIORS = {7, 13, 17}
@@ -105,7 +105,7 @@ def derive_supplementary_time(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def main() -> None:
-    DERIVED.mkdir(parents=True, exist_ok=True)
+    PROCESSED.mkdir(parents=True, exist_ok=True)
     raw = load_raw()
     per_animal = derive_per_animal(raw)
     supp_time = derive_supplementary_time(raw)

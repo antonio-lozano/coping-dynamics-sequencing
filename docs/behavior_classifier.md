@@ -1,7 +1,7 @@
-# Fig. 7 Behavior Classifier
+# Figure 7 Behavior Classifier
 
-This classifier uses the hand-curated Fig. 7 syllable annotations to train a
-per-frame behavior classifier from the bundled MoSeq table:
+The classifier maps per-frame pose/MoSeq features onto the seven hand-curated
+behavior clusters used for Figure 7:
 
 ```text
 Freeze: 0, 28
@@ -14,75 +14,70 @@ Jump: 23, 29, 30, 34
 Unassigned: all other syllables
 ```
 
-The feature set mirrors the Fig. 7 XGBoost feature extraction in `src/behavior_classifier/features.py`:
-centroid position, heading, angular velocity, velocity, absolute angular velocity,
-rolling movement statistics, and short lags within each recording. When using
-DLC tracks directly, the feature table also includes the SHAP-style movement
-features noted in the project manifest: body tilt variability, angular velocity,
-and global turning speed.
+The bundled classifier artifact is:
 
-## Install
-
-```powershell
-uv pip install -r requirements.txt
+```text
+classifier/figure7_behavior_classifier.joblib
 ```
 
-## Quick Smoke Test
+The feature extraction code is in `src/behavior_classifier/features.py`.
 
-```powershell
-python scripts\train_behavior_classifier.py train --skip-cv --max-frames 5000
+## Train Or Evaluate From The Bundled MoSeq Table
+
+```bash
+python behavior_classifier.py train
 ```
 
-## Full Training
+Quick smoke run:
 
-```powershell
-python scripts\train_behavior_classifier.py train
+```bash
+python behavior_classifier.py train --skip-cv --max-frames 5000
 ```
 
-Outputs:
+Default outputs:
 
-- `results/models/behavior_classifier/fig7_behavior_xgb.joblib`
-- `results/intermediate/tables/fig7_behavior_classifier_cv_metrics.csv`
-- `results/intermediate/tables/fig7_behavior_classifier_confusion_matrix.csv`
+- `classifier/figure7_behavior_classifier.joblib`
+- `classifier/figure7_behavior_classifier_cv_metrics.csv`
+- `classifier/figure7_behavior_classifier_confusion_matrix.csv`
 
-## Train From DLC Features
+## Train From DLC Tracks
 
-Use this when you have filtered DLC tracks and matching frame-level labels. Label
-CSVs must contain `frame_index` plus either `syllable` or `behavior_label`.
+Use this when filtered DLC tracks and matching frame-level labels are available.
+Label CSVs must contain `frame_index` plus either `syllable` or
+`behavior_label`.
 
-```powershell
-python scripts\train_behavior_classifier.py train-from-dlc `
-  --dlc-dir path\to\filtered_dlc_tracks `
-  --labels-dir path\to\frame_labels `
-  --model results\models\behavior_classifier\fig7_behavior_xgb.joblib
+```bash
+python behavior_classifier.py train-from-dlc \
+  --dlc-dir path/to/filtered_dlc_tracks \
+  --labels-dir path/to/frame_labels \
+  --model classifier/figure7_behavior_classifier.joblib
 ```
 
-## Predict
+## Predict From A MoSeq Table
 
-```powershell
-python scripts\train_behavior_classifier.py predict `
-  --model results\models\behavior_classifier\fig7_behavior_xgb.joblib `
-  --output results\intermediate\tables\fig7_behavior_classifier_predictions.csv
+```bash
+python behavior_classifier.py predict \
+  --model classifier/figure7_behavior_classifier.joblib \
+  --output classifier/outputs/figure7_behavior_classifier_predictions.csv
 ```
 
-## Raw Video To Predictions
+## Predict From DLC Tracks
 
-This path mirrors the freezing-classifier project: run DLC, convert filtered DLC
-tracks into the Fig. 7/SHAP-style pose summaries, then predict behaviors.
+From raw video, run DLC first and then apply the classifier:
 
-```powershell
-python scripts\train_behavior_classifier.py run-from-raw `
-  --video path\to\video.mp4 `
-  --dlc-config path\to\dlc_config.yaml `
-  --model results\models\behavior_classifier\fig7_behavior_xgb.joblib `
-  --output-root results\intermediate\tables\fig7_example_video
+```bash
+python behavior_classifier.py run-from-raw \
+  --video path/to/video.mp4 \
+  --dlc-config path/to/dlc_config.yaml \
+  --model classifier/figure7_behavior_classifier.joblib \
+  --output-root classifier/outputs/raw_video_runs
 ```
 
-If DLC has already produced a filtered CSV/H5 for the video:
+If filtered DLC CSV/H5 files already exist:
 
-```powershell
-python scripts\train_behavior_classifier.py run-from-dlc `
-  --dlc-file path\to\filtered_dlc_tracks.csv `
-  --model results\models\behavior_classifier\fig7_behavior_xgb.joblib `
-  --output-dir results\intermediate\tables\fig7_example_video\behavior_predictions
+```bash
+python behavior_classifier.py run-from-dlc \
+  --dlc-file path/to/filtered_dlc_tracks.csv \
+  --model classifier/figure7_behavior_classifier.joblib \
+  --output-dir classifier/outputs/behavior_predictions
 ```

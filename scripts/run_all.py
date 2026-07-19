@@ -19,12 +19,13 @@ REPO = Path(__file__).resolve().parents[1]
 
 TASKS = [
     ("build compact freezing prediction inputs", ["scripts/derive_tables/freezing_predictions_light.py"]),
-    ("derive cluster tables", ["scripts/derive_tables/cluster_tables.py"]),
-    ("derive tracking-exclusion tables", ["scripts/derive_tables/tracking_exclusions.py"]),
+    ("derive processed cluster tables", ["scripts/derive_tables/cluster_tables.py"]),
+    ("derive processed tracking-control tables", ["scripts/derive_tables/tracking_exclusions.py"]),
     ("derive Figure 6 resilience statistics", ["scripts/derive_tables/fig6_resilience_stats.py"]),
     ("regenerate data-derived figures", ["scripts/run_all_figures.py"]),
     ("build raw-data workbook", ["scripts/build_raw_data_workbook.py"]),
     ("build statistical report workbook", ["scripts/build_statistical_report.py"]),
+    ("audit manuscript results against statistics", ["scripts/audit_manuscript_results.py"]),
     ("update artifact manifest", ["scripts/update_manifest.py"]),
     ("check reproducibility package", ["scripts/check_reproducibility.py"]),
 ]
@@ -35,6 +36,7 @@ def run(label: str, command: list[str], *, verbose: bool) -> float:
     start = time.time()
     env = os.environ.copy()
     env["BATCH_MODE"] = "1"
+    env["MPLBACKEND"] = "Agg"
     env.setdefault("PYTHONWARNINGS", "ignore")
     cmd = [sys.executable, *command]
     if verbose:

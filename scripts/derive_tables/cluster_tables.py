@@ -8,11 +8,11 @@ import pandas as pd
 
 REPO = Path(__file__).resolve().parents[2]
 RAW = REPO / "data" / "raw" / "syllable_usage_per_timebin_30s.csv"
-DERIVED = REPO / "data" / "derived"
+PROCESSED = REPO / "data" / "processed"
 
-OUT_FREQ = DERIVED / "cluster_frequency_per_animal.csv"
-OUT_TIME = DERIVED / "cluster_timecourse_per_animal.csv"
-OUT_S0S28 = DERIVED / "s0s28_timecourse_per_animal.csv"
+OUT_FREQ = PROCESSED / "cluster_frequency_per_animal.csv"
+OUT_TIME = PROCESSED / "cluster_timecourse_per_animal.csv"
+OUT_S0S28 = PROCESSED / "s0s28_timecourse_per_animal.csv"
 
 CLUSTER_MAP = {
     "Freeze": [0, 28],
@@ -108,7 +108,7 @@ def derive_s0s28_timecourse(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def main() -> None:
-    DERIVED.mkdir(parents=True, exist_ok=True)
+    PROCESSED.mkdir(parents=True, exist_ok=True)
     raw = load_raw()
 
     freq = derive_cluster_frequency(raw)

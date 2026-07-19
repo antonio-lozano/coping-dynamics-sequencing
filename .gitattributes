@@ -12,7 +12,7 @@
 *.xlsx binary
 *.pdf binary
 *.png binary
-*.svg text eol=lf
+*.svg text eol=lf -whitespace
 *.gz binary
 *.joblib binary
 *.pkl binary

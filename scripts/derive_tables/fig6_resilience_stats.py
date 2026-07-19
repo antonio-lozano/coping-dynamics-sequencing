@@ -16,9 +16,9 @@ Benjamini-Hochberg FDR is applied within each contrast type:
   - bout duration:     across the 7 clusters   (matches the manuscript Fig 6M/N/P values)
 
 Run: python scripts/derive_tables/fig6_resilience_stats.py
-Writes results/statistics/fig6_diversity_resilience_stats.csv
-       results/statistics/fig6_bout_resilience_stats.csv
-       results/statistics/fig6_transition_resilience_stats.csv
+Writes statistics/fig6_diversity_resilience_stats.csv
+       statistics/fig6_bout_resilience_stats.csv
+       statistics/fig6_transition_resilience_stats.csv
 """
 import warnings, json
 from pathlib import Path
@@ -31,7 +31,7 @@ from scipy.stats import entropy
 
 REPO = Path(__file__).resolve().parents[2]
 CSV  = REPO / "data" / "raw" / "syllable_usage_per_timebin_250ms.csv"
-OUT_DIR = REPO / "results" / "statistics"
+OUT_DIR = REPO / "statistics"
 OUT_DIV  = OUT_DIR / "fig6_diversity_resilience_stats.csv"
 OUT_BOUT = OUT_DIR / "fig6_bout_resilience_stats.csv"
 OUT_TRANS = OUT_DIR / "fig6_transition_resilience_stats.csv"

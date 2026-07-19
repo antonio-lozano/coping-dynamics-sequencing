@@ -1,4 +1,4 @@
-"""Build the manuscript raw-data workbook from tracked raw/derived files.
+"""Build the manuscript raw-data workbook from tracked raw/processed files.
 
 The workbook indexes every tracked data artifact and includes tabular sheets for
 the manuscript-scale CSV/XLSX inputs and generated source-data tables. Large
@@ -23,8 +23,8 @@ REPO = Path(__file__).resolve().parents[1]
 OUT = REPO / "report" / "raw_data.xlsx"
 
 RAW_DIR = REPO / "data" / "raw"
-DERIVED_DIR = REPO / "data" / "derived"
-SOURCE_DATA_DIR = REPO / "results" / "source_data"
+PROCESSED_DIR = REPO / "data" / "processed"
+FIGURE_SOURCE_DATA_DIR = REPO / "figure_source_data"
 
 ACCENT = "FF4D4D4D"
 WHITE = Font(color="FFFFFFFF", bold=True, size=10)
@@ -39,11 +39,18 @@ SHEET_INPUTS = [
     RAW_DIR / "syllable_classification_metrics.csv",
     RAW_DIR / "syllable_usage_per_timebin_30s.csv",
     RAW_DIR / "syllable_usage_per_timebin_250ms.csv",
-    DERIVED_DIR / "cluster_frequency_per_animal.csv",
-    DERIVED_DIR / "cluster_timecourse_per_animal.csv",
-    DERIVED_DIR / "s0s28_timecourse_per_animal.csv",
-    DERIVED_DIR / "supplementary_figure1_tracking_clusters.csv",
-    DERIVED_DIR / "tracking_exclusions_per_animal.csv",
+    PROCESSED_DIR / "cluster_frequency_per_animal.csv",
+    PROCESSED_DIR / "cluster_timecourse_per_animal.csv",
+    PROCESSED_DIR / "s0s28_timecourse_per_animal.csv",
+    PROCESSED_DIR / "supplementary_figure1_tracking_clusters.csv",
+    PROCESSED_DIR / "tracking_exclusions_per_animal.csv",
+    PROCESSED_DIR / "transition_metrics_per_animal.csv",
+    PROCESSED_DIR / "figure5_dynamics_scores.csv",
+    PROCESSED_DIR / "figure5_resilience_threshold_audit.csv",
+    PROCESSED_DIR / "supplementary_figure1_time_summary.csv",
+    PROCESSED_DIR / "supplementary_figure3_distance_scores.csv",
+    PROCESSED_DIR / "supplementary_figure3_distance_summary.csv",
+    PROCESSED_DIR / "supplementary_figure3_threshold_audit.csv",
 ]
 
 
@@ -69,7 +76,7 @@ def count_rows(path: Path) -> int | None:
 
 
 def sheet_name(path: Path) -> str:
-    name = path.stem.replace("source_data_", "src_")
+    name = path.stem
     replacements = {
         "syllable_usage_per_timebin_": "syllable_",
         "cluster_frequency_per_animal": "cluster_frequency",
@@ -115,8 +122,8 @@ def add_readme(wb: openpyxl.Workbook) -> None:
         ["Build script", "scripts/build_raw_data_workbook.py"],
         ["Output", OUT.relative_to(REPO).as_posix()],
         ["Raw inputs", "data/raw/"],
-        ["Generated analysis-ready data", "data/derived/"],
-        ["Figure source data", "results/source_data/"],
+        ["Generated analysis-ready data", "data/processed/"],
+        ["Figure source data", "figure_source_data/"],
         ["Large full inputs", "Compressed files remain in data/raw and are indexed here."],
         ["Freezing prediction light table", "data/raw/freezing_predictions_light.csv.gz"],
     ]
@@ -135,8 +142,8 @@ def add_inventory(wb: openpyxl.Workbook) -> None:
     rows = []
     for base, category in [
         (RAW_DIR, "raw_input"),
-        (DERIVED_DIR, "derived_data"),
-        (SOURCE_DATA_DIR, "figure_source_data"),
+        (PROCESSED_DIR, "processed_data"),
+        (FIGURE_SOURCE_DATA_DIR, "figure_source_data"),
     ]:
         for path in sorted(base.rglob("*")):
             if not path.is_file():
@@ -173,7 +180,7 @@ def add_freezing_prediction_index(wb: openpyxl.Workbook) -> None:
 
 def add_csv_sheets(wb: openpyxl.Workbook) -> None:
     used = set(wb.sheetnames)
-    for path in SHEET_INPUTS + sorted(SOURCE_DATA_DIR.glob("*.csv")):
+    for path in SHEET_INPUTS + sorted(FIGURE_SOURCE_DATA_DIR.glob("*.csv")):
         name = sheet_name(path)
         base = name
         idx = 2
@@ -186,13 +193,13 @@ def add_csv_sheets(wb: openpyxl.Workbook) -> None:
         write_dataframe(ws, pd.read_csv(path))
 
 
-def add_bfl_scores(wb: openpyxl.Workbook) -> None:
-    path = RAW_DIR / "bfl_scores.xlsx"
+def add_behavioral_flexibility_scores(wb: openpyxl.Workbook) -> None:
+    path = RAW_DIR / "behavioral_flexibility_scores.xlsx"
     if not path.exists():
         return
     xls = pd.ExcelFile(path)
     for sheet in xls.sheet_names:
-        name = f"bfl_{sheet}"[:31]
+        name = f"flexibility_{sheet}"[:31]
         ws = wb.create_sheet(name)
         write_dataframe(ws, pd.read_excel(xls, sheet_name=sheet))
 
@@ -204,7 +211,7 @@ def main() -> None:
     add_inventory(wb)
     add_freezing_prediction_index(wb)
     add_csv_sheets(wb)
-    add_bfl_scores(wb)
+    add_behavioral_flexibility_scores(wb)
     wb.save(OUT)
     print(f"Saved: {OUT.relative_to(REPO)}")
 

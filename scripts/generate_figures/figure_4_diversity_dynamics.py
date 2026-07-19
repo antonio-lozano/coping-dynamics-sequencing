@@ -14,6 +14,8 @@ import math
 import json
 from pathlib import Path
 
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import numpy as np
@@ -32,19 +34,20 @@ if str(REPO_ROOT) not in sys.path:
 from src.plotting import plot_chord_diagram
 from src.config import (
     CLUSTER_JSON,
-    RESULTS_INTERMEDIATE_FIGURES_DIR,
-    RESULTS_SOURCE_DATA_DIR,
-    RESULTS_STATISTICS_DIR,
+    FIGURES_DIR,
+    FIGURE_SOURCE_DATA_DIR,
+    PROCESSED_DATA_DIR,
+    STATISTICS_DIR,
     SYLLABLE_TIMEBIN_250MS,
 )
 from src.statistics import compute_diversity_metrics, compute_bout_duration
 
 plt.rcParams["axes.grid"] = False
 
-LEGACY_FIGURES_DIR = REPO_ROOT / "figures"
-FIGURE_OUTPUT_DIR = RESULTS_INTERMEDIATE_FIGURES_DIR
-SOURCE_OUTPUT_DIR = RESULTS_SOURCE_DATA_DIR
-STATISTICS_OUTPUT_DIR = RESULTS_STATISTICS_DIR
+FIGURE_OUTPUT_DIR = FIGURES_DIR
+SOURCE_OUTPUT_DIR = FIGURE_SOURCE_DATA_DIR
+PROCESSED_OUTPUT_DIR = PROCESSED_DATA_DIR
+STATISTICS_OUTPUT_DIR = STATISTICS_DIR
 
 AXIS = "#4D4D4D"
 CONTROL = "#F9C74F"
@@ -654,9 +657,12 @@ def export_source_data(metrics: pd.DataFrame, bouts: pd.DataFrame, transitions: 
     df = pd.DataFrame(rows)
     if not df.empty:
         SOURCE_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-        output_csv = SOURCE_OUTPUT_DIR / "source_data_figure4.csv"
+        output_csv = SOURCE_OUTPUT_DIR / "figure4.csv"
         df.to_csv(output_csv, index=False)
         print(f"Saved: {output_csv}")
+
+    PROCESSED_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    transitions.to_csv(PROCESSED_OUTPUT_DIR / "transition_metrics_per_animal.csv", index=False)
 
     # --- MixedLM for diversity metrics (default optimizer) ---
     # The plain MixedLM fit is reported. Beta is stable across fits; SE/z/p are
@@ -822,8 +828,6 @@ def main() -> None:
     )
     for ax_i, (label, data, ylim, yticks, yfmt, star) in enumerate(
         [
-            # star flags reflect stats_figure4_bouts_MixedLM.csv (BH-FDR across 7 clusters):
-            # Freezing BH=0.016, Sniffing BH=0.026, Turn BH=0.016 -> significant; others n.s.
             ("Overall", overall, (0, 2.0), [0, 0.5, 1.0, 1.5, 2.0], "%.1f", False),
             ("Freeze", cluster_means[cluster_means["cluster"] == "Freezing"], (0, 2.0), [0, 0.5, 1.0, 1.5, 2.0], "%.1f", True),
             ("Sniff", cluster_means[cluster_means["cluster"] == "Sniffing"], (0, 4.0), [0, 1, 2, 3, 4], "%.0f", True),
@@ -857,21 +861,16 @@ def main() -> None:
 
     equalize_boxplot_heights(box_axes)
 
-    pdf = FIGURE_OUTPUT_DIR / "figure_4_diversity_dynamics.pdf"
-    svg = FIGURE_OUTPUT_DIR / "figure_4_diversity_dynamics.svg"
-    png = FIGURE_OUTPUT_DIR / "figure_4_diversity_dynamics.png"
+    pdf = FIGURE_OUTPUT_DIR / "figure4.pdf"
+    svg = FIGURE_OUTPUT_DIR / "figure4.svg"
+    png = FIGURE_OUTPUT_DIR / "figure4.png"
     fig.savefig(pdf, facecolor="white")
     fig.savefig(svg, facecolor="white")
     fig.savefig(png, dpi=600, facecolor="white")
-    LEGACY_FIGURES_DIR.mkdir(parents=True, exist_ok=True)
-    fig.savefig(LEGACY_FIGURES_DIR / "figure4.pdf", facecolor="white")
-    fig.savefig(LEGACY_FIGURES_DIR / "figure4.svg", facecolor="white")
-    fig.savefig(LEGACY_FIGURES_DIR / "figure4.png", dpi=600, facecolor="white")
     plt.close(fig)
     print(f"Saved {pdf}")
     print(f"Saved {svg}")
     print(f"Saved {png}")
-    print(f"Saved {LEGACY_FIGURES_DIR / 'figure4.pdf'}")
     print(f"Representative Control: {ctrl_rep}; ELS: {els_rep}")
 
     # Export source data

@@ -21,7 +21,7 @@ warnings.filterwarnings("ignore")
 
 REPO = Path(__file__).resolve().parents[1]
 OUT = REPO / "report" / "statistical_report.xlsx"
-STATISTICS_DIR = REPO / "results" / "statistics"
+STATISTICS_DIR = REPO / "statistics"
 
 ACCENT = "FF4D4D4D"
 ACCENT_SUB = "FF6E6E6E"
@@ -230,7 +230,6 @@ def add_readme_sheet(wb: openpyxl.Workbook) -> None:
         ["Source statistics directory", STATISTICS_DIR.relative_to(REPO).as_posix()],
         ["Figure 4 model", "Default MixedLM fits regenerated directly from data/raw."],
         ["Significance highlight", "Mustard fill marks p < 0.05 in p-value columns."],
-        ["Manuscript text audit", "results/statistics/manuscript_results_text.md"],
     ]
     for row_idx, row in enumerate(rows, 1):
         for col_idx, value in enumerate(row, 1):

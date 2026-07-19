@@ -2,12 +2,12 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Jeniffer Sanguino Gomez and Antonio Lozano
 """
-Run All Figures - regenerate every manuscript figure from source data.
+Run All Figures - regenerate every data-derived manuscript figure.
 
 Each script writes the clean manuscript figure (figureN.pdf/.svg/.png) to the
 top-level ``figures/`` directory. Figure source data go to
-``results/source_data/``; statistics go to ``results/statistics/``; helper
-tables/renders go to ``results/intermediate/``.
+``figure_source_data/``; statistical tables go to ``statistics/``; generated
+analysis tables go to ``data/processed/``.
 
 Usage:
     python scripts/run_all_figures.py
@@ -38,6 +38,7 @@ def run_script(label: str, script_path: Path) -> tuple[str, float]:
     start = time.time()
     env = os.environ.copy()
     env["BATCH_MODE"] = "1"  # skip plt.show()
+    env["MPLBACKEND"] = "Agg"
     try:
         subprocess.run([sys.executable, str(script_path)],
                        cwd=script_path.parents[2], check=True, env=env)

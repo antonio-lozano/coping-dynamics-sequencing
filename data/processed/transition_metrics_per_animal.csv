@@ -1,4 +1,4 @@
-Animal,Condition,Experiment,LZ_complexity,Recurrence_Rate,Determinism,MarkovEntropy
+Animal,group,Experiment,lz,recurrence,determinism,markov
 11.4,Control,1,190,0.29974156860254875,0.8277541949974107,1.0951244891136098
 11.6,Control,1,187,0.30571977391411403,0.823714486968772,1.0609475586564485
 123.1,ELS,3,135,0.3471015,0.864684659472045,0.848953610396163

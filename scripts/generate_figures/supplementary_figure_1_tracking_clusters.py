@@ -14,6 +14,8 @@ import math
 import sys
 from pathlib import Path
 
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -23,7 +25,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.config import FIGURES_DIR, RESULTS_INTERMEDIATE_TABLES_DIR, SUPPLEMENTARY_TRACKING_CSV
+from src.config import FIGURES_DIR, PROCESSED_DATA_DIR, SUPPLEMENTARY_TRACKING_CSV
 
 
 SOURCE_CSV = SUPPLEMENTARY_TRACKING_CSV
@@ -155,9 +157,9 @@ def plot_time_panel(ax: plt.Axes, summary: pd.DataFrame, spec: dict[str, object]
 
 
 def export_source_tables(summary: pd.DataFrame) -> None:
-    RESULTS_INTERMEDIATE_TABLES_DIR.mkdir(parents=True, exist_ok=True)
+    PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
     summary.sort_values(["cluster", "group", "time_min"]).to_csv(
-        RESULTS_INTERMEDIATE_TABLES_DIR / "supplementary_figure1_time_summary.csv",
+        PROCESSED_DATA_DIR / "supplementary_figure1_time_summary.csv",
         index=False,
     )
 

@@ -9,6 +9,8 @@ import gzip
 import pickle
 import sys
 
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.colors as mcolors
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
@@ -22,19 +24,18 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from src.config import (
-    BFL_SCORES_XLSX,
-    RESULTS_INTERMEDIATE_FIGURES_DIR,
-    RESULTS_INTERMEDIATE_TABLES_DIR,
-    RESULTS_SOURCE_DATA_DIR,
+    BEHAVIORAL_FLEXIBILITY_SCORES_XLSX,
+    FIGURES_DIR,
+    FIGURE_SOURCE_DATA_DIR,
+    PROCESSED_DATA_DIR,
     SYLLABLE_TIMEBIN_30S,
-    UPDATED_RESULTS_PKL as ORIGINAL_EQUIPO_RESULTS,
+    UPDATED_MOSEQ_PICKLE,
 )
 from src.statistics import fit_mixed_models
 
-LEGACY_FIGURES_DIR = REPO_ROOT / "figures"
-FIGURE_OUTPUT_DIR = RESULTS_INTERMEDIATE_FIGURES_DIR
-TABLE_OUTPUT_DIR = RESULTS_INTERMEDIATE_TABLES_DIR
-SOURCE_OUTPUT_DIR = RESULTS_SOURCE_DATA_DIR
+FIGURE_OUTPUT_DIR = FIGURES_DIR
+TABLE_OUTPUT_DIR = PROCESSED_DATA_DIR
+SOURCE_OUTPUT_DIR = FIGURE_SOURCE_DATA_DIR
 
 AXIS = "#4D4D4D"
 CONTROL = "#F9C74F"
@@ -101,16 +102,16 @@ def load_cluster_time() -> pd.DataFrame:
     return out.rename(columns={"Animal": "animal", "Percentage": "percent"})
 
 
-def load_bfl() -> pd.DataFrame:
-    if not BFL_SCORES_XLSX.exists():
-        raise FileNotFoundError(f"Missing bundled raw data: {BFL_SCORES_XLSX}")
-    bfl = pd.read_excel(BFL_SCORES_XLSX)
-    bfl = bfl[["Animal", "Condition", "Score", "Experiment"]].dropna(subset=["Animal", "Condition", "Score"])
-    bfl["animal"] = bfl["Animal"].astype(float).map(lambda v: str(v).rstrip("0").rstrip(".") if "." in str(v) else str(v))
-    bfl["animal"] = bfl["Animal"].map(lambda v: f"{float(v):.1f}")
-    bfl = bfl.rename(columns={"Condition": "group", "Score": "score", "Experiment": "experiment"})
-    bfl["group_ext"] = bfl.apply(lambda r: group_ext(r["animal"], r["group"]), axis=1)
-    return bfl
+def load_behavioral_flexibility_scores() -> pd.DataFrame:
+    if not BEHAVIORAL_FLEXIBILITY_SCORES_XLSX.exists():
+        raise FileNotFoundError(f"Missing bundled raw data: {BEHAVIORAL_FLEXIBILITY_SCORES_XLSX}")
+    scores = pd.read_excel(BEHAVIORAL_FLEXIBILITY_SCORES_XLSX)
+    scores = scores[["Animal", "Condition", "Score", "Experiment"]].dropna(subset=["Animal", "Condition", "Score"])
+    scores["animal"] = scores["Animal"].astype(float).map(lambda v: str(v).rstrip("0").rstrip(".") if "." in str(v) else str(v))
+    scores["animal"] = scores["Animal"].map(lambda v: f"{float(v):.1f}")
+    scores = scores.rename(columns={"Condition": "group", "Score": "score", "Experiment": "experiment"})
+    scores["group_ext"] = scores.apply(lambda r: group_ext(r["animal"], r["group"]), axis=1)
+    return scores
 
 
 def summarize_time(cluster_time: pd.DataFrame) -> pd.DataFrame:
@@ -227,10 +228,10 @@ def loocv_logistic(coords: np.ndarray, labels: np.ndarray, c_value: float = 1.0)
 
 
 def mds_profiles_from_updated_results() -> tuple[pd.DataFrame, np.ndarray, float]:
-    if not ORIGINAL_EQUIPO_RESULTS.exists():
-        raise FileNotFoundError(f"Missing bundled raw data: {ORIGINAL_EQUIPO_RESULTS}")
-    opener = gzip.open if ORIGINAL_EQUIPO_RESULTS.suffix == ".gz" else open
-    with opener(ORIGINAL_EQUIPO_RESULTS, "rb") as f:
+    if not UPDATED_MOSEQ_PICKLE.exists():
+        raise FileNotFoundError(f"Missing bundled raw data: {UPDATED_MOSEQ_PICKLE}")
+    opener = gzip.open if UPDATED_MOSEQ_PICKLE.suffix == ".gz" else open
+    with opener(UPDATED_MOSEQ_PICKLE, "rb") as f:
         results = pickle.load(f)
     valid_codes = list(range(1, 8))
     fps = 25
@@ -582,7 +583,7 @@ def export_source_data(prof: pd.DataFrame, freq: pd.DataFrame, output_dir: Path)
 
     df = pd.DataFrame(rows)
     if not df.empty:
-        output_csv = output_dir / "source_data_figure5.csv"
+        output_csv = output_dir / "figure5.csv"
         df.to_csv(output_csv, index=False)
         print(f"Saved: {output_csv}")
     else:
@@ -598,9 +599,9 @@ def main() -> None:
     freq = frequency_points(cluster_time)
     prof, _, loocv = mds_profiles_from_updated_results()
     prof.assign(resilient_by_zero=(prof["group"] == "ELS") & (prof["dynamics_score"] < 0)).to_csv(
-        TABLE_OUTPUT_DIR / "figure_5_dynamics_scores.csv", index=False
+        TABLE_OUTPUT_DIR / "figure5_dynamics_scores.csv", index=False
     )
-    threshold_audit(prof).to_csv(TABLE_OUTPUT_DIR / "figure_5_threshold_audit.csv", index=False)
+    threshold_audit(prof).to_csv(TABLE_OUTPUT_DIR / "figure5_resilience_threshold_audit.csv", index=False)
 
     fig = plt.figure(figsize=(8.27, 11.69), dpi=300, facecolor="white")
     gs = fig.add_gridspec(
@@ -629,30 +630,23 @@ def main() -> None:
     boxplot_dynamic_score(axB, prof)
     plot_frequency(axC, freq)
     plot_time(axD, time_summary, "Freeze", "D", (0, 70), list(range(0, 71, 10)), star_x=4.0, legend_corner="lower_right")
-    # Sniff: p=0.047 but BH_FDR=0.109 -> not significant after correction, no star.
     plot_time(axE, time_summary, "Sniff", "E", (0, 25), list(range(0, 26, 5)))
     plot_time(axF, time_summary, "Groom", "F", (0, 0.5), [0, 0.1, 0.2, 0.3, 0.4, 0.5])
     plot_time(axG, time_summary, "Turn", "G", (0, 70), list(range(0, 71, 10)), star_x=4.0, legend_corner="lower_right")
-    # Locomotion: no corresponding contrast reported in the manuscript, no star.
     plot_time(axH, time_summary, "Locomotion", "H", (0, 14), list(range(0, 15, 2)))
     plot_time(axI, time_summary, "Climb", "I", (0, 14), list(range(0, 15, 2)))
     plot_time(axJ, time_summary, "Jump", "J", (0, 4), [0, 1, 2, 3, 4])
 
-    pdf = FIGURE_OUTPUT_DIR / "figure_5_resilience_dynamics.pdf"
-    png = FIGURE_OUTPUT_DIR / "figure_5_resilience_dynamics.png"
-    svg = FIGURE_OUTPUT_DIR / "figure_5_resilience_dynamics.svg"
+    pdf = FIGURE_OUTPUT_DIR / "figure5.pdf"
+    png = FIGURE_OUTPUT_DIR / "figure5.png"
+    svg = FIGURE_OUTPUT_DIR / "figure5.svg"
     fig.savefig(pdf)
     fig.savefig(svg)
     fig.savefig(png, dpi=300)
-    LEGACY_FIGURES_DIR.mkdir(parents=True, exist_ok=True)
-    fig.savefig(LEGACY_FIGURES_DIR / "figure5.pdf")
-    fig.savefig(LEGACY_FIGURES_DIR / "figure5.svg")
-    fig.savefig(LEGACY_FIGURES_DIR / "figure5.png", dpi=300)
     plt.close(fig)
     print(f"Saved {pdf}")
     print(f"Saved {svg}")
     print(f"Saved {png}")
-    print(f"Saved {LEGACY_FIGURES_DIR / 'figure5.pdf'}")
 
     # Export source data
     print("Computing Figure 5 source statistics...")

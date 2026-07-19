@@ -22,6 +22,8 @@ repo_root = Path(__file__).resolve().parents[2]
 if str(repo_root) not in sys.path:
     sys.path.insert(0, str(repo_root))
 
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import numpy as np
@@ -31,20 +33,19 @@ import seaborn as sns
 from src.config import (
     BIN_SECONDS,
     CLUSTER_FREQUENCY_CSV,
+    FIGURES_DIR,
+    FIGURE_SOURCE_DATA_DIR,
     FREEZING_DIR,
     FPS,
     INDEX_CSV,
+    MOSEQ_RAW_PICKLE,
     PALETTE,
-    RESULTS_INTERMEDIATE_FIGURES_DIR,
-    RESULTS_RAW_PKL,
-    RESULTS_SOURCE_DATA_DIR,
     SOURCE_DATA_DIR,
 )
 from src.statistics import fit_mixed_models, cohens_d
 
-LEGACY_FIGURES_DIR = repo_root / "figures"
-FIGURE_OUTPUT_DIR = RESULTS_INTERMEDIATE_FIGURES_DIR
-SOURCE_OUTPUT_DIR = RESULTS_SOURCE_DATA_DIR
+FIGURE_OUTPUT_DIR = FIGURES_DIR
+SOURCE_OUTPUT_DIR = FIGURE_SOURCE_DATA_DIR
 OVERLAP_SYLLABLES = {0, 28, 40}
 TIMECOURSE_SYLLABLES = {0, 28}
 EVENT_SPAN_STARTS_MIN = [3.5, 4.5, 5.5]
@@ -137,14 +138,14 @@ def _load_precomputed_overlap(path: Path) -> pd.DataFrame:
     return df.rename(columns={"overlap_pct": "overlap"})
 
 
-def _compute_source_data_figure2(
+def _compute_figure2_source_data(
     freezing_long: pd.DataFrame,
     time_summary: pd.DataFrame,
     overlap_stats: dict,
     metrics_df: pd.DataFrame,
     panel_g_reference_labels: list[str] | None = None,
 ) -> pd.DataFrame:
-    """Build source_data_figure2 CSV with all reported statistics."""
+    """Build the Figure 2 source-data CSV with all reported statistics."""
     rows = []
 
     # Assign experiment (1 = SGK_2024, 3 = SG_2024) from cluster_frequency_per_animal.csv
@@ -275,7 +276,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source-mode", choices=["auto", "moseq_df", "results_pkl"], default="auto")
     parser.add_argument("--moseq-df", type=Path, default=None, help="Path to legacy moseq_df.csv.")
-    parser.add_argument("--results-pkl", type=Path, default=RESULTS_RAW_PKL)
+    parser.add_argument("--results-pkl", type=Path, default=MOSEQ_RAW_PICKLE)
     parser.add_argument("--freezing-dir", type=Path, default=_FREEZING_DIR_DEFAULT)
     parser.add_argument("--index-csv", type=Path, default=_INDEX_CSV_DEFAULT)
     parser.add_argument("--exclude-animals", type=str, default="Animal_48_6,48_6")
@@ -1009,30 +1010,28 @@ def main() -> None:
     )
     FIGURE_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     SOURCE_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    out_pdf = FIGURE_OUTPUT_DIR / "figure_2_validation.pdf"
-    out_svg = FIGURE_OUTPUT_DIR / "figure_2_validation.svg"
+    out_pdf = FIGURE_OUTPUT_DIR / "figure2.pdf"
+    out_svg = FIGURE_OUTPUT_DIR / "figure2.svg"
+    out_png = FIGURE_OUTPUT_DIR / "figure2.png"
     fig.savefig(out_pdf, facecolor="white")
     fig.savefig(out_svg, facecolor="white")
-    LEGACY_FIGURES_DIR.mkdir(parents=True, exist_ok=True)
-    fig.savefig(LEGACY_FIGURES_DIR / "figure2.pdf", facecolor="white")
-    fig.savefig(LEGACY_FIGURES_DIR / "figure2.svg", facecolor="white")
-    fig.savefig(LEGACY_FIGURES_DIR / "figure2.png", dpi=600, facecolor="white")
+    fig.savefig(out_png, dpi=600, facecolor="white")
     print(f"Saved: {out_pdf}")
     print(f"Saved: {out_svg}")
-    print(f"Saved: {LEGACY_FIGURES_DIR / 'figure2.pdf'}")
+    print(f"Saved: {out_png}")
 
     # Compute and export source data
     print("Computing Figure 2 source statistics...")
     freezing_long = _build_freezing_long_format(freezing_df, group_map, include_labels)
     overlap_stats = _compute_overlap_stats(overlap_df.rename(columns={"overlap": "overlap_pct"}) if "overlap" in overlap_df.columns else overlap_df)
-    source_data_df = _compute_source_data_figure2(
+    source_data_df = _compute_figure2_source_data(
         freezing_long,
         time_summary,
         overlap_stats,
         metrics_df,
         panel_g_reference_labels=panel_g_reference_labels,
     )
-    source_csv = SOURCE_OUTPUT_DIR / "source_data_figure2.csv"
+    source_csv = SOURCE_OUTPUT_DIR / "figure2.csv"
     source_data_df.to_csv(source_csv, index=False)
     print(f"Saved: {source_csv}")
 

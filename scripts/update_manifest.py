@@ -9,7 +9,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "MANIFEST.csv"
-ARTIFACT_DIRS = ("data", "figures", "report", "results")
+ARTIFACT_DIRS = ("data", "figure_source_data", "figures", "statistics", "report", "classifier")
 
 
 def sha256(path: Path) -> str:
@@ -24,23 +24,21 @@ def category(path: Path) -> str:
     parts = path.parts
     if parts[:2] == ("data", "raw"):
         return "raw_input"
-    if parts[:2] == ("data", "derived"):
-        return "derived_data"
+    if parts[:2] == ("data", "processed"):
+        return "processed_data"
     if parts[0] == "data":
         return "data_documentation"
+    if parts[0] == "figure_source_data":
+        return "figure_source_data"
     if parts[0] == "figures":
         return "manuscript_figure"
+    if parts[0] == "statistics":
+        return "statistical_output"
     if parts[0] == "report":
         return "manuscript_report"
-    if parts[:2] == ("results", "source_data"):
-        return "figure_source_data"
-    if parts[:2] == ("results", "statistics"):
-        return "statistical_output"
-    if parts[:2] == ("results", "intermediate"):
-        return "intermediate_output"
-    if parts[:2] == ("results", "models"):
+    if parts[0] == "classifier":
         return "trained_model"
-    return "result"
+    return "artifact"
 
 
 def iter_artifacts() -> list[Path]:

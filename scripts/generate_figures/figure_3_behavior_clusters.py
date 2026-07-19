@@ -14,6 +14,8 @@ import math
 import sys
 from pathlib import Path
 
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -25,17 +27,16 @@ if str(REPO_ROOT) not in sys.path:
 
 from src.config import (
     CLUSTER_FREQUENCY_CSV,
-    RESULTS_INTERMEDIATE_FIGURES_DIR,
-    RESULTS_SOURCE_DATA_DIR,
-    RESULTS_STATISTICS_DIR,
+    FIGURES_DIR,
+    FIGURE_SOURCE_DATA_DIR,
+    STATISTICS_DIR,
     SYLLABLE_TIMEBIN_30S,
 )
 from src.statistics import fit_mixed_models
 
-LEGACY_FIGURES_DIR = REPO_ROOT / "figures"
-FIGURE_OUTPUT_DIR = RESULTS_INTERMEDIATE_FIGURES_DIR
-SOURCE_OUTPUT_DIR = RESULTS_SOURCE_DATA_DIR
-STATISTICS_OUTPUT_DIR = RESULTS_STATISTICS_DIR
+FIGURE_OUTPUT_DIR = FIGURES_DIR
+SOURCE_OUTPUT_DIR = FIGURE_SOURCE_DATA_DIR
+STATISTICS_OUTPUT_DIR = STATISTICS_DIR
 
 COLORS = {"Control": "#F9C74F", "ELS": "#C37BA0"}
 AXIS_COLOR = "#4D4D4D"
@@ -303,7 +304,7 @@ def compute_and_export_source_data(cluster_df: pd.DataFrame, time_summary: pd.Da
     df = pd.DataFrame(rows)
     if not df.empty:
         SOURCE_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-        output_csv = SOURCE_OUTPUT_DIR / "source_data_figure3.csv"
+        output_csv = SOURCE_OUTPUT_DIR / "figure3.csv"
         df.to_csv(output_csv, index=False)
         print(f"Saved: {output_csv}")
     else:
@@ -426,18 +427,16 @@ def main() -> None:
 
     align_panel_letters_to_ylabels(fig, letter_artists)
 
-    pdf_path = FIGURE_OUTPUT_DIR / "figure_3_behavior_clusters.pdf"
-    svg_path = FIGURE_OUTPUT_DIR / "figure_3_behavior_clusters.svg"
+    pdf_path = FIGURE_OUTPUT_DIR / "figure3.pdf"
+    svg_path = FIGURE_OUTPUT_DIR / "figure3.svg"
+    png_path = FIGURE_OUTPUT_DIR / "figure3.png"
     fig.savefig(pdf_path, bbox_inches=None, facecolor="white")
     fig.savefig(svg_path, bbox_inches=None, facecolor="white")
-    LEGACY_FIGURES_DIR.mkdir(parents=True, exist_ok=True)
-    fig.savefig(LEGACY_FIGURES_DIR / "figure3.pdf", bbox_inches=None, facecolor="white")
-    fig.savefig(LEGACY_FIGURES_DIR / "figure3.svg", bbox_inches=None, facecolor="white")
-    fig.savefig(LEGACY_FIGURES_DIR / "figure3.png", dpi=600, bbox_inches=None, facecolor="white")
+    fig.savefig(png_path, dpi=600, bbox_inches=None, facecolor="white")
     plt.close(fig)
     print(f"Saved {pdf_path}")
     print(f"Saved {svg_path}")
-    print(f"Saved {LEGACY_FIGURES_DIR / 'figure3.pdf'}")
+    print(f"Saved {png_path}")
     print(f"Animals used: {raw['Animal'].nunique()} ({raw.groupby(['Experiment', 'group'])['Animal'].nunique().to_dict()})")
 
     # Compute and export source data

@@ -8,6 +8,8 @@ import json
 from pathlib import Path
 import sys
 
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import numpy as np
@@ -24,15 +26,14 @@ if str(REPO_ROOT) not in sys.path:
 from src.plotting import plot_chord_diagram
 from src.config import (
     CLUSTER_JSON,
-    RESULTS_INTERMEDIATE_FIGURES_DIR,
-    RESULTS_SOURCE_DATA_DIR,
+    FIGURES_DIR,
+    FIGURE_SOURCE_DATA_DIR,
     SYLLABLE_TIMEBIN_250MS,
 )
 from src.statistics import compute_diversity_metrics
 
-LEGACY_FIGURES_DIR = REPO_ROOT / "figures"
-FIGURE_OUTPUT_DIR = RESULTS_INTERMEDIATE_FIGURES_DIR
-SOURCE_OUTPUT_DIR = RESULTS_SOURCE_DATA_DIR
+FIGURE_OUTPUT_DIR = FIGURES_DIR
+SOURCE_OUTPUT_DIR = FIGURE_SOURCE_DATA_DIR
 
 AXIS = "#4D4D4D"
 # Match the physical boxplot panel dimensions used in Figure 4.
@@ -719,7 +720,7 @@ def export_source_data(metrics: pd.DataFrame, bouts: pd.DataFrame, transitions: 
 
     df = pd.DataFrame(rows)
     if not df.empty:
-        output_csv = output_dir / "source_data_figure6.csv"
+        output_csv = output_dir / "figure6.csv"
         df.to_csv(output_csv, index=False)
         print(f"Saved: {output_csv}")
 
@@ -839,21 +840,16 @@ def main() -> None:
     align_panel_tags_to_titles(fig, list(zip(bout_axes, [chr(ord("L") + i) for i in range(len(bout_axes))])))
     align_panel_tags_to_titles(fig, [(axW, "W"), (axX, "X"), (axY, "Y"), (axZ, "Z")])
 
-    pdf = FIGURE_OUTPUT_DIR / "figure_6_resilience_diversity.pdf"
-    svg = FIGURE_OUTPUT_DIR / "figure_6_resilience_diversity.svg"
-    png = FIGURE_OUTPUT_DIR / "figure_6_resilience_diversity.png"
+    pdf = FIGURE_OUTPUT_DIR / "figure6.pdf"
+    svg = FIGURE_OUTPUT_DIR / "figure6.svg"
+    png = FIGURE_OUTPUT_DIR / "figure6.png"
     fig.savefig(pdf)
     fig.savefig(svg)
     fig.savefig(png, dpi=300)
-    LEGACY_FIGURES_DIR.mkdir(parents=True, exist_ok=True)
-    fig.savefig(LEGACY_FIGURES_DIR / "figure6.pdf")
-    fig.savefig(LEGACY_FIGURES_DIR / "figure6.svg")
-    fig.savefig(LEGACY_FIGURES_DIR / "figure6.png", dpi=300)
     plt.close(fig)
     print(f"Saved {pdf}")
     print(f"Saved {svg}")
     print(f"Saved {png}")
-    print(f"Saved {LEGACY_FIGURES_DIR / 'figure6.pdf'}")
     print("Representatives: " + "; ".join(f"{g}: {a}" for g, a in reps.items()))
 
     # Export source data

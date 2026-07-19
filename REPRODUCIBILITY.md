@@ -1,8 +1,9 @@
 # Reproducibility
 
 This repository is intended to run from a clean clone without external data
-downloads. All default paths resolve inside the repository, and all data-derived
-figures and reports are rebuilt from tracked inputs.
+downloads. All default paths resolve inside the repository, and all
+data-derived figures, statistical outputs, reports, and checks are rebuilt from
+tracked inputs.
 
 ## Environment
 
@@ -24,7 +25,7 @@ python --version  # Python 3.9, 3.10, or 3.11
 pip install -r requirements.txt
 ```
 
-## Minimum Validation
+## Validation
 
 Run:
 
@@ -32,13 +33,15 @@ Run:
 python scripts/check_reproducibility.py
 ```
 
-The check verifies:
+The validation checks:
 
-- required data, figures, reports, scripts, and documentation files
+- required inputs, processed tables, source-data CSVs, statistics, figures,
+  reports, scripts, and documentation files
 - exactly 98 raw per-animal freezing prediction CSVs
-- presence of the compact freezing prediction index and light table
-- absence of retired scratch/layout paths
-- absence of common local absolute paths in text files
+- compact freezing prediction index and light table
+- absence of retired artifact paths and duplicate figure-render folders
+- absence of local absolute paths in text files
+- absence of local tool traces in versioned text files
 - `MANIFEST.csv` byte sizes and SHA-256 hashes
 
 The same check runs in `.github/workflows/reproducibility.yml`.
@@ -54,17 +57,18 @@ python scripts/run_all.py
 This executes, in order:
 
 1. Build compact freezing prediction companions in `data/raw/`.
-2. Rebuild derived tables in `data/derived/`.
-3. Rebuild Figure 6 statistical tables.
-4. Re-render data-derived manuscript figures.
+2. Rebuild processed analysis tables in `data/processed/`.
+3. Rebuild Figure 6 statistical tables in `statistics/`.
+4. Re-render data-derived manuscript figures in `figures/`.
 5. Rebuild `report/raw_data.xlsx`.
 6. Rebuild `report/statistical_report.xlsx`.
-7. Update `MANIFEST.csv`.
-8. Run `scripts/check_reproducibility.py`.
+7. Rebuild `statistics/manuscript_consistency_audit.csv`.
+8. Update `MANIFEST.csv`.
+9. Run `scripts/check_reproducibility.py`.
 
 The command is concise by default. Add `--verbose` to stream child-script
-output. Add `--skip-figures` to rebuild tables, workbooks, manifest, and checks
-without re-rendering figures.
+output. Add `--skip-figures` to rebuild tables, workbooks, the manifest, and
+checks without re-rendering figures.
 
 ## Targeted Rebuilds
 
@@ -74,7 +78,7 @@ Figures only:
 python scripts/run_all_figures.py
 ```
 
-Derived tables:
+Processed tables:
 
 ```bash
 python scripts/derive_tables/freezing_predictions_light.py
@@ -88,23 +92,17 @@ Reports:
 ```bash
 python scripts/build_raw_data_workbook.py
 python scripts/build_statistical_report.py
+python scripts/audit_manuscript_results.py
 ```
 
-Manifest:
+Manifest and checks:
 
 ```bash
 python scripts/update_manifest.py
 python scripts/check_reproducibility.py
 ```
 
-## Figure Notes
-
-Figures 2-6, Supplementary Figure 1, and Supplementary Figure 3 are generated
-from tracked data. Figure 1 is a hand-made schematic. Figure 7 is tracked as a
-canonical assembled manuscript figure in `figures/`; the associated classifier
-model is tracked in `results/models/behavior_classifier/`.
-
-## Expected Repository State
+## Expected Clean State
 
 A publication-ready state should satisfy:
 
