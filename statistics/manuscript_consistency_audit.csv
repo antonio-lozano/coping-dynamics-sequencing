@@ -1,5 +1,5 @@
 section,claim,repo_source,manuscript_beta,manuscript_se,manuscript_z,manuscript_p,repo_beta,repo_se,repo_z,repo_p,status,note
-Figure 1,"Classifier validation r=0.95, R2=0.90, p<0.001",not present,,,,,,,,,not_reproducible_from_repo,Manual validation frame-level table is not bundled; Figure 7 classifier metrics are separate.
+Figure 1,"Classifier validation r=0.95, R2=0.90, p<0.001",data/raw/simba_validation_manual_vs_automatic.csv,0.95,,,<0.001,0.9466,,,9.58e-24,match,repo_beta stores Pearson r for this validation row.
 Figure 3A,Freeze ELS vs Control frequency,statistics/stats_figure3A_GEE.csv,-0.204,0.081,-2.510,0.012,-0.2041,0.0813,-2.5103,0.0121,match,
 Figure 3A,Sniff ELS vs Control frequency,statistics/stats_figure3A_GEE.csv,0.621,0.231,2.694,0.007,0.6228,0.231,2.6959,0.007,numeric_mismatch_same_conclusion,
 Figure 3A,Turn ELS vs Control frequency,statistics/stats_figure3A_GEE.csv,0.101,0.032,3.099,0.002,0.1005,0.0324,3.0988,0.0019,match,

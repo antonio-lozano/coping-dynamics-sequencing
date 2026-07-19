@@ -15,6 +15,7 @@ in the repository. Row counts and checksums are verified by
 | `data/raw/freezing_predictions_index.csv` | File-level index for the raw freezing prediction CSVs. |
 | `data/raw/freezing_predictions_light.csv.gz` | Long-format compact companion table with animal, group, frame, and freezing columns. |
 | `data/raw/moseq_syllables_per_frame.csv.gz` | Per-frame MoSeq syllable table used by validation and classifier workflows. |
+| `data/raw/simba_validation_manual_vs_automatic.csv` | Manual versus automatic SimBA freezing percentages used for the Figure 1 validation correlation. |
 | `data/raw/syllable_classification_metrics.csv` | Precision/recall summary for syllable-based behavior classes. |
 | `data/raw/syllable_usage_per_timebin_30s.csv` | MoSeq syllable usage at 30 s resolution. |
 | `data/raw/syllable_usage_per_timebin_250ms.csv` | MoSeq syllable usage at 250 ms resolution. |

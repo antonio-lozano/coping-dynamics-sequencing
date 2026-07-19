@@ -22,6 +22,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from xml.etree import ElementTree
 
+import pandas as pd
+from scipy import stats
+
 
 ROOT = Path(__file__).resolve().parents[1]
 STATISTICS_DIR = ROOT / "statistics"
@@ -51,9 +54,10 @@ CLAIMS = [
     Claim(
         section="Figure 1",
         claim="Classifier validation r=0.95, R2=0.90, p<0.001",
-        repo_source="not present",
+        repo_source="data/raw/simba_validation_manual_vs_automatic.csv",
         filters=(),
-        note="Manual validation frame-level table is not bundled; Figure 7 classifier metrics are separate.",
+        manuscript_beta="0.95",
+        manuscript_p="<0.001",
         markers=("R=0.95",),
     ),
     Claim(
@@ -417,6 +421,30 @@ def classify(claim: Claim, beta: float, se: float, z: float, p: float) -> str:
 def audit_rows() -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
     for claim in CLAIMS:
+        if claim.section == "Figure 1":
+            validation = pd.read_csv(ROOT / claim.repo_source)
+            fit = stats.linregress(validation["manual_percent"], validation["automatic_percent"])
+            repo_r = float(fit.rvalue)
+            repo_p = float(fit.pvalue)
+            rows.append(
+                {
+                    "section": claim.section,
+                    "claim": claim.claim,
+                    "repo_source": claim.repo_source,
+                    "manuscript_beta": claim.manuscript_beta,
+                    "manuscript_se": claim.manuscript_se,
+                    "manuscript_z": claim.manuscript_z,
+                    "manuscript_p": claim.manuscript_p,
+                    "repo_beta": format_number(repo_r),
+                    "repo_se": "",
+                    "repo_z": "",
+                    "repo_p": format_number(repo_p),
+                    "status": classify(claim, repo_r, math.nan, math.nan, repo_p),
+                    "note": "repo_beta stores Pearson r for this validation row.",
+                }
+            )
+            continue
+
         if claim.repo_source == "not present":
             rows.append(
                 {

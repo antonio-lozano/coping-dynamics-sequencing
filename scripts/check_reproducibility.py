@@ -33,6 +33,7 @@ REQUIRED_FILES = [
     "data/raw/freezing_predictions_index.csv",
     "data/raw/freezing_predictions_light.csv.gz",
     "data/raw/moseq_syllables_per_frame.csv.gz",
+    "data/raw/simba_validation_manual_vs_automatic.csv",
     "data/raw/syllable_classification_metrics.csv",
     "data/raw/syllable_usage_per_timebin_30s.csv",
     "data/raw/syllable_usage_per_timebin_250ms.csv",

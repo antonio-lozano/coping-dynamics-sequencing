@@ -84,6 +84,8 @@ Raw inputs include:
 - `data/raw/freezing_predictions_index.csv`: file-level index with frame counts,
   freezing fractions, byte sizes, and SHA-256 checksums.
 - `data/raw/moseq_syllables_per_frame.csv.gz`: per-frame MoSeq syllable table.
+- `data/raw/simba_validation_manual_vs_automatic.csv`: manual versus automatic
+  SimBA freezing validation values.
 - `data/raw/syllable_usage_per_timebin_30s.csv` and
   `data/raw/syllable_usage_per_timebin_250ms.csv`: time-bin syllable usage.
 - `data/raw/behavioral_flexibility_scores.xlsx`: behavioral flexibility score
