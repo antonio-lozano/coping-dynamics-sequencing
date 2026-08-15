@@ -1,5 +1,6 @@
 # Data (tracked curated inputs; ignore only local re-extractions)
 data/raw/moseq_syllables_per_frame.csv
+data/raw/manuscript_final/
 data/**/*.pkl
 data/**/*.parquet
 data/**/*.npy

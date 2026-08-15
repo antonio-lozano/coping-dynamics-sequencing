@@ -1,0 +1,83 @@
+animal_id,animal,group,project,experiment,selected_syllables,freezing_frames,syllable_0_28_frames,overlap_frames,percent_freezing_covered_by_syllable_0_28,precision_syllable_0_28_vs_freezing
+11.4,Animal 11_4DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,2545,1907,1575,61.886051080550097,82.590456213948613
+11.6,Animal 11_6DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,3987,3082,2619,65.688487584650119,84.97728747566515
+34.4,Animal 34_4DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,880,831,577,65.568181818181813,69.434416365824305
+34.5,Animal 34_5DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,1554,1591,1292,83.140283140283145,81.206788183532382
+40.4,Animal_40_4DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,2219,1488,1261,56.827399729607933,84.744623655913969
+40.6,Animal_40_6DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,1836,1668,1520,82.788671023965151,91.127098321342928
+41.4,Animal_41_4DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,3409,2833,2647,77.647403930771489,93.434521708436293
+41.5,Animal_41_5DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,2416,2352,2029,83.981788079470192,86.267006802721085
+41.6,Animal_41_6DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,2519,2352,2137,84.835252084160388,90.85884353741497
+47.5,Animal_47_5DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,2343,1873,1515,64.660691421254796,80.886278697277092
+5.4,Animal 5_4DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,3046,2947,2463,80.860144451739984,83.576518493383105
+50.5,Animal_50_5DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,3313,3497,3003,90.642921823121043,85.873605947955383
+53.5,Animal_53_5DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,3042,2990,2568,84.418145956607489,85.886287625418049
+54.3,Animal_54_3DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,2062,1965,1719,83.365664403491763,87.480916030534345
+54.4,Animal_54_4DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,3730,3627,3144,84.289544235924936,86.683209263854422
+54.6,Animal_54_6DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,2654,2816,2366,89.148455162019587,84.01988636363636
+58.5,Animal_58_5DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,2093,1931,1612,77.018633540372676,83.480062143966862
+62.1,Animal_62_1DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,1337,1206,994,74.345549738219901,82.421227197346596
+62.2,Animal_62_2DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,2631,2805,2245,85.328772329912582,80.035650623885928
+62.3,Animal_62_3DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,3143,3221,2718,86.477887368755972,84.383731760322874
+62.4,Animal_62_4DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,3003,2859,2504,83.383283383283384,87.583071003847508
+62.5,Animal_62_5DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,1362,1137,928,68.135095447870782,81.618293755496921
+68.1,Animal_68_1DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,2219,2140,1790,80.666967102298344,83.644859813084111
+74.1,Animal_74_1DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,1931,1897,1419,73.485240807871563,74.802319451765939
+80.3,Animal_80_3DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,562,664,345,61.387900355871878,51.957831325301207
+15.4,Animal 15_4DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,2184,2010,1571,71.932234432234438,78.159203980099505
+15.6,Animal 15_6DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,2069,2045,1497,72.353794103431611,73.202933985330077
+2.4,Animal 2_4DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,2422,2338,1880,77.621800165152763,80.410607356715133
+23.4,Animal 23_4DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,1600,1662,1249,78.0625,75.150421179302043
+25.1,Animal 25_1DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,1992,1596,1337,67.118473895582326,83.771929824561411
+26.4,Animal 26_4DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,3049,3211,2700,88.553624139061995,84.085954531298654
+32.2,Animal 32_2DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,1595,1242,932,58.432601880877741,75.0402576489533
+32.4,Animal 32_4DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,1680,1174,925,55.05952380952381,78.790459965928449
+43.3,Animal_43_3DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,1840,1701,1435,77.989130434782609,84.362139917695472
+43.5,Animal_43_5DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,1818,1865,1521,83.663366336633658,81.554959785522783
+49.5,Animal_49_5DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,1053,781,635,60.30389363722697,81.306017925736242
+49.6,Animal_49_6DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,4264,4270,3794,88.977485928705434,88.852459016393453
+55.3,Animal_55_3DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,1992,1500,1226,61.546184738955823,81.733333333333334
+55.5,Animal_55_5DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,738,691,451,61.111111111111107,65.267727930535457
+56.3,Animal_56_3DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,2279,2326,1967,86.309784993418177,84.565778159931213
+63.3,Animal_63_3DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,2081,2178,1800,86.496876501681882,82.644628099173559
+69.1,Animal_69_1DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,1823,1841,1446,79.319802523313214,78.54426941879413
+69.2,Animal_69_2DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,764,846,478,62.565445026178011,56.501182033096931
+69.3,Animal_69_3DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,1208,1289,922,76.324503311258269,71.528316524437557
+69.5,Animal_69_5DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,1703,1841,1328,77.980035231943631,72.134709397066814
+73.1,Animal_73_1DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,1623,1760,1345,82.871226124460875,76.420454545454547
+73.4,Animal_73_4DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,1292,1596,1051,81.346749226006182,65.852130325814542
+75.1,Animal_75_1DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,814,1009,683,83.906633906633914,67.69078295341923
+88.2,Animal_88_2DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,1357,1521,1092,80.471628592483427,71.794871794871796
+88.3,Animal_88_3DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez and Krugers, 2024",1,0 + 28,1420,1410,1125,79.225352112676063,79.787234042553195
+129.1,Animal_129_1DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez et al., 2024",3,0 + 28,3083,3680,2741,88.906908855011352,74.483695652173907
+129.4,Animal_129_4DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez et al., 2024",3,0 + 28,3846,4047,3509,91.237649505980229,86.706202125030885
+136.2,Animal_136_2DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez et al., 2024",3,0 + 28,2374,2698,2111,88.921651221566975,78.243143068939958
+136.3,Animal_136_3DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez et al., 2024",3,0 + 28,2420,2326,1865,77.066115702479337,80.18056749785039
+136.5,Animal_136_5DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez et al., 2024",3,0 + 28,3609,3843,3195,88.528678304239406,83.138173302107731
+137.3,Animal_137_3DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez et al., 2024",3,0 + 28,870,945,672,77.241379310344826,71.111111111111114
+145.5,Animal_145_5DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez et al., 2024",3,0 + 28,2610,2846,2411,92.375478927203076,84.715390021082214
+146.6,Animal_146_6DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez et al., 2024",3,0 + 28,4664,4640,4254,91.20926243567753,91.681034482758619
+147.4,Animal_147_4DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez et al., 2024",3,0 + 28,3320,3124,2887,86.9578313253012,92.413572343149809
+152.3,Animal_152_3DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez et al., 2024",3,0 + 28,2533,2443,2115,83.497828661666006,86.573884568153915
+152.5,Animal_152_5DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez et al., 2024",3,0 + 28,3922,4056,3603,91.86639469658337,88.831360946745562
+157.1,Animal_157_1DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez et al., 2024",3,0 + 28,2275,2118,1759,77.318681318681314,83.050047214353157
+157.4,Animal_157_4DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez et al., 2024",3,0 + 28,2533,2166,1946,76.825898144492697,89.843028624192058
+158.5,Animal_158_5DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez et al., 2024",3,0 + 28,2892,3321,2758,95.366528354080231,83.047274917193619
+161.1,Animal_161_1DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez et al., 2024",3,0 + 28,3808,4039,3485,91.517857142857139,86.283733597425112
+161.3,Animal_161_3DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,Control,"Sanguino-Gomez et al., 2024",3,0 + 28,3033,3190,2827,93.208044840092313,88.620689655172413
+123.1,Animal_123_1DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez et al., 2024",3,0 + 28,2814,2835,2269,80.632551528073918,80.03527336860671
+123.3,Animal_123_3DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez et al., 2024",3,0 + 28,3204,3323,3038,94.818976279650428,91.423412578994885
+128.4,Animal_128_4DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez et al., 2024",3,0 + 28,2829,2969,2555,90.314598798161896,86.055911081172113
+133.3,Animal_133_3DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez et al., 2024",3,0 + 28,3646,3837,3254,89.248491497531546,84.805837894188159
+134.2,Animal_134_2DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez et al., 2024",3,0 + 28,3201,3243,2858,89.284598562949085,88.128276287388218
+134.4,Animal_134_4DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez et al., 2024",3,0 + 28,2453,2722,2229,90.868324500611493,81.888317413666428
+144.3,Animal_144_3DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez et al., 2024",3,0 + 28,1363,1507,1117,81.951577402787962,74.120769741207695
+144.5,Animal_144_5DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez et al., 2024",3,0 + 28,1841,2049,1543,83.813145029875074,75.305026842362139
+148.4,Animal_148_4DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez et al., 2024",3,0 + 28,2642,2774,2406,91.067373202119612,86.733958183129062
+150.3,Animal_150_3DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez et al., 2024",3,0 + 28,3493,3803,3215,92.041225307758381,84.538522219300546
+150.5,Animal_150_5DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez et al., 2024",3,0 + 28,1338,1421,1142,85.351270553064268,80.36593947923997
+153.4,Animal_153_4DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez et al., 2024",3,0 + 28,2824,3145,2589,91.678470254957517,82.321144674085858
+154.4,Animal_154_4DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez et al., 2024",3,0 + 28,2730,2861,2475,90.659340659340657,86.508213911219855
+159.3,Animal_159_3DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez et al., 2024",3,0 + 28,1202,1358,957,79.617304492512474,70.471281296023562
+159.4,Animal_159_4DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez et al., 2024",3,0 + 28,3490,3757,3114,89.226361031518621,82.885280809156242
+159.5,Animal_159_5DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000filtered,ELS,"Sanguino-Gomez et al., 2024",3,0 + 28,802,1065,579,72.194513715710727,54.366197183098599

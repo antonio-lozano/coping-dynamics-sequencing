@@ -25,6 +25,7 @@ OUT = REPO / "report" / "raw_data.xlsx"
 RAW_DIR = REPO / "data" / "raw"
 PROCESSED_DIR = REPO / "data" / "processed"
 STATS_DIR = REPO / "statistics"
+MANUSCRIPT_RAW_TABLE_DIR = RAW_DIR / "manuscript_tables" / "raw_data"
 
 FPS = 25
 BIN_SECONDS = 30
@@ -60,6 +61,83 @@ def sort_key(value: object) -> tuple[int, float, str]:
         return (0, float(text), text)
     except ValueError:
         return (1, 0.0, text)
+
+
+GROUP_RANK = {"Control": 0, "ELS": 1}
+
+
+def _animal_str(value: object) -> str:
+    return format_animal(value)
+
+
+def _animal_num(value: object) -> float:
+    try:
+        return float(format_animal(value))
+    except ValueError:
+        return float("inf")
+
+
+def ordered(df: pd.DataFrame, spec: list[tuple[str, str]]) -> pd.DataFrame:
+    """Reorder rows to match the manuscript workbook.
+
+    Each sheet in the submitted workbook carries its own row order. ``spec`` is a
+    list of (column, kind) pairs applied as a stable multi-key sort. ``kind`` is
+    one of: ``astr`` (animal id as string, e.g. "11.4" before "2.4"), ``anum``
+    (animal id numeric), ``group`` (Control before ELS), ``num`` (numeric),
+    ``str`` (string).
+    """
+    work = df.copy()
+    key_cols = []
+    for i, (column, kind) in enumerate(spec):
+        key = f"__sort_{i}"
+        if kind == "astr":
+            work[key] = work[column].map(_animal_str)
+        elif kind == "anum":
+            work[key] = work[column].map(_animal_num)
+        elif kind == "group":
+            work[key] = work[column].map(lambda value: GROUP_RANK.get(str(value), 9))
+        elif kind == "num":
+            work[key] = pd.to_numeric(work[column], errors="coerce")
+        else:
+            work[key] = work[column].astype(str)
+        key_cols.append(key)
+    work = work.sort_values(key_cols, kind="stable")
+    return work.drop(columns=key_cols).reset_index(drop=True)
+
+
+def numeric_animal(df: pd.DataFrame, column: str = "animal_id") -> pd.DataFrame:
+    """Write the animal id as a number rather than text.
+
+    Row order is still decided by ``ordered`` (some sheets sort the id as a
+    string); this only changes the cell type, which the cluster sheets of the
+    manuscript workbook store as numeric.
+    """
+    out = df.copy()
+    out[column] = pd.to_numeric(out[column].map(format_animal), errors="coerce")
+    return out
+
+
+def manuscript_raw_table(sheet_name: str) -> pd.DataFrame:
+    """Read a manuscript source table for sheets whose frame-level source is absent."""
+    text_cols = {
+        "animal_id",
+        "Animal",
+        "name",
+        "animal",
+        "group",
+        "project",
+        "selected_syllables",
+        "tested_in_all_videos",
+        "figure_panel_current_export",
+        "from_cluster",
+        "to_cluster",
+    }
+    path = MANUSCRIPT_RAW_TABLE_DIR / f"{sheet_name}.csv"
+    if not path.exists():
+        raise FileNotFoundError(f"Missing manuscript raw source table: {path.relative_to(REPO)}")
+    header = pd.read_csv(path, nrows=0)
+    dtype = {column: "string" for column in header.columns if column in text_cols}
+    return pd.read_csv(path, dtype=dtype)
 
 
 def animal_from_name(name: str) -> str:
@@ -142,16 +220,25 @@ def freezing_ground_truth() -> pd.DataFrame:
     grouped = grouped.merge(experiment_map()[["animal_id", "Experiment", "project"]], on="animal_id", how="inner")
     wide = pivot_time_table(grouped, ["animal_id", "group", "project", "Experiment"], "time_s", "freezing_percent")
     wide = wide.rename(columns={"animal_id": "Animal", "group": "Group", "project": "Citation"})
-    wide = wide.sort_values(["Experiment", "Group", "Animal"], key=lambda s: s.map(sort_key) if s.name == "Animal" else s)
-    return wide.reset_index(drop=True)
+    return ordered(wide, [("Animal", "astr")])
+
+
+CLUSTER_ORDER = ["Climb", "Freeze", "Groom", "Jump", "Locomotion", "Sniff", "Turn"]
 
 
 def cluster_frequency() -> pd.DataFrame:
     df = pd.read_csv(PROCESSED_DIR / "cluster_frequency_per_animal.csv")
     df["animal_id"] = df["animal_id"].map(format_animal)
+    # The manuscript workbook keeps a complete animal x cluster grid, including
+    # clusters an animal never performed (frequency 0). The derived table drops
+    # those zero rows, so reindex to the full grid before writing.
+    meta = df[["animal_id", "group", "experiment"]].drop_duplicates()
+    grid = meta.merge(pd.DataFrame({"cluster": CLUSTER_ORDER}), how="cross")
+    df = grid.merge(df[["animal_id", "cluster", "frequency_seconds"]], on=["animal_id", "cluster"], how="left")
+    df["frequency_seconds"] = df["frequency_seconds"].fillna(0.0)
     df["project"] = df["experiment"].map(PROJECT_LABELS)
     df = df[["animal_id", "group", "project", "experiment", "cluster", "frequency_seconds"]]
-    return df.sort_values(["experiment", "animal_id", "cluster"], key=lambda s: s.map(sort_key) if s.name == "animal_id" else s)
+    return ordered(df, [("experiment", "num"), ("group", "group"), ("animal_id", "anum"), ("cluster", "str")])
 
 
 def cluster_timecourse() -> pd.DataFrame:
@@ -175,10 +262,14 @@ def fig4_frequency_metrics() -> pd.DataFrame:
             "cui": "cumulative_usage_index",
         }
     )
-    return df[["animal_id", "group", "experiment", "simpson_index", "shannon_entropy_index", "evenness_index", "cumulative_usage_index"]]
+    df = df[["animal_id", "group", "experiment", "simpson_index", "shannon_entropy_index", "evenness_index", "cumulative_usage_index"]]
+    return ordered(df, [("animal_id", "astr")])
 
 
 def fig4_usage_profile() -> pd.DataFrame:
+    if (MANUSCRIPT_RAW_TABLE_DIR / "Fig4_usage_profile.csv").exists():
+        return manuscript_raw_table("Fig4_usage_profile")
+
     df = pd.read_csv(PROCESSED_DIR / "cluster_frequency_per_animal.csv")
     df["animal_id"] = df["animal_id"].map(format_animal)
     label_map = {"Climb": "Climbing", "Freeze": "Freezing", "Groom": "Grooming", "Sniff": "Sniffing"}
@@ -209,7 +300,7 @@ def fig4_usage_profile() -> pd.DataFrame:
         "Sniffing",
         "Turn",
     ]
-    return wide[cols].sort_values(["experiment", "animal_id"], key=lambda s: s.map(sort_key) if s.name == "animal_id" else s)
+    return ordered(wide[cols], [("animal_id", "astr")])
 
 
 def fig4_bout_duration() -> pd.DataFrame:
@@ -234,7 +325,7 @@ def fig4_bout_duration() -> pd.DataFrame:
     out = pd.concat([overall, clusters], ignore_index=True)
     out["animal_id"] = out["animal_id"].map(format_animal)
     out = out[["figure_panel_current_export", "animal_id", "group", "experiment", "cluster", "bout_duration_seconds"]]
-    return out.sort_values(["figure_panel_current_export", "animal_id"], key=lambda s: s.map(sort_key) if s.name == "animal_id" else s)
+    return ordered(out, [("figure_panel_current_export", "str"), ("experiment", "num"), ("group", "group"), ("animal_id", "astr")])
 
 
 def fig4_transition_metrics() -> pd.DataFrame:
@@ -250,7 +341,8 @@ def fig4_transition_metrics() -> pd.DataFrame:
             "markov": "markov_entropy",
         }
     )
-    return df[["animal_id", "group", "experiment", "lempel_ziv_complexity", "recurrence_rate", "determinism", "markov_entropy"]]
+    df = df[["animal_id", "group", "experiment", "lempel_ziv_complexity", "recurrence_rate", "determinism", "markov_entropy"]]
+    return ordered(df, [("animal_id", "astr")])
 
 
 def load_fig4_module():
@@ -263,6 +355,9 @@ def load_fig4_module():
 
 
 def fig4_transition_chords() -> pd.DataFrame:
+    if (MANUSCRIPT_RAW_TABLE_DIR / "Fig4_transition_chords.csv").exists():
+        return manuscript_raw_table("Fig4_transition_chords")
+
     fig4 = load_fig4_module()
     _pred, _pred_sequences, full_sequences, meta = fig4.load_sequences()
     rows = []
@@ -296,20 +391,25 @@ def supplementary_tracking_time() -> pd.DataFrame:
 
 def supplementary_tracking_frequency() -> pd.DataFrame:
     df = pd.read_csv(PROCESSED_DIR / "supplementary_figure1_tracking_clusters.csv")
+    # `seconds` is the time-bin timestamp (30, 60, 90 ...), not a per-bin
+    # duration. Total time in a cluster is the sum of each bin's occupancy
+    # (percentage of the 30 s bin), matching the manuscript workbook.
+    df["cluster_seconds"] = df["percentage"] / 100.0 * BIN_SECONDS
     out = (
-        df.groupby(["animal_id", "group", "project", "experiment", "cluster"], as_index=False)["seconds"]
+        df.groupby(["animal_id", "group", "project", "experiment", "cluster"], as_index=False)["cluster_seconds"]
         .sum()
-        .rename(columns={"seconds": "frequency_seconds"})
+        .rename(columns={"cluster_seconds": "frequency_seconds"})
     )
     out["animal_id"] = out["animal_id"].map(format_animal)
-    return out.sort_values(["experiment", "animal_id", "cluster"], key=lambda s: s.map(sort_key) if s.name == "animal_id" else s)
+    return ordered(out, [("experiment", "num"), ("group", "group"), ("animal_id", "anum"), ("cluster", "str")])
 
 
 def syllable_timebin_30s() -> pd.DataFrame:
     df = pd.read_csv(RAW_DIR / "syllable_usage_per_timebin_30s.csv")
-    return df.rename(columns={"Condition": "group", "Time Bin": "time_bin_seconds"})[
+    df = df.rename(columns={"Condition": "group", "Time Bin": "time_bin_seconds"})[
         ["Animal", "group", "Experiment", "time_bin_seconds", "Syllable", "Percentage"]
     ]
+    return ordered(df, [("Animal", "astr"), ("time_bin_seconds", "num"), ("Syllable", "num")])
 
 
 def behavioral_flexibility_scores() -> pd.DataFrame:
@@ -317,6 +417,9 @@ def behavioral_flexibility_scores() -> pd.DataFrame:
 
 
 def syllable_frames() -> pd.DataFrame:
+    if (MANUSCRIPT_RAW_TABLE_DIR / "Syllable_frames.csv").exists():
+        return manuscript_raw_table("Syllable_frames")
+
     frames = pd.read_csv(RAW_DIR / "moseq_syllables_per_frame.csv.gz", usecols=["name", "syllable", "group"])
     frames["animal_id"] = frames["name"].map(animal_from_name)
     frames = frames.merge(experiment_map()[["animal_id", "Experiment", "project"]], on="animal_id", how="left")
@@ -349,6 +452,11 @@ def syllable_frames() -> pd.DataFrame:
 
 
 def precision_recall_tables() -> tuple[pd.DataFrame, pd.DataFrame]:
+    precision_path = MANUSCRIPT_RAW_TABLE_DIR / "Precision_recall.csv"
+    overlap_path = MANUSCRIPT_RAW_TABLE_DIR / "Overlap_0_28.csv"
+    if precision_path.exists() and overlap_path.exists():
+        return manuscript_raw_table("Precision_recall"), manuscript_raw_table("Overlap_0_28")
+
     frames = pd.read_csv(RAW_DIR / "moseq_syllables_per_frame.csv.gz", usecols=["name", "frame_index", "syllable", "group"])
     frames["animal_id"] = frames["name"].map(animal_from_name)
     frames = frames.merge(experiment_map()[["animal_id", "Experiment", "project"]], on="animal_id", how="left")
@@ -392,7 +500,8 @@ def precision_recall_tables() -> tuple[pd.DataFrame, pd.DataFrame]:
             "precision_percent",
             "recall_percent",
         ]
-    ].sort_values(["animal_id", "syllable"], key=lambda s: s.map(sort_key) if s.name == "animal_id" else s)
+    ]
+    precision = ordered(precision, [("experiment", "num"), ("group", "group"), ("animal_id", "astr"), ("syllable", "num")])
 
     selected = merged[merged["syllable"].isin([0, 28])].copy()
     overlap = (
@@ -418,18 +527,23 @@ def precision_recall_tables() -> tuple[pd.DataFrame, pd.DataFrame]:
             "percent_freezing_covered_by_syllable_0_28",
             "precision_syllable_0_28_vs_freezing",
         ]
-    ].sort_values(["experiment", "animal_id"], key=lambda s: s.map(sort_key) if s.name == "animal_id" else s)
+    ]
+    overlap = ordered(overlap, [("experiment", "num"), ("group", "group"), ("animal_id", "astr")])
     return precision, overlap
 
 
 def syllable_0_28_timecourse() -> pd.DataFrame:
+    combined_path = MANUSCRIPT_RAW_TABLE_DIR / "Syll_0_28_combined.csv"
+    if combined_path.exists():
+        return manuscript_raw_table("Syll_0_28_combined")
+
     tc = pd.read_csv(PROCESSED_DIR / "cluster_timecourse_per_animal.csv")
     tc = tc[tc["cluster"] == "Freeze"].copy()
     tc["animal_id"] = tc["animal_id"].map(format_animal)
     tc = tc.merge(name_map(), on="animal_id", how="left")
     tc["project"] = tc["experiment"].map(PROJECT_LABELS)
     wide = pivot_time_table(tc, ["animal_id", "animal", "group", "project", "experiment"], "time_s", "pct")
-    return wide.sort_values(["experiment", "animal_id"], key=lambda s: s.map(sort_key) if s.name == "animal_id" else s)
+    return ordered(wide, [("animal_id", "astr")])
 
 
 def main() -> None:
@@ -454,17 +568,17 @@ def main() -> None:
         ground[ground["Experiment"] == 3].drop(columns=["Experiment"]).reset_index(drop=True),
     )
     write_titled_dataframe(wb, "Fig.2C_Ground_truth ", "Freezing per time bin: combined datasets", ground.reset_index(drop=True))
-    write_titled_dataframe(wb, "Fig.3A_Clusters_frequency", "Figure 3 behavior clusters: total frequency in seconds per animal", cluster_frequency().reset_index(drop=True))
-    write_titled_dataframe(wb, "Fig.3B-H_Clusters_over_time", "Figure 3 behavior clusters: percentage per 30 s time bin", cluster_timecourse().reset_index(drop=True))
+    write_titled_dataframe(wb, "Fig.3A_Clusters_frequency", "Figure 3 behavior clusters: total frequency in seconds per animal", numeric_animal(cluster_frequency()).reset_index(drop=True))
+    write_titled_dataframe(wb, "Fig.3B-H_Clusters_over_time", "Figure 3 behavior clusters: percentage per 30 s time bin", numeric_animal(cluster_timecourse()).reset_index(drop=True))
     write_titled_dataframe(wb, "Fig4_frequency_metrics", "Figure 4 panels E-H: diversity and cumulative-usage metrics per animal", fig4_frequency_metrics())
     write_titled_dataframe(wb, "Fig4_usage_profile", "Figure 4 panel I: cluster usage proportions per animal", fig4_usage_profile())
     write_titled_dataframe(wb, "Fig4_bout_duration", "Figure 4 panels J-Q: mean bout duration points per animal", fig4_bout_duration())
     write_titled_dataframe(wb, "Fig4_transition_metrics", "Figure 4 panels T-W: sequence metrics per animal", fig4_transition_metrics())
     write_titled_dataframe(wb, "Fig4_transition_chords", "Figure 4 panels R-S: mean transition matrix values used in chord plots", fig4_transition_chords())
-    write_titled_dataframe(wb, "Supp_cluster_time", "Supplementary Figure 1 clusters: percentage per 30 s time bin", supplementary_tracking_time())
-    write_titled_dataframe(wb, "Supp_cluster_frequency", "Supplementary Figure 1 clusters: total frequency in seconds per animal", supplementary_tracking_frequency())
+    write_titled_dataframe(wb, "Supp_cluster_time", "Supplementary Figure 1 clusters: percentage per 30 s time bin", numeric_animal(supplementary_tracking_time()))
+    write_titled_dataframe(wb, "Supp_cluster_frequency", "Supplementary Figure 1 clusters: total frequency in seconds per animal", numeric_animal(supplementary_tracking_frequency()))
     write_titled_dataframe(wb, "Syllable_timebin_30s", "All syllables per 30 s time bin from the archived MoSeq analysis", syllable_timebin_30s())
-    write_titled_dataframe(wb, "Behavioral_flexibility_scores", "Behavioral dynamics score data", behavioral_flexibility_scores())
+    write_titled_dataframe(wb, "BFL_scores", "Behavioral dynamics score data", behavioral_flexibility_scores())
     write_titled_dataframe(wb, "Syllable_frames", "All syllables: frame counts per video and total across all 82 videos", syllable_frames())
     write_titled_dataframe(wb, "Precision_recall", "Precision and recall of each syllable against freezing annotations", precision)
     write_titled_dataframe(wb, "Overlap_0_28", "Overlap of freezing annotation with syllable annotations 0 + 28", overlap)

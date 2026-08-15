@@ -10,6 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "MANIFEST.csv"
 ARTIFACT_DIRS = ("data", "figure_source_data", "figures", "statistics", "report", "classifier")
+EXCLUDED_DIRS = {"__pycache__", "manuscript_final"}
 
 
 def sha256(path: Path) -> str:
@@ -47,7 +48,11 @@ def iter_artifacts() -> list[Path]:
         base = ROOT / dirname
         if not base.exists():
             continue
-        paths.extend(p for p in base.rglob("*") if p.is_file())
+        paths.extend(
+            path
+            for path in base.rglob("*")
+            if path.is_file() and not EXCLUDED_DIRS.intersection(path.relative_to(ROOT).parts)
+        )
     return sorted(paths, key=lambda p: p.as_posix().lower())
 
 

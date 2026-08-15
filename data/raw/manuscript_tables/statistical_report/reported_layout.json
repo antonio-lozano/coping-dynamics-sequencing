@@ -1,0 +1,289 @@
+{
+  "sheets": [
+    {
+      "index": 0,
+      "title": "Fig.1A_ SimBA_validation",
+      "show_grid_lines": null,
+      "merged_ranges": [
+        "A1:G1"
+      ]
+    },
+    {
+      "index": 1,
+      "title": "Fig.2A-C_Ground_truth ",
+      "show_grid_lines": null,
+      "merged_ranges": [
+        "S1:AG1",
+        "A1:O1",
+        "H41:I41",
+        "AR41:AS41",
+        "Z41:AA41",
+        "AK1:AX1",
+        "AA2:AD2",
+        "AS2:AV2",
+        "I2:L2"
+      ]
+    },
+    {
+      "index": 2,
+      "title": "Fig.2D_Syllable_usage",
+      "show_grid_lines": null,
+      "merged_ranges": [
+        "A1:D1"
+      ]
+    },
+    {
+      "index": 3,
+      "title": "Fig.2E-F_Precision_recall",
+      "show_grid_lines": null,
+      "merged_ranges": [
+        "A1:G1"
+      ]
+    },
+    {
+      "index": 4,
+      "title": "Fig.2H_Freezing_syllables",
+      "show_grid_lines": null,
+      "merged_ranges": [
+        "S1:AG1",
+        "A1:O1",
+        "H41:I41",
+        "Z41:AA41",
+        "AA2:AD2",
+        "I2:L2"
+      ]
+    },
+    {
+      "index": 5,
+      "title": "Fig.3A_Clusters_frequency",
+      "show_grid_lines": null,
+      "merged_ranges": [
+        "BB1:BK1",
+        "A1:A13",
+        "AO1:AX1",
+        "AO31:AX31",
+        "A16:A28",
+        "X52:AE52",
+        "M52:T52",
+        "CB31:CK31",
+        "CB1:CK1",
+        "B52:I52",
+        "BO1:BX1",
+        "BO31:BX31",
+        "B16:K16",
+        "BB16:BK16",
+        "AO16:AX16",
+        "B31:K31",
+        "AB1:AK1",
+        "AB16:AK16",
+        "O1:X1",
+        "CB16:CK16",
+        "A31:A43",
+        "B1:K1",
+        "BO16:BX16",
+        "AB31:AK31",
+        "O31:X31",
+        "O16:X16",
+        "BB31:BK31"
+      ]
+    },
+    {
+      "index": 6,
+      "title": "Fig.3B-H_Clusters_over_time",
+      "show_grid_lines": null,
+      "merged_ranges": [
+        "FH1:FV1",
+        "EX2:FA2",
+        "AA2:AD2",
+        "AT2:AW2",
+        "BL2:BO2",
+        "CV2:CY2",
+        "DF1:DT1",
+        "S1:AH1",
+        "DN2:DQ2",
+        "S67:W67",
+        "BD1:BR1",
+        "BD67:BH67",
+        "I2:L2",
+        "DF67:DJ67",
+        "EF2:EI2",
+        "AL1:AZ1",
+        "AL67:AP67",
+        "CN1:DB1",
+        "BV67:BZ67",
+        "CN67:CR67",
+        "EP1:FD1",
+        "DX67:EB67",
+        "EP67:ET67",
+        "A1:O1",
+        "FH3:FL3",
+        "S3:Y13",
+        "BV1:CJ1",
+        "CD2:CG2",
+        "A67:E67",
+        "DX1:EL1"
+      ]
+    },
+    {
+      "index": 7,
+      "title": "Fig.4E-H_frequency_metrics",
+      "show_grid_lines": null,
+      "merged_ranges": [
+        "AK1:AT1",
+        "A1:J1",
+        "M1:V1",
+        "Y1:AH1"
+      ]
+    },
+    {
+      "index": 8,
+      "title": "Fig.4J-Q_bout_duration",
+      "show_grid_lines": null,
+      "merged_ranges": [
+        "AK1:AT1",
+        "A1:J1",
+        "CG1:CP1",
+        "Y1:AH1",
+        "AW1:BF1",
+        "BU1:CD1",
+        "M1:V1",
+        "BI1:BR1"
+      ]
+    },
+    {
+      "index": 9,
+      "title": "Fig.4T-W_transition_metrics",
+      "show_grid_lines": null,
+      "merged_ranges": [
+        "AK1:AT1",
+        "A1:J1",
+        "M1:V1",
+        "Y1:AH1"
+      ]
+    },
+    {
+      "index": 10,
+      "title": "Fig.5B_Euclidean distance",
+      "show_grid_lines": null,
+      "merged_ranges": [
+        "A1:J1"
+      ]
+    },
+    {
+      "index": 11,
+      "title": "Fig.5C_Clusters_frequency",
+      "show_grid_lines": null,
+      "merged_ranges": [
+        "A1:A13",
+        "BB1:BK1",
+        "AO1:AX1",
+        "AO31:AX31",
+        "A16:A28",
+        "X52:AE52",
+        "M52:T52",
+        "CB31:CK31",
+        "CB1:CK1",
+        "B52:I52",
+        "BO1:BX1",
+        "BO31:BX31",
+        "B16:K16",
+        "BB16:BK16",
+        "AO16:AX16",
+        "B31:K31",
+        "AB1:AK1",
+        "AB16:AK16",
+        "O1:X1",
+        "CB16:CK16",
+        "A31:A43",
+        "B1:K1",
+        "BO16:BX16",
+        "AB31:AK31",
+        "O31:X31",
+        "O16:X16",
+        "BB31:BK31"
+      ]
+    },
+    {
+      "index": 12,
+      "title": "Fig.5D-J_Clusters_over_time",
+      "show_grid_lines": null,
+      "merged_ranges": [
+        "FH1:FV1",
+        "EX2:FA2",
+        "AA2:AD2",
+        "AT2:AW2",
+        "BL2:BO2",
+        "DF1:DT1",
+        "CV2:CY2",
+        "S1:AH1",
+        "DN2:DQ2",
+        "BD1:BR1",
+        "I2:L2",
+        "EF2:EI2",
+        "AL1:AZ1",
+        "CN1:DB1",
+        "EP1:FD1",
+        "A1:O1",
+        "FP2:FS2",
+        "BV1:CJ1",
+        "CD2:CG2",
+        "DX1:EL1"
+      ]
+    },
+    {
+      "index": 13,
+      "title": "Fig.6G-J_frequency_metrics",
+      "show_grid_lines": null,
+      "merged_ranges": [
+        "N1:X1",
+        "A1:K1",
+        "AA1:AK1",
+        "AO1:AY1"
+      ]
+    },
+    {
+      "index": 14,
+      "title": "Fig.6L-S_bout_duration",
+      "show_grid_lines": null,
+      "merged_ranges": [
+        "N1:X1",
+        "BB1:BL1",
+        "AA1:AK1",
+        "AO1:AY1",
+        "CB1:CL1",
+        "CP1:CZ1",
+        "A1:K1",
+        "BO1:BY1"
+      ]
+    },
+    {
+      "index": 15,
+      "title": "Fig.6W-Z_transition_metrics",
+      "show_grid_lines": null,
+      "merged_ranges": [
+        "N1:X1",
+        "A1:K1",
+        "AA1:AK1",
+        "AO1:AY1"
+      ]
+    },
+    {
+      "index": 16,
+      "title": "Sup-Fig.3_distance_scores",
+      "show_grid_lines": null,
+      "merged_ranges": [
+        "AH1:AQ1",
+        "A1:J1",
+        "W1:AF1",
+        "AS1:BB1",
+        "L1:U1"
+      ]
+    },
+    {
+      "index": 17,
+      "title": "Resilience_overlap_methods",
+      "show_grid_lines": null,
+      "merged_ranges": []
+    }
+  ]
+}

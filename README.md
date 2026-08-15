@@ -36,8 +36,9 @@ python scripts/run_all.py
 ```
 
 This rebuilds the compact freezing-prediction tables, processed analysis
-tables, data-derived figures, raw-data workbook, statistical report workbook,
-artifact manifest, and reproducibility checks. Add `--verbose` to stream each
+tables, data-derived figures, raw-data workbook, full and source-dataset
+statistical report, artifact manifest, and
+reproducibility checks. Add `--verbose` to stream each
 child script's output. Add `--skip-figures` to rebuild tables, reports, the
 manifest, and checks without re-rendering figures.
 
@@ -60,7 +61,7 @@ data/processed/       Deterministic tables regenerated from data/raw
 figure_source_data/   Plotted values and summary values behind Figures 2-6
 statistics/           Machine-readable statistical model outputs
 figures/              Canonical manuscript figure exports
-report/               raw_data.xlsx and statistical_report.xlsx
+report/               raw-data workbook and canonical statistical report
 classifier/           Figure 7 behavior-classifier artifact
 scripts/              Rebuild, report, figure, and validation entry points
 src/                  Shared analysis, plotting, statistics, and classifier code
@@ -72,6 +73,18 @@ config/               Figure metadata used by the report package
 `statistics/`, `figures/`, and `report/` are regenerated products. The term
 `figure_source_data` is used only for the plotted data underlying manuscript
 figures, not for raw experimental inputs.
+
+The statistical builder creates one canonical output:
+
+- `report/statistical_report.xlsx` recalculates the Combined full dataset,
+  Sanguino-Gomez & Krugers, and Sanguino-Gomez et al. analyses where source
+  dataset identity is available. It includes raw and adjusted p-values, direct
+  resilience contrasts, per-time-bin posthoc tests, model/sample metadata,
+  time-effect units, and the manuscript consistency audit.
+
+The historical report is retained as transparent source-cell records under
+`data/raw/manuscript_tables/statistical_report/`; it is provenance, not a
+second final workbook. See `docs/workbook_match_audit.md` for details.
 
 ## Key Data
 
