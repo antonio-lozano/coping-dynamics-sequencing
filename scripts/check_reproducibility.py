@@ -95,6 +95,7 @@ REQUIRED_FILES = [
 ]
 
 FIGURE_STEMS = [
+    "figure1",
     "figure2",
     "figure3",
     "figure4",
@@ -102,6 +103,7 @@ FIGURE_STEMS = [
     "figure6",
     "figure7",
     "supplementary_figure1",
+    "supplementary_figure2",
     "supplementary_figure3",
 ]
 FIGURE_EXTS = (".pdf", ".svg", ".png")

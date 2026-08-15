@@ -108,17 +108,20 @@ Raw inputs include:
 
 | Output | Script |
 | --- | --- |
+| Figure 1 | Canonical tracked export (hand-assembled schematic) |
 | Figure 2 | `scripts/generate_figures/figure_2_validation.py` |
 | Figure 3 | `scripts/generate_figures/figure_3_behavior_clusters.py` |
 | Figure 4 | `scripts/generate_figures/figure_4_diversity_dynamics.py` |
 | Figure 5 | `scripts/generate_figures/figure_5_resilience_dynamics.py` |
 | Figure 6 | `scripts/generate_figures/figure_6_resilience_diversity.py` |
+| Figure 7 | Canonical tracked export with associated classifier artifact |
 | Supplementary Figure 1 | `scripts/generate_figures/supplementary_figure_1_tracking_clusters.py` |
+| Supplementary Figure 2 | Canonical tracked export (analysis workflow schematic) |
 | Supplementary Figure 3 | `scripts/generate_figures/supplementary_figure_3_distances.py` |
 
-Figure 1 is a hand-assembled schematic. Figure 7 is tracked as the canonical
-assembled manuscript figure in `figures/`, with the associated classifier
-artifact in `classifier/figure7_behavior_classifier.joblib`.
+Figures 1 and 7 and Supplementary Figure 2 are tracked as canonical assembled
+manuscript figures. Figure 7 has an associated classifier artifact in
+`classifier/figure7_behavior_classifier.joblib`.
 
 ## Quality Controls
 
