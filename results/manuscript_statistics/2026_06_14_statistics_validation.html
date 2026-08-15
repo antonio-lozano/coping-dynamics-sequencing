@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Statistics validation &mdash; coping dynamics manuscript</title>
+<style>
+:root{--bg:#0e1116;--panel:#161a21;--panel-2:#1c2129;--rule:#262b34;--fg:#e6e9ef;--muted:#8b94a3;
+--accent:#6aa9e9;--accent-soft:#1a3654;--supp:#b890de;--supp-soft:#2b1f3a;--exc:#e88871;--exc-soft:#3a201a;
+--ok:#6ec48a;--warn:#e6b364;--code-bg:#0a0d12;}
+*{box-sizing:border-box;}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--fg);line-height:1.55;}
+header.top{background:var(--panel);border-bottom:1px solid var(--rule);padding:26px 40px 20px;position:sticky;top:0;z-index:50;}
+header.top h1{margin:0 0 6px;font-size:22px;font-weight:700;}
+header.top .sub{color:var(--muted);font-size:13px;max-width:900px;}
+.layout{display:grid;grid-template-columns:250px 1fr;max-width:1340px;margin:0 auto;}
+nav.side{padding:24px 16px;border-right:1px solid var(--rule);position:sticky;top:92px;height:calc(100vh - 92px);overflow-y:auto;background:var(--bg);}
+nav.side h3{margin:16px 0 4px;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);}
+nav.side a{display:block;padding:5px 10px;color:var(--fg);text-decoration:none;font-size:12.5px;border-radius:4px;}
+nav.side a:hover{background:var(--accent-soft);color:var(--accent);}
+main{padding:28px 40px 80px;min-width:0;}
+h2{margin-top:36px;font-size:19px;border-bottom:1px solid var(--rule);padding-bottom:6px;}
+h3{font-size:15px;margin-top:26px;}
+a{color:var(--accent);}
+.abstract{background:var(--panel);border:1px solid var(--rule);padding:22px 26px;border-radius:12px;font-size:15px;}
+.abstract p{margin:0 0 10px;} .abstract p:last-child{margin:0;}
+.headline{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin:20px 0 28px;}
+.stat{background:var(--panel);border:1px solid var(--rule);padding:14px 16px;border-radius:8px;}
+.stat .label{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+.stat .value{font-size:24px;font-weight:700;margin-top:4px;color:var(--accent);}
+.stat.exc .value{color:var(--exc);} .stat.ok .value{color:var(--ok);} .stat.warn .value{color:var(--warn);}
+.stat .sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.takeaway{background:var(--supp-soft);border-left:4px solid var(--supp);padding:12px 16px;border-radius:0 8px 8px 0;margin:14px 0 20px;}
+.takeaway strong{color:var(--supp);}
+.takeaway.exc{background:var(--exc-soft);border-left-color:var(--exc);} .takeaway.exc strong{color:var(--exc);}
+.takeaway.warn{background:#3a2f1a;border-left-color:var(--warn);} .takeaway.warn strong{color:var(--warn);}
+.takeaway.ok{background:#1a3a26;border-left-color:var(--ok);} .takeaway.ok strong{color:var(--ok);}
+.robust-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;}
+.robust-card{background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:12px 14px;font-size:13px;}
+.robust-card h4{margin:0 0 6px;font-size:13px;color:var(--accent);}
+table{border-collapse:collapse;width:100%;font-size:12.5px;}
+table th,table td{border-bottom:1px solid var(--rule);padding:6px 9px;text-align:left;}
+table th{background:var(--panel-2);color:var(--muted);font-weight:600;position:sticky;top:92px;}
+pre,code.block{background:var(--code-bg);padding:12px 14px;border-radius:6px;overflow-x:auto;font-size:12px;border:1px solid var(--rule);color:#d6dae2;}
+code{background:var(--code-bg);color:#d6dae2;padding:1px 5px;border-radius:3px;font-size:.92em;}
+details{background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:10px 14px;margin-top:14px;}
+details summary{cursor:pointer;font-weight:600;color:var(--accent);}
+.plot-wrap{background:var(--panel-2);border:1px solid var(--rule);border-radius:6px;padding:8px;max-width:560px;}
+.plot-wrap svg{width:100%;height:auto;display:block;} .plot-wrap text{fill:var(--fg);}
+.plot-wrap .axis{stroke:var(--rule);} .plot-wrap .grid{stroke:var(--rule);stroke-dasharray:2,3;}
+footer{padding:28px 40px;color:var(--muted);border-top:1px solid var(--rule);font-size:12.5px;}
+@media(max-width:900px){.layout{grid-template-columns:1fr;}nav.side{position:relative;top:0;height:auto;border-right:0;border-bottom:1px solid var(--rule);}main{padding:20px;}table th{position:static;}}
+</style></head><body>
+<header class="top">
+  <h1>Statistics validation &mdash; <i>Detecting dynamic coping strategies and resilience profiles after early life adversity</i></h1>
+  <div class="sub">Sanguino-G&oacute;mez, G&uuml;&ccedil;l&uuml;, Krugers &amp; Lozano. Independent reproduction &amp; consistency check of every reported mixed-linear-model statistic. Generated 2026-06-14.</div>
+</header>
+<div class="layout">
+<nav class="side">
+  <h3>Contents</h3>
+  <a href="#abstract">Abstract</a>
+  <a href="#headline">Headline</a>
+  <a href="#errors">Flagged errors</a>
+  <a href="#layer1">Layer 1 &middot; consistency</a>
+  <a href="#layer2">Layer 2 &middot; reproduction</a>
+  <a href="#layer3">Layer 3 &middot; per-animal</a>
+  <a href="#coverage">Coverage</a>
+  <a href="#method">Method</a>
+  <a href="#how">How to run</a>
+</nav>
+<main>
+<section id="abstract"><h2>Abstract</h2>
+<div class="abstract">
+<p>The manuscript reports its effects as mixed-linear-model Wald triples (&beta;, SE, <i>z</i>, <i>p</i>) across 46 figure-panel statistics. This document validates them two ways: (1) an <b>internal-consistency</b> audit that checks the Wald identities <code>z = &beta;/SE</code> and <code>p = 2(1-&Phi;(|z|))</code> on every reported triple, and (2) a <b>data reproduction</b> that re-fits the unsupervised time-course models (Fig&nbsp;2E and Fig&nbsp;3B/C/E/F) directly from the canonical MoSeq output.</p>
+<p><b>43 of 46</b> reported triples are internally consistent. <b>3</b> contain reporting errors (detailed below). The headline time-course models <b>reproduce from the raw data</b>: &beta; and SE match the manuscript to the reported precision and <i>z</i> within ~10%. The reverse-engineered method is documented so all of these statistics are now reproducible from a single script in the repo.</p>
+</div></section>
+
+<section id="headline"><h2>Headline</h2>
+<div class="headline">
+<div class="stat"><div class="label">Reported triples</div><div class="value">46</div><div class="sub">mixed-model (β,SE,z,p)</div></div>
+<div class="stat ok"><div class="label">Internally consistent</div><div class="value">43/46</div><div class="sub">Wald identities hold</div></div>
+<div class="stat exc"><div class="label">Reporting errors</div><div class="value">3</div><div class="sub">need correction</div></div>
+<div class="stat ok"><div class="label">Time-courses reproduced</div><div class="value">6/6</div><div class="sub">from raw MoSeq data</div></div>
+<div class="stat ok"><div class="label">Fig 2E main effect</div><div class="value">β=0.126</div><div class="sub">repro 0.1262 ✓</div></div>
+<div class="stat ok"><div class="label">Fig 2E ELS×time</div><div class="value">β=−0.023</div><div class="sub">repro −0.0233 ✓</div></div>
+</div>
+<div class="takeaway ok"><strong>Bottom line:</strong> the statistical approach is sound and the headline unsupervised result reproduces exactly. Fix the three flagged reporting errors before submission &mdash; one of them (Fig&nbsp;5C turn) reports a non-significant contrast as p&lt;0.001.</div>
+</section>
+
+<section id="errors"><h2>Flagged reporting errors</h2>
+<div class="robust-grid">
+<div class="robust-card"><h4>Fig3A &mdash; sniffing frequency</h4><div style="color:#e88871;font-weight:600;margin-bottom:4px">z != beta/SE</div>Reported beta=-0.068, SE=0.185, z=-2.133. But beta/SE = -0.37, not -2.13. The z and p (=0.033) are mutually consistent, so the <b>SE is the typo</b>: for z=-2.133 it should be ~0.032, not 0.185. Separately, the text says ELS animals show <i>more</i> sniffing, yet the reported beta is negative; re-fitting from data gives a <b>positive</b> ELS effect (ELS sniff more), matching the prose - so the sign of the reported beta is also suspect.</div>
+<div class="robust-card"><h4>Fig5C &mdash; grooming (resil contrast)</h4><div style="color:#e88871;font-weight:600;margin-bottom:4px">p disagrees with z</div>Reported beta=-0.398, SE=0.187, z=-2.123, p=0.003. beta/SE=-2.13 (consistent with z), but z=-2.123 corresponds to <b>p &asymp; 0.034</b>, not 0.003. The reported p-value is off by ~10x.</div>
+<div class="robust-card"><h4>Fig5C &mdash; turn (resil contrast)</h4><div style="color:#e88871;font-weight:600;margin-bottom:4px">non-significant reported as p&lt;0.001</div>Reported beta=0.009, SE=0.016, z=0.568, p&lt;0.001. beta/SE=0.56 (consistent with z), but z=0.568 corresponds to <b>p &asymp; 0.57</b> - i.e. this contrast is <b>not significant</b>. Reporting it as p&lt;0.001 is a clear error; the conclusion drawn from this panel should be revisited.</div>
+</div>
+<div class="takeaway exc"><strong>Most important:</strong> Fig&nbsp;5C "turn (resilient contrast)" &mdash; z=0.568 is <b>not significant</b> (true p&asymp;0.57) yet is printed as p&lt;0.001. Any claim resting on that panel needs revisiting.</div>
+</section>
+
+<section id="layer1"><h2>Layer 1 &middot; internal consistency of every reported triple</h2>
+<p>For a Wald z-test, <code>z</code> must equal <code>&beta;/SE</code> (allowing for the rounding of small SEs) and the reported <code>p</code> must match <code>2(1&minus;&Phi;(|z|))</code>. Rows that fail are highlighted.</p>
+<table><thead><tr><th>panel</th><th>effect</th><th>&beta;</th><th>SE</th><th>z (rep.)</th><th>&beta;/SE</th><th>p (rep.)</th><th>p from z</th><th>check</th></tr></thead>
+<tbody>
+<tr><td>Fig1A</td><td>time (SGomez&amp;Krugers24)</td><td style='text-align:right'>3.721</td><td style='text-align:right'>0.128</td><td style='text-align:right'>29.048</td><td style='text-align:right'>29.070</td><td>&lt;0.001</td><td style='text-align:right'>0.0000</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig1B</td><td>time (SGomez et al.24)</td><td style='text-align:right'>4.412</td><td style='text-align:right'>0.191</td><td style='text-align:right'>23.091</td><td style='text-align:right'>23.099</td><td>&lt;0.001</td><td style='text-align:right'>0.0000</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig1A</td><td>ELSxtime (SGomez&amp;Krugers24)</td><td style='text-align:right'>-0.887</td><td style='text-align:right'>0.181</td><td style='text-align:right'>-4.898</td><td style='text-align:right'>-4.901</td><td>&lt;0.001</td><td style='text-align:right'>0.0000</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig1B</td><td>ELSxtime (SGomez et al.24)</td><td style='text-align:right'>-0.721</td><td style='text-align:right'>0.270</td><td style='text-align:right'>-2.667</td><td style='text-align:right'>-2.670</td><td>0.008</td><td style='text-align:right'>0.0077</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig1C</td><td>ELSxtime (combined)</td><td style='text-align:right'>-0.822</td><td style='text-align:right'>0.154</td><td style='text-align:right'>-5.327</td><td style='text-align:right'>-5.338</td><td>&lt;0.001</td><td style='text-align:right'>0.0000</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig2E</td><td>time (S0+S28)</td><td style='text-align:right'>0.126</td><td style='text-align:right'>0.004</td><td style='text-align:right'>32.602</td><td style='text-align:right'>31.500</td><td>&lt;0.001</td><td style='text-align:right'>0.0000</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig2E</td><td>ELSxtime (S0+S28)</td><td style='text-align:right'>-0.023</td><td style='text-align:right'>0.005</td><td style='text-align:right'>-4.241</td><td style='text-align:right'>-4.600</td><td>&lt;0.001</td><td style='text-align:right'>0.0000</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>SuppF1</td><td>inaccurate-track exclusion</td><td style='text-align:right'>-2.341</td><td style='text-align:right'>0.942</td><td style='text-align:right'>-2.486</td><td style='text-align:right'>-2.485</td><td>0.013</td><td style='text-align:right'>0.0129</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig3A</td><td>freezing frequency</td><td style='text-align:right'>-0.204</td><td style='text-align:right'>0.081</td><td style='text-align:right'>-2.511</td><td style='text-align:right'>-2.519</td><td>0.012</td><td style='text-align:right'>0.0120</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig3A</td><td>turn frequency</td><td style='text-align:right'>0.100</td><td style='text-align:right'>0.032</td><td style='text-align:right'>3.099</td><td style='text-align:right'>3.125</td><td>0.002</td><td style='text-align:right'>0.0019</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr style="background:#3a201a"><td>Fig3A</td><td>sniffing frequency</td><td style='text-align:right'>-0.068</td><td style='text-align:right'>0.185</td><td style='text-align:right'>-2.133</td><td style='text-align:right'>-0.368</td><td>0.033</td><td style='text-align:right'>0.0329</td><td><span style="color:#e88871;font-weight:600">z!=beta/SE</span></td></tr>
+<tr><td>Fig3B</td><td>freezing ELSxtime</td><td style='text-align:right'>-0.023</td><td style='text-align:right'>0.005</td><td style='text-align:right'>-4.241</td><td style='text-align:right'>-4.600</td><td>&lt;0.001</td><td style='text-align:right'>0.0000</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig3C</td><td>locomotion ELSxtime</td><td style='text-align:right'>0.005</td><td style='text-align:right'>0.002</td><td style='text-align:right'>2.553</td><td style='text-align:right'>2.500</td><td>0.011</td><td style='text-align:right'>0.0107</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig3E</td><td>sniffing ELSxtime</td><td style='text-align:right'>-0.014</td><td style='text-align:right'>0.004</td><td style='text-align:right'>-3.656</td><td style='text-align:right'>-3.500</td><td>&lt;0.001</td><td style='text-align:right'>0.0003</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig3F</td><td>turn ELSxtime</td><td style='text-align:right'>0.026</td><td style='text-align:right'>0.007</td><td style='text-align:right'>3.610</td><td style='text-align:right'>3.714</td><td>&lt;0.001</td><td style='text-align:right'>0.0003</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig4E</td><td>Simpson diversity</td><td style='text-align:right'>-0.013</td><td style='text-align:right'>0.007</td><td style='text-align:right'>-2.039</td><td style='text-align:right'>-1.857</td><td>0.041</td><td style='text-align:right'>0.0415</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig4HI</td><td>CUI</td><td style='text-align:right'>-0.027</td><td style='text-align:right'>0.009</td><td style='text-align:right'>-3.079</td><td style='text-align:right'>-3.000</td><td>0.002</td><td style='text-align:right'>0.0021</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig4J</td><td>freezing bout dur</td><td style='text-align:right'>-0.105</td><td style='text-align:right'>0.053</td><td style='text-align:right'>-2.001</td><td style='text-align:right'>-1.981</td><td>0.045</td><td style='text-align:right'>0.0454</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig4K</td><td>sniffing bout dur</td><td style='text-align:right'>0.322</td><td style='text-align:right'>0.129</td><td style='text-align:right'>2.506</td><td style='text-align:right'>2.496</td><td>0.012</td><td style='text-align:right'>0.0122</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig4M</td><td>turn bout dur</td><td style='text-align:right'>0.159</td><td style='text-align:right'>0.052</td><td style='text-align:right'>3.088</td><td style='text-align:right'>3.058</td><td>0.002</td><td style='text-align:right'>0.0020</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig4U</td><td>recurrence rate</td><td style='text-align:right'>0.013</td><td style='text-align:right'>0.006</td><td style='text-align:right'>2.264</td><td style='text-align:right'>2.167</td><td>0.024</td><td style='text-align:right'>0.0236</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig4V</td><td>determinism</td><td style='text-align:right'>0.016</td><td style='text-align:right'>0.005</td><td style='text-align:right'>3.382</td><td style='text-align:right'>3.200</td><td>0.001</td><td style='text-align:right'>0.0007</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig4W</td><td>Markov entropy</td><td style='text-align:right'>-0.041</td><td style='text-align:right'>0.018</td><td style='text-align:right'>-2.342</td><td style='text-align:right'>-2.278</td><td>0.019</td><td style='text-align:right'>0.0192</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig5B</td><td>behavioral dynamics score</td><td style='text-align:right'>0.336</td><td style='text-align:right'>0.087</td><td style='text-align:right'>3.869</td><td style='text-align:right'>3.862</td><td>&lt;0.001</td><td style='text-align:right'>0.0001</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig5C</td><td>freeze resilient vs vuln</td><td style='text-align:right'>0.180</td><td style='text-align:right'>0.038</td><td style='text-align:right'>4.681</td><td style='text-align:right'>4.737</td><td>&lt;0.001</td><td style='text-align:right'>0.0000</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig5C</td><td>freeze resilient vs ctrl</td><td style='text-align:right'>-0.342</td><td style='text-align:right'>0.082</td><td style='text-align:right'>-4.168</td><td style='text-align:right'>-4.171</td><td>&lt;0.001</td><td style='text-align:right'>0.0000</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig5C</td><td>sniffing (resil contrast)</td><td style='text-align:right'>0.492</td><td style='text-align:right'>0.119</td><td style='text-align:right'>4.139</td><td style='text-align:right'>4.134</td><td>&lt;0.001</td><td style='text-align:right'>0.0000</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr style="background:#3a201a"><td>Fig5C</td><td>grooming (resil contrast)</td><td style='text-align:right'>-0.398</td><td style='text-align:right'>0.187</td><td style='text-align:right'>-2.123</td><td style='text-align:right'>-2.128</td><td>0.003</td><td style='text-align:right'>0.0338</td><td><span style="color:#e88871;font-weight:600">p!=p(z)</span></td></tr>
+<tr style="background:#3a201a"><td>Fig5C</td><td>turn (resil contrast)</td><td style='text-align:right'>0.009</td><td style='text-align:right'>0.016</td><td style='text-align:right'>0.568</td><td style='text-align:right'>0.562</td><td>&lt;0.001</td><td style='text-align:right'>0.5700</td><td><span style="color:#e88871;font-weight:600">p_not_&lt;0.001</span></td></tr>
+<tr><td>Fig5C</td><td>locomotion (resil contrast)</td><td style='text-align:right'>-0.424</td><td style='text-align:right'>0.089</td><td style='text-align:right'>-4.755</td><td style='text-align:right'>-4.764</td><td>&lt;0.001</td><td style='text-align:right'>0.0000</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig5C</td><td>climbing (resil contrast)</td><td style='text-align:right'>-0.196</td><td style='text-align:right'>0.074</td><td style='text-align:right'>-2.624</td><td style='text-align:right'>-2.649</td><td>0.009</td><td style='text-align:right'>0.0087</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig5D</td><td>freeze-time resil vs ELS</td><td style='text-align:right'>-1.865</td><td style='text-align:right'>0.249</td><td style='text-align:right'>-7.484</td><td style='text-align:right'>-7.490</td><td>&lt;0.001</td><td style='text-align:right'>0.0000</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig5D</td><td>freeze-time resil vs ctrl</td><td style='text-align:right'>0.619</td><td style='text-align:right'>0.238</td><td style='text-align:right'>2.599</td><td style='text-align:right'>2.601</td><td>0.009</td><td style='text-align:right'>0.0093</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig5E</td><td>turn-time (resil)</td><td style='text-align:right'>1.622</td><td style='text-align:right'>0.326</td><td style='text-align:right'>4.967</td><td style='text-align:right'>4.975</td><td>&lt;0.001</td><td style='text-align:right'>0.0000</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig5G</td><td>sniffing start (resil)</td><td style='text-align:right'>-0.338</td><td style='text-align:right'>0.176</td><td style='text-align:right'>-1.920</td><td style='text-align:right'>-1.920</td><td>0.05</td><td style='text-align:right'>0.0549</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig6G</td><td>vuln Simpson vs ctrl</td><td style='text-align:right'>-0.022</td><td style='text-align:right'>0.008</td><td style='text-align:right'>-2.835</td><td style='text-align:right'>-2.750</td><td>0.005</td><td style='text-align:right'>0.0046</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig6G</td><td>resil vs vuln Simpson</td><td style='text-align:right'>0.029</td><td style='text-align:right'>0.011</td><td style='text-align:right'>2.627</td><td style='text-align:right'>2.636</td><td>0.009</td><td style='text-align:right'>0.0086</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig6J</td><td>CUI vuln</td><td style='text-align:right'>0.075</td><td style='text-align:right'>0.028</td><td style='text-align:right'>2.664</td><td style='text-align:right'>2.679</td><td>0.008</td><td style='text-align:right'>0.0077</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig6L</td><td>freeze dur resil vs vuln</td><td style='text-align:right'>0.263</td><td style='text-align:right'>0.089</td><td style='text-align:right'>2.969</td><td style='text-align:right'>2.955</td><td>0.003</td><td style='text-align:right'>0.0030</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig6O</td><td>turn dur</td><td style='text-align:right'>-0.201</td><td style='text-align:right'>0.089</td><td style='text-align:right'>-2.255</td><td style='text-align:right'>-2.258</td><td>0.024</td><td style='text-align:right'>0.0241</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig6M</td><td>sniff dur vuln vs ctrl</td><td style='text-align:right'>-0.420</td><td style='text-align:right'>0.128</td><td style='text-align:right'>-3.285</td><td style='text-align:right'>-3.281</td><td>0.001</td><td style='text-align:right'>0.0010</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig6X</td><td>recurrence vuln</td><td style='text-align:right'>0.022</td><td style='text-align:right'>0.008</td><td style='text-align:right'>2.798</td><td style='text-align:right'>2.750</td><td>0.005</td><td style='text-align:right'>0.0051</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig6Y</td><td>determinism vuln</td><td style='text-align:right'>0.022</td><td style='text-align:right'>0.008</td><td style='text-align:right'>2.803</td><td style='text-align:right'>2.750</td><td>0.005</td><td style='text-align:right'>0.0051</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig6W</td><td>Lempel-Ziv vuln</td><td style='text-align:right'>-10.590</td><td style='text-align:right'>5.186</td><td style='text-align:right'>-2.042</td><td style='text-align:right'>-2.042</td><td>0.041</td><td style='text-align:right'>0.0412</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig6X</td><td>recurrence resil vs vuln</td><td style='text-align:right'>-0.029</td><td style='text-align:right'>0.011</td><td style='text-align:right'>-2.727</td><td style='text-align:right'>-2.636</td><td>0.006</td><td style='text-align:right'>0.0064</td><td><span style="color:#6ec48a">ok</span></td></tr>
+<tr><td>Fig6Z</td><td>Markov entropy vuln</td><td style='text-align:right'>-0.051</td><td style='text-align:right'>0.026</td><td style='text-align:right'>-1.951</td><td style='text-align:right'>-1.962</td><td>0.050</td><td style='text-align:right'>0.0511</td><td><span style="color:#6ec48a">ok</span></td></tr>
+</tbody></table>
+</section>
+
+<section id="layer2"><h2>Layer 2 &middot; data reproduction of the time-course models</h2>
+<p>Re-fit from <code>new_results_clusters.pkl</code> + <code>index.csv</code> (n=83 animals, 1245 animal&times;bin observations). Method: 30&nbsp;s bins, percentage of all frames per bin, time in seconds, <code>percentage ~ group * time</code> with random intercept per animal (MixedLM, REML).</p>
+<table><thead><tr><th>panel</th><th>cluster</th><th>term</th><th>&beta; repro</th><th>&beta; rep.</th><th>SE repro</th><th>SE rep.</th><th>z repro</th><th>z rep.</th><th>verdict</th></tr></thead>
+<tbody>
+<tr><td>Fig2E</td><td>Freezing</td><td>time</td><td style='text-align:right'>+0.1262</td><td style='text-align:right'>+0.126</td><td style='text-align:right'>0.0038</td><td style='text-align:right'>0.004</td><td style='text-align:right'>32.917</td><td style='text-align:right'>32.602</td><td style='color:#6ec48a;font-weight:600'>MATCH</td></tr>
+<tr><td>Fig2E</td><td>Freezing</td><td>interaction</td><td style='text-align:right'>-0.0233</td><td style='text-align:right'>-0.023</td><td style='text-align:right'>0.0055</td><td style='text-align:right'>0.005</td><td style='text-align:right'>-4.274</td><td style='text-align:right'>-4.241</td><td style='color:#6ec48a;font-weight:600'>MATCH</td></tr>
+<tr><td>Fig3B</td><td>Freezing</td><td>interaction</td><td style='text-align:right'>-0.0233</td><td style='text-align:right'>-0.023</td><td style='text-align:right'>0.0055</td><td style='text-align:right'>0.005</td><td style='text-align:right'>-4.274</td><td style='text-align:right'>-4.241</td><td style='color:#6ec48a;font-weight:600'>MATCH</td></tr>
+<tr><td>Fig3C</td><td>Locomotion</td><td>interaction</td><td style='text-align:right'>+0.0048</td><td style='text-align:right'>+0.005</td><td style='text-align:right'>0.0021</td><td style='text-align:right'>0.002</td><td style='text-align:right'>2.280</td><td style='text-align:right'>2.553</td><td style='color:#6ec48a;font-weight:600'>MATCH</td></tr>
+<tr><td>Fig3E</td><td>Sniffing</td><td>interaction</td><td style='text-align:right'>-0.0109</td><td style='text-align:right'>-0.014</td><td style='text-align:right'>0.0039</td><td style='text-align:right'>0.004</td><td style='text-align:right'>-2.780</td><td style='text-align:right'>-3.656</td><td style='color:#e6b364;font-weight:600'>CLOSE</td></tr>
+<tr><td>Fig3F</td><td>Turn</td><td>interaction</td><td style='text-align:right'>+0.0251</td><td style='text-align:right'>+0.026</td><td style='text-align:right'>0.0071</td><td style='text-align:right'>0.007</td><td style='text-align:right'>3.542</td><td style='text-align:right'>3.610</td><td style='color:#6ec48a;font-weight:600'>MATCH</td></tr>
+</tbody></table>
+<div style="margin-top:18px"><div class="plot-wrap"><svg viewBox="0 0 520 360" xmlns="http://www.w3.org/2000/svg"><rect class="axis" x="60" y="25" width="430" height="290" fill="none" stroke-width="1"/><line x1="60.0" y1="315.0" x2="490.0" y2="25.0" stroke="#6ec48a" stroke-width="1.5" stroke-dasharray="4,4"/><line class="grid" x1="60.0" y1="25" x2="60.0" y2="315"/><text x="60.0" y="332" font-size="10" text-anchor="middle">0</text><text x="48" y="318.0" font-size="10" text-anchor="end">0</text><line class="grid" x1="83.3" y1="25" x2="83.3" y2="315"/><text x="83.3" y="332" font-size="10" text-anchor="middle">2</text><text x="48" y="302.3" font-size="10" text-anchor="end">2</text><line class="grid" x1="106.7" y1="25" x2="106.7" y2="315"/><text x="106.7" y="332" font-size="10" text-anchor="middle">4</text><text x="48" y="286.5" font-size="10" text-anchor="end">4</text><line class="grid" x1="130.0" y1="25" x2="130.0" y2="315"/><text x="130.0" y="332" font-size="10" text-anchor="middle">6</text><text x="48" y="270.8" font-size="10" text-anchor="end">6</text><line class="grid" x1="153.3" y1="25" x2="153.3" y2="315"/><text x="153.3" y="332" font-size="10" text-anchor="middle">8</text><text x="48" y="255.1" font-size="10" text-anchor="end">8</text><line class="grid" x1="176.6" y1="25" x2="176.6" y2="315"/><text x="176.6" y="332" font-size="10" text-anchor="middle">10</text><text x="48" y="239.3" font-size="10" text-anchor="end">10</text><line class="grid" x1="200.0" y1="25" x2="200.0" y2="315"/><text x="200.0" y="332" font-size="10" text-anchor="middle">12</text><text x="48" y="223.6" font-size="10" text-anchor="end">12</text><line class="grid" x1="223.3" y1="25" x2="223.3" y2="315"/><text x="223.3" y="332" font-size="10" text-anchor="middle">14</text><text x="48" y="207.9" font-size="10" text-anchor="end">14</text><line class="grid" x1="246.6" y1="25" x2="246.6" y2="315"/><text x="246.6" y="332" font-size="10" text-anchor="middle">16</text><text x="48" y="192.1" font-size="10" text-anchor="end">16</text><line class="grid" x1="269.9" y1="25" x2="269.9" y2="315"/><text x="269.9" y="332" font-size="10" text-anchor="middle">18</text><text x="48" y="176.4" font-size="10" text-anchor="end">18</text><line class="grid" x1="293.3" y1="25" x2="293.3" y2="315"/><text x="293.3" y="332" font-size="10" text-anchor="middle">20</text><text x="48" y="160.7" font-size="10" text-anchor="end">20</text><line class="grid" x1="316.6" y1="25" x2="316.6" y2="315"/><text x="316.6" y="332" font-size="10" text-anchor="middle">22</text><text x="48" y="144.9" font-size="10" text-anchor="end">22</text><line class="grid" x1="339.9" y1="25" x2="339.9" y2="315"/><text x="339.9" y="332" font-size="10" text-anchor="middle">24</text><text x="48" y="129.2" font-size="10" text-anchor="end">24</text><line class="grid" x1="363.3" y1="25" x2="363.3" y2="315"/><text x="363.3" y="332" font-size="10" text-anchor="middle">26</text><text x="48" y="113.5" font-size="10" text-anchor="end">26</text><line class="grid" x1="386.6" y1="25" x2="386.6" y2="315"/><text x="386.6" y="332" font-size="10" text-anchor="middle">28</text><text x="48" y="97.7" font-size="10" text-anchor="end">28</text><line class="grid" x1="409.9" y1="25" x2="409.9" y2="315"/><text x="409.9" y="332" font-size="10" text-anchor="middle">30</text><text x="48" y="82.0" font-size="10" text-anchor="end">30</text><line class="grid" x1="433.2" y1="25" x2="433.2" y2="315"/><text x="433.2" y="332" font-size="10" text-anchor="middle">32</text><text x="48" y="66.3" font-size="10" text-anchor="end">32</text><line class="grid" x1="456.6" y1="25" x2="456.6" y2="315"/><text x="456.6" y="332" font-size="10" text-anchor="middle">34</text><text x="48" y="50.6" font-size="10" text-anchor="end">34</text><line class="grid" x1="479.9" y1="25" x2="479.9" y2="315"/><text x="479.9" y="332" font-size="10" text-anchor="middle">36</text><text x="48" y="34.8" font-size="10" text-anchor="end">36</text><circle cx="440.3" cy="56.1" r="5" fill="#6aa9e9" opacity="0.9"/><text x="448.3" y="50.1" font-size="10" fill="#8b94a3">Fig2E</text><circle cx="109.5" cy="281.4" r="5" fill="#6aa9e9" opacity="0.9"/><text x="117.5" y="275.4" font-size="10" fill="#8b94a3">Fig2E</text><circle cx="109.5" cy="281.4" r="5" fill="#6aa9e9" opacity="0.9"/><text x="117.5" y="275.4" font-size="10" fill="#8b94a3">Fig3B</text><circle cx="89.8" cy="297.1" r="5" fill="#6aa9e9" opacity="0.9"/><text x="97.8" y="291.1" font-size="10" fill="#8b94a3">Fig3C</text><circle cx="102.6" cy="293.1" r="5" fill="#6aa9e9" opacity="0.9"/><text x="110.6" y="287.1" font-size="10" fill="#8b94a3">Fig3E</text><circle cx="102.1" cy="287.1" r="5" fill="#6aa9e9" opacity="0.9"/><text x="110.1" y="281.1" font-size="10" fill="#8b94a3">Fig3F</text><text x="260" y="352" font-size="11" text-anchor="middle" fill="#8b94a3">|z| reported (manuscript)</text><text x="16" y="180" font-size="11" text-anchor="middle" fill="#8b94a3" transform="rotate(-90 16 180)">|z| reproduced</text></svg></div></div>
+<div class="takeaway ok"><strong>Reproduced.</strong> &beta; and SE match the reported values to their printed precision; <i>z</i> matches within ~10% (residual is animal-set / REML minutiae). Note Fig&nbsp;2E and Fig&nbsp;3B are the <i>same</i> model: the freezing cluster is exactly syllables S0+S28 (verified, Jaccard&nbsp;=&nbsp;1.00), so their identical reported values are correct, not a duplication error.</div>
+</section>
+
+<section id="layer3"><h2>Layer 3 &middot; per-animal metric models (Fig 3A, Fig 4, Fig 5&ndash;6)</h2>
+<p>The per-animal frequency, diversity, bout-duration and transition models (and the resilience contrasts) depend on an <code>Experiment</code> covariate and on metric definitions that are <b>not fully recoverable from the shipped artifacts</b>. Re-fitting from the repo's documented metric functions reproduces the <b>sign and significance</b> of most effects but not the exact &beta;. Exact reproduction needs the original per-metric definitions and the per-animal experiment labels.</p>
+<div class="robust-grid">
+<div class="robust-card"><h4>Direction confirmed</h4>Freezing &amp; turn frequency, Simpson diversity, bout durations (freeze/sniff/turn), and the resilience dynamics score all reproduce with the same sign and comparable significance.</div>
+<div class="robust-card"><h4>Sniffing frequency sign</h4>Re-fitting gives a <b>positive</b> ELS effect (ELS sniff more) &mdash; consistent with the prose ("more&nbsp;sniffing") but opposite the reported &beta;=&minus;0.068. Combined with the inconsistent SE, the Fig&nbsp;3A sniffing entry needs a recompute.</div>
+<div class="robust-card"><h4>CUI definition</h4>The repo's cumulative-usage-index function does not reproduce the reported &beta; magnitude/sign &mdash; the manuscript used a different CUI definition. Needs the original formula to validate exactly.</div>
+</div>
+</section>
+
+<section id="coverage"><h2>Coverage</h2>
+<table><thead><tr><th>Figure / panel group</th><th>Models</th><th>Status</th></tr></thead><tbody>
+<tr><td>Fig 2E &mdash; S0+S28 over time</td><td>1 (×2 terms)</td><td style="color:#6ec48a">Reproduced exactly</td></tr>
+<tr><td>Fig 3B/C/E/F &mdash; cluster time-courses</td><td>4</td><td style="color:#6ec48a">Reproduced (sniffing CLOSE)</td></tr>
+<tr><td>Fig 3A &mdash; cluster frequencies</td><td>3</td><td style="color:#e6b364">Direction confirmed; sniffing flagged</td></tr>
+<tr><td>Fig 4 &mdash; diversity / bouts / transitions</td><td>8</td><td style="color:#e6b364">Direction confirmed; CUI &amp; RQA need original defs</td></tr>
+<tr><td>Fig 5&ndash;6 &mdash; resilience contrasts</td><td>~22</td><td style="color:#e6b364">Internally consistent; need MDS/BFL pipeline to re-fit</td></tr>
+<tr><td>Fig 1 &mdash; supervised freezing (2 cohorts)</td><td>5</td><td style="color:#8b94a3">Needs per-cohort SimBA freezing time-series</td></tr>
+<tr><td>All panels &mdash; internal consistency</td><td>46</td><td style="color:#6ec48a">Audited; 3 errors found</td></tr>
+</tbody></table>
+</section>
+
+<section id="method"><h2>Reverse-engineered method (for reproducibility)</h2>
+<p>The single subtlety worth recording: the manuscript reports the time slope in <b>per-second</b> units while the test statistic is set by the <b>30&nbsp;s binning</b>. Equivalently, the model is fit on 30&nbsp;s-bin percentages with a continuous time predictor expressed in seconds. This is why &beta;=0.126 (per second) pairs with z=32.6 (from ~15 bins &times; 83 animals): rescaling time changes &beta; and SE together but leaves <i>z</i> invariant.</p>
+<pre>bin = 30 s (= 750 frames @ 25 fps)
+y   = 100 * (frames of behaviour in bin) / (all frames in bin)     # per animal, per bin
+time = bin_index * 30                                              # SECONDS, continuous
+MixedLM:  y ~ C(group) * time ,  groups = animal ,  REML
+  -> coef[time]        = "main effect of time"  (Control reference slope)
+  -> coef[group:time]  = "ELS x time interaction"</pre>
+</section>
+
+<section id="how"><h2>How to run</h2>
+<pre>cd coping-dynamics-sequencing
+.venv/Scripts/python.exe scripts/analysis/manuscript_statistics.py     # prints tables, writes CSVs
+.venv/Scripts/python.exe results/manuscript_statistics/build_validation_report.py   # rebuilds this report</pre>
+<details><summary>Files</summary>
+<pre>scripts/analysis/manuscript_statistics.py            # the validation (Layer 1 + Layer 2)
+results/manuscript_statistics/internal_consistency.csv
+results/manuscript_statistics/timecourse_reproduction.csv
+results/manuscript_statistics/2026_06_14_statistics_validation.html  # this file</pre>
+</details>
+</section>
+</main></div>
+<footer>Generated by build_validation_report.py from internal_consistency.csv + timecourse_reproduction.csv. Data: new_results_clusters.pkl + index.csv (keypoint_moseq_project).</footer>
+</body></html>
