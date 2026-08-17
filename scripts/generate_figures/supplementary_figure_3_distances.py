@@ -4,18 +4,19 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import gzip
 import pickle
 import sys
+from pathlib import Path
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
-from matplotlib.ticker import MaxNLocator
 import numpy as np
 import pandas as pd
+from matplotlib.ticker import MaxNLocator
 from scipy.interpolate import griddata
 from scipy.optimize import minimize
 from scipy.spatial.distance import cityblock, correlation, cosine
@@ -200,7 +201,9 @@ def load_transition_features() -> tuple[pd.DataFrame, np.ndarray]:
     return pd.DataFrame(rows), np.asarray(features, dtype=float)
 
 
-def profile_from_distance(meta: pd.DataFrame, dist: np.ndarray, metric_name: str) -> tuple[pd.DataFrame, dict]:
+def profile_from_distance(
+    meta: pd.DataFrame, dist: np.ndarray, metric_name: str
+) -> tuple[pd.DataFrame, dict]:
     """Build an MDS dynamics-score profile + summary row from a precomputed distance matrix."""
     coords = metric_mds_smacof(dist, random_state=42)
     prof = meta.copy()
@@ -326,7 +329,18 @@ def style_axis(ax: plt.Axes, labelsize: float = 5.2) -> None:
 
 
 def tag(ax: plt.Axes, letter: str, x: float = -0.16, y: float = 1.10) -> plt.Text:
-    return ax.text(x, y, letter, transform=ax.transAxes, ha="center", va="top", fontsize=8, fontweight="bold", color=AXIS, clip_on=False)
+    return ax.text(
+        x,
+        y,
+        letter,
+        transform=ax.transAxes,
+        ha="center",
+        va="top",
+        fontsize=8,
+        fontweight="bold",
+        color=AXIS,
+        clip_on=False,
+    )
 
 
 def match_fig5_mds_proportions(ax: plt.Axes) -> None:
@@ -348,31 +362,75 @@ def plot_mds(ax: plt.Axes, data: pd.DataFrame, metric_name: str, letter: str) ->
     y = data["mds2"].to_numpy()
     score = data["dynamics_score"].to_numpy()
     margin = 0.10 * max(np.ptp(x), np.ptp(y))
-    gx, gy = np.mgrid[x.min() - margin : x.max() + margin : 150j, y.min() - margin : y.max() + margin : 150j]
+    gx, gy = np.mgrid[
+        x.min() - margin : x.max() + margin : 150j, y.min() - margin : y.max() + margin : 150j
+    ]
     gz = griddata(np.column_stack([x, y]), score, (gx, gy), method="cubic")
     nn = griddata(np.column_stack([x, y]), score, (gx, gy), method="nearest")
     gz = np.where(np.isnan(gz), nn, gz)
     vabs = max(abs(np.nanmin(score)), abs(np.nanmax(score)))
     levels = np.linspace(-vabs, vabs, 19)
     cmap = mcolors.LinearSegmentedColormap.from_list("dyn", [CONTROL, "#FFFFFF", ELS])
-    cf = ax.contourf(gx, gy, np.clip(gz, -vabs + 1e-9, vabs - 1e-9), levels=levels, cmap=cmap, alpha=0.62)
+    cf = ax.contourf(
+        gx, gy, np.clip(gz, -vabs + 1e-9, vabs - 1e-9), levels=levels, cmap=cmap, alpha=0.62
+    )
     cs = ax.contour(gx, gy, gz, levels=levels, colors=AXIS, linewidths=0.32, alpha=0.82)
     ax.clabel(cs, levels[::2], inline=True, fontsize=3.8, fmt="%.2g", colors=AXIS)
     for group in ["Control", "ELS"]:
         sub = data[data["group"] == group]
-        ax.scatter(sub["mds1"], sub["mds2"], s=21, color=PALETTE[group], edgecolor=AXIS, linewidth=0.30, alpha=0.88, label=group, zorder=3)
+        ax.scatter(
+            sub["mds1"],
+            sub["mds2"],
+            s=21,
+            color=PALETTE[group],
+            edgecolor=AXIS,
+            linewidth=0.30,
+            alpha=0.88,
+            label=group,
+            zorder=3,
+        )
     handles = [
-        plt.Line2D([0], [0], marker="o", linestyle="none", markerfacecolor=PALETTE[group], markeredgecolor="none", markersize=4.0, label=group)
+        plt.Line2D(
+            [0],
+            [0],
+            marker="o",
+            linestyle="none",
+            markerfacecolor=PALETTE[group],
+            markeredgecolor="none",
+            markersize=4.0,
+            label=group,
+        )
         for group in ["Control", "ELS"]
     ]
-    ax.legend(handles=handles, loc="upper right", frameon=True, facecolor="white", edgecolor="#D0D0D0", fontsize=5.1, borderpad=0.16, handlelength=0.55, handletextpad=0.38)
+    ax.legend(
+        handles=handles,
+        loc="upper right",
+        frameon=True,
+        facecolor="white",
+        edgecolor="#D0D0D0",
+        fontsize=5.1,
+        borderpad=0.16,
+        handlelength=0.55,
+        handletextpad=0.38,
+    )
     cax = ax.inset_axes([1.05, 0.0, 0.042, 1.0])
     cbar = plt.colorbar(cf, cax=cax)
     cbar.ax.yaxis.set_label_position("left")
     cbar.set_label("Dynamic Similarity Score", fontsize=4.8, color=AXIS, labelpad=1.8)
     cbar.ax.tick_params(labelsize=4.4, width=0.35, length=1.5, colors=AXIS)
     cbar.outline.set_linewidth(0.35)
-    ax.text(0.985, -0.145, f"LOOCV Acc:\n{data['loocv_accuracy'].iloc[0]*100:.1f}%", transform=ax.transAxes, ha="right", va="top", fontsize=4.6, color=AXIS, clip_on=False, bbox=dict(facecolor="white", edgecolor="#BDBDBD", linewidth=0.35, pad=1.4))
+    ax.text(
+        0.985,
+        -0.145,
+        f"LOOCV Acc:\n{data['loocv_accuracy'].iloc[0] * 100:.1f}%",
+        transform=ax.transAxes,
+        ha="right",
+        va="top",
+        fontsize=4.6,
+        color=AXIS,
+        clip_on=False,
+        bbox=dict(facecolor="white", edgecolor="#BDBDBD", linewidth=0.35, pad=1.4),
+    )
     ax.set_title(f"MDS Plot ({metric_name} Distance)", fontsize=6.2, pad=3)
     ax.set_xlabel("MDS Dimension 1", fontsize=5.7, labelpad=1)
     ax.set_ylabel("MDS Dimension 2", fontsize=5.7, labelpad=1)
@@ -387,7 +445,9 @@ def plot_box(ax: plt.Axes, data: pd.DataFrame, metric_name: str, letter: str) ->
     pad = (y_max - y_min) * 0.18
     y0 = y_min - pad
     y1 = BOX_TOP_LIMITS.get(metric_name, y_max + pad)
-    resilient_vals = data.loc[(data["group"] == "ELS") & (data["dynamics_score"] < 0), "dynamics_score"].dropna()
+    resilient_vals = data.loc[
+        (data["group"] == "ELS") & (data["dynamics_score"] < 0), "dynamics_score"
+    ].dropna()
     if not resilient_vals.empty:
         rect_pad = (y1 - y0) * 0.018
         rect_y0 = max(y0, float(resilient_vals.min()) - rect_pad)
@@ -413,7 +473,11 @@ def plot_box(ax: plt.Axes, data: pd.DataFrame, metric_name: str, letter: str) ->
             widths=0.48,
             patch_artist=True,
             showfliers=False,
-            boxprops={"facecolor": (*mcolors.to_rgb(color), 0.15), "edgecolor": color, "linewidth": 0.75},
+            boxprops={
+                "facecolor": (*mcolors.to_rgb(color), 0.15),
+                "edgecolor": color,
+                "linewidth": 0.75,
+            },
             whiskerprops={"color": color, "linewidth": 0.75},
             capprops={"color": color, "linewidth": 0.75},
             medianprops={"color": color, "linewidth": 0.95},
@@ -441,7 +505,17 @@ def plot_box(ax: plt.Axes, data: pd.DataFrame, metric_name: str, letter: str) ->
         y = y_max + pad * 0.28
         h = pad * 0.18
         ax.plot([0, 0, 1, 1], [y, y + h, y + h, y], color=AXIS, linewidth=0.55, clip_on=False)
-        ax.text(0.5, y + h * 1.1, "*", ha="center", va="bottom", fontsize=8.5, fontweight="bold", color=AXIS, clip_on=False)
+        ax.text(
+            0.5,
+            y + h * 1.1,
+            "*",
+            ha="center",
+            va="bottom",
+            fontsize=8.5,
+            fontweight="bold",
+            color=AXIS,
+            clip_on=False,
+        )
     return tag(ax, letter, x=BOX_TAG_X)
 
 
@@ -466,7 +540,9 @@ def main() -> None:
 
     profiles.to_csv(TABLE_OUTPUT_DIR / "supplementary_figure3_distance_scores.csv", index=False)
     summary.to_csv(TABLE_OUTPUT_DIR / "supplementary_figure3_distance_summary.csv", index=False)
-    threshold_audit(profiles).to_csv(TABLE_OUTPUT_DIR / "supplementary_figure3_threshold_audit.csv", index=False)
+    threshold_audit(profiles).to_csv(
+        TABLE_OUTPUT_DIR / "supplementary_figure3_threshold_audit.csv", index=False
+    )
 
     fig = plt.figure(figsize=(8.27, 11.69), dpi=300, facecolor="white")
     gs = fig.add_gridspec(

@@ -43,8 +43,8 @@ if str(REPO) not in sys.path:
 from scripts.analysis import figure_7_core as tier1  # noqa: E402
 from scripts.analysis import figure_7_recap as recap  # noqa: E402
 from src.config import (  # noqa: E402
-    FIGURES_DIR,
     FIGURE_SOURCE_DATA_DIR,
+    FIGURES_DIR,
     RAW_DATA_DIR,
     STATISTICS_DIR,
 )
@@ -93,8 +93,14 @@ HORIZON_XLABEL = "Time (minutes)"
 FIGURE7_CLASSES = BEHAVIOUR_ORDER + ["Unassigned"]
 FIGURE7_ACCURACY = np.array([0.80, 0.86, 0.45, 0.71, 0.61, 0.68, 0.47, 0.30, 0.63])
 FIGURE7_ACCURACY_NOTES = [
-    "+0.68, 6.4x", "+0.74, 6.9x", "+0.33, 3.6x", "+0.58, 5.6x",
-    "+0.49, 4.9x", "+0.55, 5.4x", "+0.34, 3.7x", "+0.18, 2.4x",
+    "+0.68, 6.4x",
+    "+0.74, 6.9x",
+    "+0.33, 3.6x",
+    "+0.58, 5.6x",
+    "+0.49, 4.9x",
+    "+0.55, 5.4x",
+    "+0.34, 3.7x",
+    "+0.18, 2.4x",
     "+0.50, 5.0x",
 ]
 FIGURE7_SHAP_FEATURES = [
@@ -119,16 +125,18 @@ FIGURE7_SHAP_FEATURES = [
     "Average Tail Speed",
     "Instant Tail Speed",
 ]
-FIGURE7_CONFUSION = np.array([
-    [0.800, 0.004, 0.000, 0.021, 0.044, 0.041, 0.044, 0.041],
-    [0.002, 0.860, 0.000, 0.000, 0.002, 0.022, 0.069, 0.044],
-    [0.069, 0.007, 0.450, 0.069, 0.038, 0.000, 0.031, 0.340],
-    [0.038, 0.000, 0.000, 0.710, 0.160, 0.034, 0.026, 0.038],
-    [0.078, 0.001, 0.000, 0.060, 0.610, 0.043, 0.088, 0.110],
-    [0.036, 0.037, 0.000, 0.001, 0.045, 0.680, 0.130, 0.068],
-    [0.048, 0.049, 0.000, 0.008, 0.100, 0.160, 0.470, 0.160],
-    [0.076, 0.085, 0.000, 0.025, 0.190, 0.096, 0.230, 0.300],
-])
+FIGURE7_CONFUSION = np.array(
+    [
+        [0.800, 0.004, 0.000, 0.021, 0.044, 0.041, 0.044, 0.041],
+        [0.002, 0.860, 0.000, 0.000, 0.002, 0.022, 0.069, 0.044],
+        [0.069, 0.007, 0.450, 0.069, 0.038, 0.000, 0.031, 0.340],
+        [0.038, 0.000, 0.000, 0.710, 0.160, 0.034, 0.026, 0.038],
+        [0.078, 0.001, 0.000, 0.060, 0.610, 0.043, 0.088, 0.110],
+        [0.036, 0.037, 0.000, 0.001, 0.045, 0.680, 0.130, 0.068],
+        [0.048, 0.049, 0.000, 0.008, 0.100, 0.160, 0.470, 0.160],
+        [0.076, 0.085, 0.000, 0.025, 0.190, 0.096, 0.230, 0.300],
+    ]
+)
 
 
 # --------------------------------------------------------------------------
@@ -148,8 +156,9 @@ def behaviour_dynamics_features(
         tc = tc.loc[tc["cluster"].isin(behaviours)].copy()
     tc["feature"] = "bd_" + tc["cluster"] + "_t" + tc["time_bin"].astype(str)
     return (
-        tc.pivot_table(index="animal_id", columns="feature", values="pct",
-                       aggfunc="mean", fill_value=0)
+        tc.pivot_table(
+            index="animal_id", columns="feature", values="pct", aggfunc="mean", fill_value=0
+        )
         .sort_index(axis=1)
         .reset_index()
     )
@@ -195,8 +204,7 @@ def loocv_auc(x: np.ndarray, y: np.ndarray) -> float:
     return tier1.auc_or_nan(y, loocv_scores(x, y))
 
 
-def within_cohort_shuffles(cohort: np.ndarray, y: np.ndarray, n_perm: int,
-                           seed: int) -> np.ndarray:
+def within_cohort_shuffles(cohort: np.ndarray, y: np.ndarray, n_perm: int, seed: int) -> np.ndarray:
     """Shuffle the target inside each cohort, so cohort structure cannot leak in."""
     rng = np.random.default_rng(seed)
     out = np.tile(y, (n_perm, 1))
@@ -230,18 +238,23 @@ def onset_of_prediction(labels: pd.DataFrame, root: Path, n_perm: int) -> pd.Dat
             null = np.array([loocv_auc(x, p) for p in perms])
             null_mean = float(np.nanmean(null))
 
-            rows.append({
-                "feature_set": name,
-                "horizon_min": horizon,
-                "n_features": len(cols),
-                "roc_auc": observed,
-                "null_mean": null_mean,
-                "auc_above_null_mean": float(observed - null_mean),
-                "p_perm": float((np.sum(null >= observed) + 1) / (len(null) + 1)),
-            })
-            print(f"  {name:<16s} {horizon:>4.1f} min  n_feat={len(cols):>3d}  "
-                  f"AUC={observed:.3f}  nullmean={null_mean:.3f}  "
-                  f"delta={observed - null_mean:+.3f}", flush=True)
+            rows.append(
+                {
+                    "feature_set": name,
+                    "horizon_min": horizon,
+                    "n_features": len(cols),
+                    "roc_auc": observed,
+                    "null_mean": null_mean,
+                    "auc_above_null_mean": float(observed - null_mean),
+                    "p_perm": float((np.sum(null >= observed) + 1) / (len(null) + 1)),
+                }
+            )
+            print(
+                f"  {name:<16s} {horizon:>4.1f} min  n_feat={len(cols):>3d}  "
+                f"AUC={observed:.3f}  nullmean={null_mean:.3f}  "
+                f"delta={observed - null_mean:+.3f}",
+                flush=True,
+            )
     return pd.DataFrame(rows)
 
 
@@ -275,16 +288,25 @@ def held_out_cohort_tests(labels: pd.DataFrame, root: Path) -> pd.DataFrame:
         if not np.array_equal(a["animal_id"].to_numpy(), b["animal_id"].to_numpy()):
             raise AssertionError(f"{test_exp}: held-out animals differ between feature sets")
         y = a["target"].to_numpy(dtype=int)
-        stats = tier1.paired_auc_test(y, a["resilience_score"].to_numpy(dtype=float),
-                                      b["resilience_score"].to_numpy(dtype=float))
-        rows.append({"panel": "D", "comparison": "Behaviour dynamics vs Freeze only",
-                     "test_experiment": test_exp, "n_test": len(y), **stats,
-                     "stars": tier1.significance_stars(stats["p_value"])})
+        stats = tier1.paired_auc_test(
+            y,
+            a["resilience_score"].to_numpy(dtype=float),
+            b["resilience_score"].to_numpy(dtype=float),
+        )
+        rows.append(
+            {
+                "panel": "D",
+                "comparison": "Behaviour dynamics vs Freeze only",
+                "test_experiment": test_exp,
+                "n_test": len(y),
+                **stats,
+                "stars": tier1.significance_stars(stats["p_value"]),
+            }
+        )
     return pd.DataFrame(rows)
 
 
-def full_session_loocv(labels: pd.DataFrame, root: Path
-                       ) -> tuple[pd.DataFrame, pd.DataFrame]:
+def full_session_loocv(labels: pd.DataFrame, root: Path) -> tuple[pd.DataFrame, pd.DataFrame]:
     rows: list[dict[str, object]] = []
     scores_by_set: dict[str, np.ndarray] = {}
     target: np.ndarray | None = None
@@ -294,20 +316,34 @@ def full_session_loocv(labels: pd.DataFrame, root: Path
         y = data["target"].to_numpy(dtype=int)
         scores = loocv_scores(x, y)
         lo, hi = tier1.bootstrap_auc_ci(y, scores)
-        rows.append({"feature_set": name, "roc_auc": tier1.auc_or_nan(y, scores),
-                     "ci_low": lo, "ci_high": hi, "n_features": len(cols)})
+        rows.append(
+            {
+                "feature_set": name,
+                "roc_auc": tier1.auc_or_nan(y, scores),
+                "ci_low": lo,
+                "ci_high": hi,
+                "n_features": len(cols),
+            }
+        )
         scores_by_set[name] = scores
         target = y
 
     # Panel E: the two models leave out the same animals in the same order, so
     # their LOOCV scores line up one-to-one and the test can be paired.
-    stats = tier1.paired_auc_test(target, scores_by_set["Behaviour dynamics"],
-                                  scores_by_set["Freeze only"])
-    test = pd.DataFrame([{
-        "panel": "E", "comparison": "Behaviour dynamics vs Freeze only",
-        "n_animals": len(target), **stats,
-        "stars": tier1.significance_stars(stats["p_value"]),
-    }])
+    stats = tier1.paired_auc_test(
+        target, scores_by_set["Behaviour dynamics"], scores_by_set["Freeze only"]
+    )
+    test = pd.DataFrame(
+        [
+            {
+                "panel": "E",
+                "comparison": "Behaviour dynamics vs Freeze only",
+                "n_animals": len(target),
+                **stats,
+                "stars": tier1.significance_stars(stats["p_value"]),
+            }
+        ]
+    )
     return pd.DataFrame(rows), test
 
 
@@ -333,14 +369,16 @@ def shapley_values(labels: pd.DataFrame, root: Path) -> pd.DataFrame:
     rows: list[dict[str, object]] = []
     for j, col in enumerate(cols):
         behaviour = col.replace("motif_", "")
-        rows.append({
-            "behaviour": behaviour,
-            "coefficient": float(coef[j + 1]),
-            "mean_abs_shap": float(np.mean(np.abs(phi[:, j]))),
-            "mean_shap_resilient": float(np.mean(phi[y == 1, j])),
-            "mean_shap_vulnerable": float(np.mean(phi[y == 0, j])),
-            "direction": "resilient" if coef[j + 1] > 0 else "vulnerable",
-        })
+        rows.append(
+            {
+                "behaviour": behaviour,
+                "coefficient": float(coef[j + 1]),
+                "mean_abs_shap": float(np.mean(np.abs(phi[:, j]))),
+                "mean_shap_resilient": float(np.mean(phi[y == 1, j])),
+                "mean_shap_vulnerable": float(np.mean(phi[y == 0, j])),
+                "direction": "resilient" if coef[j + 1] > 0 else "vulnerable",
+            }
+        )
     out = pd.DataFrame(rows).sort_values("mean_abs_shap", ascending=False)
 
     per_animal = pd.DataFrame(phi, columns=[c.replace("motif_", "") for c in cols])
@@ -354,25 +392,27 @@ def shapley_values(labels: pd.DataFrame, root: Path) -> pd.DataFrame:
 # figure
 # --------------------------------------------------------------------------
 def style() -> None:
-    plt.rcParams.update({
-        "font.family": "sans-serif",
-        "font.sans-serif": ["Arial", "Helvetica", "DejaVu Sans"],
-        "font.size": 7,
-        "axes.labelsize": 7.5,
-        "axes.titlesize": 8.5,
-        "xtick.labelsize": 6.5,
-        "ytick.labelsize": 6.5,
-        "legend.fontsize": 6.0,
-        "axes.edgecolor": AXIS,
-        "axes.linewidth": 0.6,
-        "xtick.color": AXIS,
-        "ytick.color": AXIS,
-        "text.color": "#1A1A1A",
-        "axes.labelcolor": "#1A1A1A",
-        "axes.grid": False,
-        "svg.fonttype": "none",
-        "pdf.fonttype": 42,
-    })
+    plt.rcParams.update(
+        {
+            "font.family": "sans-serif",
+            "font.sans-serif": ["Arial", "Helvetica", "DejaVu Sans"],
+            "font.size": 7,
+            "axes.labelsize": 7.5,
+            "axes.titlesize": 8.5,
+            "xtick.labelsize": 6.5,
+            "ytick.labelsize": 6.5,
+            "legend.fontsize": 6.0,
+            "axes.edgecolor": AXIS,
+            "axes.linewidth": 0.6,
+            "xtick.color": AXIS,
+            "ytick.color": AXIS,
+            "text.color": "#1A1A1A",
+            "axes.labelcolor": "#1A1A1A",
+            "axes.grid": False,
+            "svg.fonttype": "none",
+            "pdf.fonttype": 42,
+        }
+    )
 
 
 def _tidy(ax: plt.Axes) -> None:
@@ -392,29 +432,69 @@ def display_feature_set(name: str) -> str:
 
 
 def panel_tag(ax: plt.Axes, letter: str, x: float = -0.12, y: float = 1.12) -> plt.Text:
-    return ax.text(x, y, letter, transform=ax.transAxes, ha="center", va="top",
-            fontsize=7.5, fontweight="bold", color=AXIS, clip_on=False)
+    return ax.text(
+        x,
+        y,
+        letter,
+        transform=ax.transAxes,
+        ha="center",
+        va="top",
+        fontsize=7.5,
+        fontweight="bold",
+        color=AXIS,
+        clip_on=False,
+    )
 
 
 def line_legend(ax: plt.Axes, *, ncol: int = 1, fontsize: float = 4.6) -> None:
-    leg = ax.legend(frameon=False, fontsize=fontsize, loc="lower right", ncol=ncol,
-                    handlelength=1.15, handletextpad=0.35, columnspacing=0.7,
-                    labelspacing=0.22, borderaxespad=0.15)
+    leg = ax.legend(
+        frameon=False,
+        fontsize=fontsize,
+        loc="lower right",
+        ncol=ncol,
+        handlelength=1.15,
+        handletextpad=0.35,
+        columnspacing=0.7,
+        labelspacing=0.22,
+        borderaxespad=0.15,
+    )
     for text in leg.get_texts():
         text.set_color(AXIS)
 
 
-def sig_bracket(ax: plt.Axes, x1: float, x2: float, y: float, label: str,
-                *, tick: float = 0.022, fontsize: float = 5.0) -> None:
+def sig_bracket(
+    ax: plt.Axes,
+    x1: float,
+    x2: float,
+    y: float,
+    label: str,
+    *,
+    tick: float = 0.022,
+    fontsize: float = 5.0,
+) -> None:
     """Draw a significance bracket spanning x1-x2 with its label above."""
-    ax.plot([x1, x1, x2, x2], [y, y + tick, y + tick, y],
-            color=AXIS, linewidth=0.5, clip_on=False, zorder=6)
+    ax.plot(
+        [x1, x1, x2, x2],
+        [y, y + tick, y + tick, y],
+        color=AXIS,
+        linewidth=0.5,
+        clip_on=False,
+        zorder=6,
+    )
     # "n.s." is text and sits above the line; asterisks hang lower, so they are
     # nudged up to keep the visual gap to the bracket the same.
     offset = tick + (0.004 if label == "n.s." else -0.004)
-    ax.text((x1 + x2) / 2.0, y + offset, label, ha="center", va="bottom",
-            fontsize=fontsize if label == "n.s." else fontsize + 1.2,
-            color=AXIS, clip_on=False, zorder=6)
+    ax.text(
+        (x1 + x2) / 2.0,
+        y + offset,
+        label,
+        ha="center",
+        va="bottom",
+        fontsize=fontsize if label == "n.s." else fontsize + 1.2,
+        color=AXIS,
+        clip_on=False,
+        zorder=6,
+    )
 
 
 def add_event_spans(ax: plt.Axes) -> None:
@@ -483,14 +563,32 @@ def plot_panel_a(ax: plt.Axes, onset: pd.DataFrame, letter: str = "A") -> plt.Te
 
     for behaviour in BEHAVIOUR_ORDER:
         sub = onset.loc[onset["feature_set"] == behaviour].sort_values("horizon_min")
-        ax.plot(sub["horizon_min"], sub["roc_auc"], color=BEHAVIOUR_COLORS[behaviour],
-                linewidth=0.9, marker="o", markersize=2.4, mec="white", mew=0.25,
-                label=behaviour,
-                zorder=3, alpha=0.9)
+        ax.plot(
+            sub["horizon_min"],
+            sub["roc_auc"],
+            color=BEHAVIOUR_COLORS[behaviour],
+            linewidth=0.9,
+            marker="o",
+            markersize=2.4,
+            mec="white",
+            mew=0.25,
+            label=behaviour,
+            zorder=3,
+            alpha=0.9,
+        )
 
-    ax.plot(combined["horizon_min"], combined["roc_auc"], color=COMBINED_COLOR,
-            linewidth=1.35, marker="o", markersize=3.2, mec="white", mew=0.25,
-            label=COMBINED, zorder=5)
+    ax.plot(
+        combined["horizon_min"],
+        combined["roc_auc"],
+        color=COMBINED_COLOR,
+        linewidth=1.35,
+        marker="o",
+        markersize=3.2,
+        mec="white",
+        mew=0.25,
+        label=COMBINED,
+        zorder=5,
+    )
 
     ax.set_xlabel(HORIZON_XLABEL)
     ax.set_ylabel("ROC AUC")
@@ -506,20 +604,28 @@ def plot_panel_a(ax: plt.Axes, onset: pd.DataFrame, letter: str = "A") -> plt.Te
 
     handles, lbls = ax.get_legend_handles_labels()
     handle_map = dict(zip(lbls, handles))
-    legend_order = [COMBINED, "Freeze", "Sniff", "Groom",
-                    "Turn", "Locomotion", "Climb", "Jump"]
-    leg = ax.legend([handle_map[label] for label in legend_order], legend_order,
-                    loc="lower right", bbox_to_anchor=(0.985, 0.02),
-                    ncol=1, frameon=False, handlelength=0.85,
-                    handletextpad=0.3, labelspacing=0.10,
-                    fontsize=3.65, borderaxespad=0.0)
+    legend_order = [COMBINED, "Freeze", "Sniff", "Groom", "Turn", "Locomotion", "Climb", "Jump"]
+    leg = ax.legend(
+        [handle_map[label] for label in legend_order],
+        legend_order,
+        loc="lower right",
+        bbox_to_anchor=(0.985, 0.02),
+        ncol=1,
+        frameon=False,
+        handlelength=0.85,
+        handletextpad=0.3,
+        labelspacing=0.10,
+        fontsize=3.65,
+        borderaxespad=0.0,
+    )
     for text in leg.get_texts():
         text.set_color(AXIS)
     return panel_tag(ax, letter, x=-0.105, y=1.12)
 
 
-def plot_panel_b(ax: plt.Axes, cross: pd.DataFrame, letter: str = "B",
-                 tests: pd.DataFrame | None = None) -> plt.Text:
+def plot_panel_b(
+    ax: plt.Axes, cross: pd.DataFrame, letter: str = "B", tests: pd.DataFrame | None = None
+) -> plt.Text:
     directions = [("Exp3", "Exp1"), ("Exp1", "Exp3")]
     width = 0.18
     xs = np.arange(len(directions)) * 0.70
@@ -529,13 +635,20 @@ def plot_panel_b(ax: plt.Axes, cross: pd.DataFrame, letter: str = "B",
     ):
         vals = []
         for test_exp, _ in directions:
-            row = cross.loc[(cross["feature_set"] == name)
-                            & (cross["test_experiment"] == test_exp)]
+            row = cross.loc[(cross["feature_set"] == name) & (cross["test_experiment"] == test_exp)]
             vals.append(float(row["roc_auc"].iloc[0]))
         pos = xs + (k - 0.5) * width
         bar_tops[name] = vals
-        ax.bar(pos, vals, width=width, color=colour, edgecolor="white",
-               linewidth=0.4, label=display_feature_set(name), zorder=2)
+        ax.bar(
+            pos,
+            vals,
+            width=width,
+            color=colour,
+            edgecolor="white",
+            linewidth=0.4,
+            label=display_feature_set(name),
+            zorder=2,
+        )
         for p, v in zip(pos, vals):
             ax.text(p, v + 0.025, f"{v:.2f}", ha="center", va="bottom", fontsize=6)
 
@@ -546,8 +659,9 @@ def plot_panel_b(ax: plt.Axes, cross: pd.DataFrame, letter: str = "B",
                 continue
             # Clear both bars and the value labels printed just above them.
             top = max(bar_tops["Behaviour dynamics"][i], bar_tops["Freeze only"][i])
-            sig_bracket(ax, xs[i] - 0.5 * width, xs[i] + 0.5 * width,
-                        top + 0.165, str(row["stars"].iloc[0]))
+            sig_bracket(
+                ax, xs[i] - 0.5 * width, xs[i] + 0.5 * width, top + 0.165, str(row["stars"].iloc[0])
+            )
 
     ax.axhline(0.5, color=CHANCE_GREY, linewidth=0.5, linestyle=(0, (2.5, 2)), zorder=1)
     ax.set_xticks(xs)
@@ -555,8 +669,10 @@ def plot_panel_b(ax: plt.Axes, cross: pd.DataFrame, letter: str = "B",
     # single long line: since C moved onto this row there is no longer width for
     # the one-line form, which ran into the neighbouring panel.
     ax.set_xticklabels(
-        [f"{tier1.COHORT_LABELS[train]}\n\u2192 {tier1.COHORT_LABELS[test]}"
-         for test, train in directions],
+        [
+            f"{tier1.COHORT_LABELS[train]}\n\u2192 {tier1.COHORT_LABELS[test]}"
+            for test, train in directions
+        ],
         fontsize=3.6,
         ha="center",
         multialignment="center",
@@ -567,38 +683,53 @@ def plot_panel_b(ax: plt.Axes, cross: pd.DataFrame, letter: str = "B",
     ax.set_yticks([0, 0.2, 0.4, 0.6, 0.8, 1.0])
     ax.set_xlim(xs[0] - 0.30, xs[-1] + 0.30)
     ax.set_title("Held-out cohort", fontsize=6.4, color=AXIS, pad=3)
-    ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.02), frameon=False,
-              handlelength=1.0, fontsize=4.8, labelspacing=0.2,
-              borderpad=0.0, ncol=2, columnspacing=0.7, handletextpad=0.35)
+    ax.legend(
+        loc="upper center",
+        bbox_to_anchor=(0.5, 1.02),
+        frameon=False,
+        handlelength=1.0,
+        fontsize=4.8,
+        labelspacing=0.2,
+        borderpad=0.0,
+        ncol=2,
+        columnspacing=0.7,
+        handletextpad=0.35,
+    )
     _tidy(ax)
     fit_spines_to_ticks(ax)
     full_x_spine(ax)
     return panel_tag(ax, letter, x=-0.12, y=1.12)
 
 
-def plot_panel_c(ax: plt.Axes, head: pd.DataFrame, letter: str = "C",
-                 tests: pd.DataFrame | None = None) -> plt.Text:
+def plot_panel_c(
+    ax: plt.Axes, head: pd.DataFrame, letter: str = "C", tests: pd.DataFrame | None = None
+) -> plt.Text:
     names = ["Behaviour dynamics", "Freeze only"]
     colours = [DYNAMICS_COLOR, FREEZE_ONLY_COLOR]
     xs = np.arange(len(names)) * 0.44
     tops: list[float] = []
     for x, name, colour in zip(xs, names, colours):
         row = head.loc[head["feature_set"] == name].iloc[0]
-        ax.bar(x, row["roc_auc"], width=0.28, color=colour, edgecolor="white",
-               linewidth=0.4, zorder=2)
-        ax.errorbar(x, row["roc_auc"],
-                    yerr=[[row["roc_auc"] - row["ci_low"]],
-                          [row["ci_high"] - row["roc_auc"]]],
-                    color=recap.darken(colour, factor=0.68),
-                    linewidth=0.8, capsize=2.2, zorder=3)
-        ax.text(x, row["ci_high"] + 0.03, f"{row['roc_auc']:.2f}", ha="center",
-                va="bottom", fontsize=6)
+        ax.bar(
+            x, row["roc_auc"], width=0.28, color=colour, edgecolor="white", linewidth=0.4, zorder=2
+        )
+        ax.errorbar(
+            x,
+            row["roc_auc"],
+            yerr=[[row["roc_auc"] - row["ci_low"]], [row["ci_high"] - row["roc_auc"]]],
+            color=recap.darken(colour, factor=0.68),
+            linewidth=0.8,
+            capsize=2.2,
+            zorder=3,
+        )
+        ax.text(
+            x, row["ci_high"] + 0.03, f"{row['roc_auc']:.2f}", ha="center", va="bottom", fontsize=6
+        )
         tops.append(float(row["ci_high"]))
 
     if tests is not None and not tests.empty:
         # Clear the taller error bar and its value label.
-        sig_bracket(ax, xs[0], xs[-1], max(tops) + 0.105,
-                    str(tests["stars"].iloc[0]))
+        sig_bracket(ax, xs[0], xs[-1], max(tops) + 0.105, str(tests["stars"].iloc[0]))
 
     ax.axhline(0.5, color=CHANCE_GREY, linewidth=0.5, linestyle=(0, (2.5, 2)), zorder=1)
     ax.set_xticks(xs)
@@ -619,13 +750,27 @@ def plot_panel_d(ax: plt.Axes, shap: pd.DataFrame, letter: str = "D") -> plt.Tex
     shap = shap.sort_values("mean_abs_shap")
     ys = np.arange(len(shap))
     colours = [BEHAVIOUR_COLORS.get(b, "#999999") for b in shap["behaviour"]]
-    ax.barh(ys, shap["mean_abs_shap"], color=colours, edgecolor="white",
-            linewidth=0.4, height=0.68, zorder=2)
+    ax.barh(
+        ys,
+        shap["mean_abs_shap"],
+        color=colours,
+        edgecolor="white",
+        linewidth=0.4,
+        height=0.68,
+        zorder=2,
+    )
 
     for y, (_, r) in zip(ys, shap.iterrows()):
         arrow = "\u2191" if r["coefficient"] > 0 else "\u2193"
-        ax.text(r["mean_abs_shap"] + 0.004, y, arrow, va="center", ha="left",
-                fontsize=6.5, color="#4A4A4A")
+        ax.text(
+            r["mean_abs_shap"] + 0.004,
+            y,
+            arrow,
+            va="center",
+            ha="left",
+            fontsize=6.5,
+            color="#4A4A4A",
+        )
 
     ax.set_yticks(ys)
     ax.set_yticklabels(shap["behaviour"], fontsize=6)
@@ -634,21 +779,39 @@ def plot_panel_d(ax: plt.Axes, shap: pd.DataFrame, letter: str = "D") -> plt.Tex
     ax.set_xlim(0, float(shap["mean_abs_shap"].max()) * 1.34)
     # Right-align inside the last tick: the axis runs past it, so anchoring at
     # the axes edge would put the key outside the drawn plot.
-    ax.text(0.80, 0.06, "\u2191 toward resilient\n\u2193 toward vulnerable",
-            transform=ax.transAxes, ha="right", va="bottom", fontsize=5.6,
-            color="#6A6A6A", linespacing=1.35)
+    ax.text(
+        0.80,
+        0.06,
+        "\u2191 toward resilient\n\u2193 toward vulnerable",
+        transform=ax.transAxes,
+        ha="right",
+        va="bottom",
+        fontsize=5.6,
+        color="#6A6A6A",
+        linespacing=1.35,
+    )
     _tidy(ax)
     fit_spines_to_ticks(ax)
     return panel_tag(ax, letter, x=-0.12, y=1.12)
 
 
-def build_figure(onset: pd.DataFrame, cross: pd.DataFrame, head: pd.DataFrame,
-                 shap: pd.DataFrame) -> plt.Figure:
+def build_figure(
+    onset: pd.DataFrame, cross: pd.DataFrame, head: pd.DataFrame, shap: pd.DataFrame
+) -> plt.Figure:
     style()
     fig = plt.figure(figsize=(7.2, 5.4))
-    gs = GridSpec(2, 3, figure=fig, height_ratios=[1.32, 1.0],
-                  hspace=0.46, wspace=0.36,
-                  left=0.078, right=0.985, top=0.945, bottom=0.088)
+    gs = GridSpec(
+        2,
+        3,
+        figure=fig,
+        height_ratios=[1.32, 1.0],
+        hspace=0.46,
+        wspace=0.36,
+        left=0.078,
+        right=0.985,
+        top=0.945,
+        bottom=0.088,
+    )
     plot_panel_a(fig.add_subplot(gs[0, :]), onset)
     plot_panel_b(fig.add_subplot(gs[1, 0]), cross)
     plot_panel_c(fig.add_subplot(gs[1, 1]), head)
@@ -662,12 +825,9 @@ def recap_tables() -> tuple[pd.DataFrame, pd.DataFrame]:
     panel_c = SOURCE_OUT / "figure7_predictor_timecourse.csv"
     if not panel_ab.exists() or not panel_c.exists():
         labels, predictors = recap.cached("predictors", recap.build_predictors, fresh=False)
-        ab = recap.cached("panel_ab", lambda: recap.panel_ab_data(labels, predictors),
-                          fresh=False)
-        horizon = recap.cached("horizon_features", recap.all_horizon_features,
-                               fresh=False)
-        c = recap.cached("panel_c", lambda: recap.panel_c_data(labels, horizon),
-                         fresh=False)
+        ab = recap.cached("panel_ab", lambda: recap.panel_ab_data(labels, predictors), fresh=False)
+        horizon = recap.cached("horizon_features", recap.all_horizon_features, fresh=False)
+        c = recap.cached("panel_c", lambda: recap.panel_c_data(labels, horizon), fresh=False)
         ab.drop(columns=["color"], errors="ignore").to_csv(panel_ab, index=False)
         c.drop(columns=["color"], errors="ignore").to_csv(panel_c, index=False)
     else:
@@ -729,8 +889,7 @@ def colour_for_individual(panel: str, name: str, behaviour: str | None, family: 
 
 def individual_overtime_data(labels: pd.DataFrame) -> pd.DataFrame:
     """Repeated-CV AUC for every individual time-resolved metric."""
-    horizon_frames = recap.cached("horizon_features", recap.all_horizon_features,
-                                  fresh=False)
+    horizon_frames = recap.cached("horizon_features", recap.all_horizon_features, fresh=False)
     rows: list[dict[str, object]] = []
     for horizon in recap.HORIZONS_MIN:
         frames = horizon_frames[horizon]
@@ -740,25 +899,29 @@ def individual_overtime_data(labels: pd.DataFrame) -> pd.DataFrame:
                 continue
             data = recap.direct.attach(labels, frame)
             folds = recap.direct.make_folds(
-                recap.direct.strat_key(data), recap.direct.N_SPLITS,
-                recap.direct.N_REPEATS, recap.RANDOM_SEED
+                recap.direct.strat_key(data),
+                recap.direct.N_SPLITS,
+                recap.direct.N_REPEATS,
+                recap.RANDOM_SEED,
             )
             aucs, _ = recap.direct.cv_auc_np(
                 data[[col]].to_numpy(dtype=float),
                 data["target"].to_numpy(dtype=int),
                 folds,
             )
-            rows.append({
-                "panel": panel,
-                "metric": name,
-                "family": family,
-                "horizon_min": horizon,
-                "cv_auc": float(aucs.mean()),
-                "cv_lo": float(np.percentile(aucs, 10)),
-                "cv_hi": float(np.percentile(aucs, 90)),
-                "color": colour_for_individual(panel, name, behaviour, family),
-                "linestyle": "-",
-            })
+            rows.append(
+                {
+                    "panel": panel,
+                    "metric": name,
+                    "family": family,
+                    "horizon_min": horizon,
+                    "cv_auc": float(aucs.mean()),
+                    "cv_lo": float(np.percentile(aucs, 10)),
+                    "cv_hi": float(np.percentile(aucs, 90)),
+                    "color": colour_for_individual(panel, name, behaviour, family),
+                    "linestyle": "-",
+                }
+            )
     return pd.DataFrame(rows)
 
 
@@ -766,9 +929,18 @@ def draw_family_overtime(ax: plt.Axes, table: pd.DataFrame, letter: str) -> plt.
     add_event_spans(ax)
     for name, sub in table.groupby("predictor", sort=False):
         sub = sub.sort_values("horizon_min")
-        ax.plot(sub["horizon_min"], sub["cv_auc"], color=sub["color"].iloc[0],
-                lw=0.9, marker="o", ms=2.4, mec="white", mew=0.25,
-                label=remap_family_name(name), zorder=2)
+        ax.plot(
+            sub["horizon_min"],
+            sub["cv_auc"],
+            color=sub["color"].iloc[0],
+            lw=0.9,
+            marker="o",
+            ms=2.4,
+            mec="white",
+            mew=0.25,
+            label=remap_family_name(name),
+            zorder=2,
+        )
     ax.axhline(0.5, color=CHANCE_GREY, lw=0.5, ls=(0, (2.5, 2)), zorder=1)
     ax.set_xlim(HORIZON_XLIM)
     ax.set_xticks(HORIZON_XTICKS)
@@ -777,8 +949,12 @@ def draw_family_overtime(ax: plt.Axes, table: pd.DataFrame, letter: str) -> plt.
     ax.set_ylim(0, 1)
     ax.set_ylabel("ROC AUC")
     ax.set_xlabel(HORIZON_XLABEL)
-    ax.set_title("Frequency/diversity/transition/bout duration metrics over time",
-                 fontsize=6.4, color=AXIS, pad=3)
+    ax.set_title(
+        "Frequency/diversity/transition/bout duration metrics over time",
+        fontsize=6.4,
+        color=AXIS,
+        pad=3,
+    )
     _tidy(ax)
     fit_spines_to_ticks(ax)
     mark_final_horizon(ax)
@@ -786,27 +962,40 @@ def draw_family_overtime(ax: plt.Axes, table: pd.DataFrame, letter: str) -> plt.
     return panel_tag(ax, letter, x=-0.105, y=1.12)
 
 
-def top_two_names(table: pd.DataFrame, name_col: str, auc_col: str,
-                  mode: str) -> list[str]:
+def top_two_names(table: pd.DataFrame, name_col: str, auc_col: str, mode: str) -> list[str]:
     ordered = table.sort_values("horizon_min")
     if mode == "overall":
-        ranked = ordered.groupby(name_col, sort=False)[auc_col].max().sort_values(
-            ascending=False
-        ).reset_index()
+        ranked = (
+            ordered.groupby(name_col, sort=False)[auc_col]
+            .max()
+            .sort_values(ascending=False)
+            .reset_index()
+        )
     elif mode == "early":
         early = ordered.loc[ordered["horizon_min"] <= 3.0]
-        ranked = early.groupby(name_col, sort=False)[auc_col].max().sort_values(
-            ascending=False
-        ).reset_index()
+        ranked = (
+            early.groupby(name_col, sort=False)[auc_col]
+            .max()
+            .sort_values(ascending=False)
+            .reset_index()
+        )
     else:
         raise ValueError(f"unknown top-two mode: {mode}")
     return [str(v) for v in ranked[name_col].head(2)]
 
 
-def draw_top_two_mini(ax: plt.Axes, table: pd.DataFrame, names: list[str],
-                      *, name_col: str, auc_col: str, color_col: str | None,
-                      title: str, x_ticks: list[float],
-                      show_xlabel: bool = False) -> None:
+def draw_top_two_mini(
+    ax: plt.Axes,
+    table: pd.DataFrame,
+    names: list[str],
+    *,
+    name_col: str,
+    auc_col: str,
+    color_col: str | None,
+    title: str,
+    x_ticks: list[float],
+    show_xlabel: bool = False,
+) -> None:
     add_event_spans(ax)
     for name in names:
         sub = table.loc[table[name_col] == name].sort_values("horizon_min")
@@ -815,8 +1004,18 @@ def draw_top_two_mini(ax: plt.Axes, table: pd.DataFrame, names: list[str],
         else:
             color = BEHAVIOUR_COLORS.get(name, COMBINED_COLOR)
         label = remap_family_name(name)
-        ax.plot(sub["horizon_min"], sub[auc_col], color=color, lw=0.8,
-                marker="o", ms=1.8, mec="white", mew=0.18, label=label, zorder=2)
+        ax.plot(
+            sub["horizon_min"],
+            sub[auc_col],
+            color=color,
+            lw=0.8,
+            marker="o",
+            ms=1.8,
+            mec="white",
+            mew=0.18,
+            label=label,
+            zorder=2,
+        )
     ax.axhline(0.5, color=CHANCE_GREY, lw=0.4, ls=(0, (2.5, 2)), zorder=1)
     ax.set_xlim(HORIZON_XLIM)
     ax.set_xticks(x_ticks)
@@ -833,55 +1032,88 @@ def draw_top_two_mini(ax: plt.Axes, table: pd.DataFrame, names: list[str],
     ax.tick_params(axis="x", labelsize=4.0, length=1.6, pad=1)
     fit_spines_to_ticks(ax)
     mark_final_horizon(ax)
-    leg = ax.legend(frameon=False, fontsize=3.5, loc="lower right",
-                    handlelength=0.9, handletextpad=0.25, labelspacing=0.1,
-                    borderaxespad=0.05)
+    leg = ax.legend(
+        frameon=False,
+        fontsize=3.5,
+        loc="lower right",
+        handlelength=0.9,
+        handletextpad=0.25,
+        labelspacing=0.1,
+        borderaxespad=0.05,
+    )
     for text in leg.get_texts():
         text.set_color(AXIS)
 
 
-def draw_behaviour_mini_pair(top_ax: plt.Axes, bottom_ax: plt.Axes,
-                             onset: pd.DataFrame) -> None:
+def draw_behaviour_mini_pair(top_ax: plt.Axes, bottom_ax: plt.Axes, onset: pd.DataFrame) -> None:
     behaviour_rows = onset.loc[onset["feature_set"].isin(BEHAVIOUR_ORDER)].copy()
     draw_top_two_mini(
-        top_ax, behaviour_rows,
+        top_ax,
+        behaviour_rows,
         top_two_names(behaviour_rows, "feature_set", "roc_auc", "overall"),
-        name_col="feature_set", auc_col="roc_auc", color_col=None,
-        title="Best predictor overall", x_ticks=HORIZON_XTICKS[::2],
+        name_col="feature_set",
+        auc_col="roc_auc",
+        color_col=None,
+        title="Best predictor overall",
+        x_ticks=HORIZON_XTICKS[::2],
     )
     draw_top_two_mini(
-        bottom_ax, behaviour_rows,
+        bottom_ax,
+        behaviour_rows,
         top_two_names(behaviour_rows, "feature_set", "roc_auc", "early"),
-        name_col="feature_set", auc_col="roc_auc", color_col=None,
-        title="Best predictor first 3 min", x_ticks=HORIZON_XTICKS[::2], show_xlabel=True,
+        name_col="feature_set",
+        auc_col="roc_auc",
+        color_col=None,
+        title="Best predictor first 3 min",
+        x_ticks=HORIZON_XTICKS[::2],
+        show_xlabel=True,
     )
 
 
-def draw_family_mini_pair(top_ax: plt.Axes, bottom_ax: plt.Axes,
-                          table: pd.DataFrame) -> None:
+def draw_family_mini_pair(top_ax: plt.Axes, bottom_ax: plt.Axes, table: pd.DataFrame) -> None:
     draw_top_two_mini(
-        top_ax, table,
+        top_ax,
+        table,
         top_two_names(table, "predictor", "cv_auc", "overall"),
-        name_col="predictor", auc_col="cv_auc", color_col="color",
-        title="Best predictor overall", x_ticks=HORIZON_XTICKS[::2],
+        name_col="predictor",
+        auc_col="cv_auc",
+        color_col="color",
+        title="Best predictor overall",
+        x_ticks=HORIZON_XTICKS[::2],
     )
     draw_top_two_mini(
-        bottom_ax, table,
+        bottom_ax,
+        table,
         top_two_names(table, "predictor", "cv_auc", "early"),
-        name_col="predictor", auc_col="cv_auc", color_col="color",
-        title="Best predictor first 3 min", x_ticks=HORIZON_XTICKS[::2], show_xlabel=True,
+        name_col="predictor",
+        auc_col="cv_auc",
+        color_col="color",
+        title="Best predictor first 3 min",
+        x_ticks=HORIZON_XTICKS[::2],
+        show_xlabel=True,
     )
 
 
-def draw_individual_overtime(ax: plt.Axes, table: pd.DataFrame, panel: str,
-                             letter: str, title: str, ncol: int = 2) -> plt.Text:
+def draw_individual_overtime(
+    ax: plt.Axes, table: pd.DataFrame, panel: str, letter: str, title: str, ncol: int = 2
+) -> plt.Text:
     subtab = table.loc[table["panel"] == panel]
     add_event_spans(ax)
     for name, sub in subtab.groupby("metric", sort=False):
         sub = sub.sort_values("horizon_min")
-        ax.plot(sub["horizon_min"], sub["cv_auc"], color=sub["color"].iloc[0],
-                lw=0.8, marker="o", ms=2.0, mec="white", mew=0.2,
-                linestyle=sub["linestyle"].iloc[0], label=name, alpha=0.95)
+        ax.plot(
+            sub["horizon_min"],
+            sub["cv_auc"],
+            color=sub["color"].iloc[0],
+            lw=0.8,
+            marker="o",
+            ms=2.0,
+            mec="white",
+            mew=0.2,
+            linestyle=sub["linestyle"].iloc[0],
+            label=name,
+            alpha=0.95,
+        )
     ax.axhline(0.5, color=CHANCE_GREY, lw=0.45, ls=(0, (2.5, 2)), zorder=1)
     ax.set_xlim(HORIZON_XLIM)
     ax.set_xticks(HORIZON_XTICKS)
@@ -954,11 +1186,13 @@ def figure7_global_shap_values() -> pd.DataFrame:
 
 def write_classifier_source_data() -> None:
     """Export the legacy classifier values reused in Figure 7A-C."""
-    pd.DataFrame({
-        "class": FIGURE7_CLASSES + ["Overall"],
-        "accuracy": FIGURE7_ACCURACY,
-        "chance_accuracy": 0.125,
-    }).to_csv(SOURCE_OUT / "figure7_classifier_accuracy.csv", index=False)
+    pd.DataFrame(
+        {
+            "class": FIGURE7_CLASSES + ["Overall"],
+            "accuracy": FIGURE7_ACCURACY,
+            "chance_accuracy": 0.125,
+        }
+    ).to_csv(SOURCE_OUT / "figure7_classifier_accuracy.csv", index=False)
 
     figure7_global_shap_values().to_csv(
         SOURCE_OUT / "figure7_classifier_global_shap.csv", index_label="feature"
@@ -977,25 +1211,51 @@ def draw_figure7_a(ax: plt.Axes) -> plt.Text:
     labels = FIGURE7_CLASSES + ["Overall"]
     colours = [BEHAVIOUR_COLORS[name] for name in BEHAVIOUR_ORDER] + ["#D2D2D2"]
     ys = np.arange(len(labels))
-    ax.barh(ys[:-1], FIGURE7_ACCURACY[:-1], height=0.72, color=colours,
-            edgecolor="white", linewidth=0.35, zorder=2)
+    ax.barh(
+        ys[:-1],
+        FIGURE7_ACCURACY[:-1],
+        height=0.72,
+        color=colours,
+        edgecolor="white",
+        linewidth=0.35,
+        zorder=2,
+    )
 
     gradient = np.linspace(0, 1, 512)[None, :]
     gradient_cmap = LinearSegmentedColormap.from_list(
         "figure7_behaviours",
-        ["#D2D2D2", BEHAVIOUR_COLORS["Jump"], BEHAVIOUR_COLORS["Climb"],
-         BEHAVIOUR_COLORS["Locomotion"], BEHAVIOUR_COLORS["Turn"],
-         BEHAVIOUR_COLORS["Groom"], BEHAVIOUR_COLORS["Sniff"],
-         BEHAVIOUR_COLORS["Freeze"]],
+        [
+            "#D2D2D2",
+            BEHAVIOUR_COLORS["Jump"],
+            BEHAVIOUR_COLORS["Climb"],
+            BEHAVIOUR_COLORS["Locomotion"],
+            BEHAVIOUR_COLORS["Turn"],
+            BEHAVIOUR_COLORS["Groom"],
+            BEHAVIOUR_COLORS["Sniff"],
+            BEHAVIOUR_COLORS["Freeze"],
+        ],
     )
     overall_y = ys[-1]
-    ax.imshow(gradient, extent=(0, FIGURE7_ACCURACY[-1], overall_y - 0.36,
-                               overall_y + 0.36), aspect="auto", cmap=gradient_cmap,
-              interpolation="bicubic", zorder=2)
+    ax.imshow(
+        gradient,
+        extent=(0, FIGURE7_ACCURACY[-1], overall_y - 0.36, overall_y + 0.36),
+        aspect="auto",
+        cmap=gradient_cmap,
+        interpolation="bicubic",
+        zorder=2,
+    )
 
     for y, value, note in zip(ys, FIGURE7_ACCURACY, FIGURE7_ACCURACY_NOTES):
-        ax.text(value + 0.012, y, f"{value:.2f}\n({note})", ha="left", va="center",
-                fontsize=5.6, color=AXIS, linespacing=1.05)
+        ax.text(
+            value + 0.012,
+            y,
+            f"{value:.2f}\n({note})",
+            ha="left",
+            va="center",
+            fontsize=5.6,
+            color=AXIS,
+            linespacing=1.05,
+        )
 
     ax.axvline(0.12, color=AXIS, linewidth=0.5, linestyle=(0, (2.5, 2)), zorder=3)
     ax.set_yticks(ys)
@@ -1012,8 +1272,9 @@ def draw_figure7_a(ax: plt.Axes) -> plt.Text:
     ax.set_title("Accuracy versus chance", fontsize=6.4, color=AXIS, pad=8)
     _tidy(ax)
     fit_spines_to_ticks(ax)
-    ax.text(1.28, 7.0, "Dashed line: chance = 0.12",
-            ha="right", va="center", fontsize=3.45, color=AXIS)
+    ax.text(
+        1.28, 7.0, "Dashed line: chance = 0.12", ha="right", va="center", fontsize=3.45, color=AXIS
+    )
     return panel_tag(ax, "A", x=-0.20, y=1.15)
 
 
@@ -1023,8 +1284,16 @@ def draw_figure7_b(ax: plt.Axes, shap_values: pd.DataFrame) -> plt.Text:
     colours = {**BEHAVIOUR_COLORS, "Unassigned": "#D2D2D2"}
     for name in FIGURE7_CLASSES:
         values = shap_values[name].to_numpy(dtype=float)
-        ax.barh(ys, values, left=left, height=0.78, color=colours[name],
-                edgecolor="none", label=name, zorder=2)
+        ax.barh(
+            ys,
+            values,
+            left=left,
+            height=0.78,
+            color=colours[name],
+            edgecolor="none",
+            label=name,
+            zorder=2,
+        )
         left += values
 
     ax.set_yticks(ys)
@@ -1043,9 +1312,17 @@ def draw_figure7_b(ax: plt.Axes, shap_values: pd.DataFrame) -> plt.Text:
     fit_spines_to_ticks(ax)
     # Sits in the open wedge to the right of the shorter lower bars, so the panel
     # no longer needs a wide empty right margin just to hold the key.
-    leg = ax.legend(loc="lower right", bbox_to_anchor=(0.99, 0.03), frameon=False,
-                    fontsize=3.6, ncol=1, handlelength=1.5, handletextpad=0.35,
-                    labelspacing=0.10, borderaxespad=0.0)
+    leg = ax.legend(
+        loc="lower right",
+        bbox_to_anchor=(0.99, 0.03),
+        frameon=False,
+        fontsize=3.6,
+        ncol=1,
+        handlelength=1.5,
+        handletextpad=0.35,
+        labelspacing=0.10,
+        borderaxespad=0.0,
+    )
     for text in leg.get_texts():
         text.set_color(AXIS)
     return panel_tag(ax, "B", x=-0.34, y=1.15)
@@ -1053,12 +1330,14 @@ def draw_figure7_b(ax: plt.Axes, shap_values: pd.DataFrame) -> plt.Text:
 
 def draw_figure7_c(ax: plt.Axes, cax: plt.Axes) -> plt.Text:
     cmap = LinearSegmentedColormap.from_list("figure7_confusion", ["#FFFFFF", "#B45E8C"])
-    image = ax.imshow(FIGURE7_CONFUSION, cmap=cmap, vmin=0, vmax=0.86,
-                      interpolation="nearest", aspect="equal")
+    image = ax.imshow(
+        FIGURE7_CONFUSION, cmap=cmap, vmin=0, vmax=0.86, interpolation="nearest", aspect="equal"
+    )
     ticks = np.arange(len(FIGURE7_CLASSES))
     ax.set_xticks(ticks)
-    ax.set_xticklabels(FIGURE7_CLASSES, rotation=45, ha="right",
-                       rotation_mode="anchor", fontsize=3.7)
+    ax.set_xticklabels(
+        FIGURE7_CLASSES, rotation=45, ha="right", rotation_mode="anchor", fontsize=3.7
+    )
     ax.set_yticks(ticks)
     ax.set_yticklabels(FIGURE7_CLASSES, fontsize=4.0)
     ax.set_xlabel("Predicted label", labelpad=1.5)
@@ -1073,14 +1352,20 @@ def draw_figure7_c(ax: plt.Axes, cax: plt.Axes) -> plt.Text:
         for col in range(FIGURE7_CONFUSION.shape[1]):
             value = FIGURE7_CONFUSION[row, col]
             label = "0" if value == 0 else f"{value:.3f}".rstrip("0").rstrip(".")
-            ax.text(col, row, label, ha="center", va="center", fontsize=3.15,
-                    color="white" if value >= 0.42 else "#B45E8C")
+            ax.text(
+                col,
+                row,
+                label,
+                ha="center",
+                va="center",
+                fontsize=3.15,
+                color="white" if value >= 0.42 else "#B45E8C",
+            )
 
     colourbar = ax.figure.colorbar(image, cax=cax)
     colourbar.set_ticks([0, 0.2, 0.4, 0.6, 0.8])
     colourbar.set_ticklabels(["0", "0.2", "0.4", "0.6", "0.8"])
-    colourbar.ax.tick_params(labelsize=3.5, length=1.8, width=0.4, colors=AXIS,
-                             pad=1.0)
+    colourbar.ax.tick_params(labelsize=3.5, length=1.8, width=0.4, colors=AXIS, pad=1.0)
     # Ticks label the outside of the bar. On the left they were drawn over the
     # matrix's last column, since the bar sits flush against it.
     colourbar.ax.yaxis.set_ticks_position("right")
@@ -1090,21 +1375,33 @@ def draw_figure7_c(ax: plt.Axes, cax: plt.Axes) -> plt.Text:
     return panel_tag(ax, "C", x=-0.30, y=1.15)
 
 
-def build_complete_figure(onset: pd.DataFrame, cross: pd.DataFrame,
-                          head: pd.DataFrame, shap: pd.DataFrame,
-                          individual_time: pd.DataFrame,
-                          labels: pd.DataFrame,
-                          cross_tests: pd.DataFrame | None = None,
-                          head_test: pd.DataFrame | None = None) -> plt.Figure:
+def build_complete_figure(
+    onset: pd.DataFrame,
+    cross: pd.DataFrame,
+    head: pd.DataFrame,
+    shap: pd.DataFrame,
+    individual_time: pd.DataFrame,
+    labels: pd.DataFrame,
+    cross_tests: pd.DataFrame | None = None,
+    head_test: pd.DataFrame | None = None,
+) -> plt.Figure:
     """Build the complete A4 manuscript Figure 7."""
     style()
     ab_recap, c_recap = recap_tables()
     figure7_shap = figure7_global_shap_values()
     fig = plt.figure(figsize=(8.27, 11.69), dpi=300, facecolor="white")  # A4 portrait
-    gs = GridSpec(6, 8, figure=fig,
-                  height_ratios=[1.12, 0.86, 0.88, 0.88, 0.82, 0.70],
-                  hspace=0.70, wspace=0.70,
-                  left=0.068, right=0.988, top=0.978, bottom=0.052)
+    gs = GridSpec(
+        6,
+        8,
+        figure=fig,
+        height_ratios=[1.12, 0.86, 0.88, 0.88, 0.82, 0.70],
+        hspace=0.70,
+        wspace=0.70,
+        left=0.068,
+        right=0.988,
+        top=0.978,
+        bottom=0.052,
+    )
 
     # Row 0 carries A and B alone, so both get the full page width: A's accuracy
     # labels and B's 20 feature names are the most space-hungry text in the
@@ -1112,9 +1409,7 @@ def build_complete_figure(onset: pd.DataFrame, cross: pd.DataFrame,
     # B's 20 feature names are the widest text block on the page and its bars ran
     # right up against them.  Giving A a little more of the row and B a little
     # less, with a wider gutter, pulls B's bars clear of its own labels and of A.
-    source = gs[0, :].subgridspec(
-        1, 2, width_ratios=[1.16, 1.40], wspace=0.46
-    )
+    source = gs[0, :].subgridspec(1, 2, width_ratios=[1.16, 1.40], wspace=0.46)
     # Panels A-C are excluded from align_panel_letters: they label their y axes
     # with long category names instead of an axis title, so anchoring the letter
     # to that column would push it far to the left, over the neighbour. Their
@@ -1129,12 +1424,8 @@ def build_complete_figure(onset: pd.DataFrame, cross: pd.DataFrame,
 
     # C is square (imshow with aspect="equal"), so it needs a narrower cell than
     # its neighbours; D is trimmed to make room for it.
-    def_panels = gs[1, :].subgridspec(
-        1, 4, width_ratios=[0.90, 0.92, 0.62, 1.16], wspace=0.66
-    )
-    c_grid = def_panels[0, 0].subgridspec(
-        1, 2, width_ratios=[1.0, 0.045], wspace=0.22
-    )
+    def_panels = gs[1, :].subgridspec(1, 4, width_ratios=[0.90, 0.92, 0.62, 1.16], wspace=0.66)
+    c_grid = def_panels[0, 0].subgridspec(1, 2, width_ratios=[1.0, 0.045], wspace=0.22)
     ax_c_source = fig.add_subplot(c_grid[0, 0])
     letter_c = draw_figure7_c(ax_c_source, fig.add_subplot(c_grid[0, 1]))
 
@@ -1157,10 +1448,21 @@ def build_complete_figure(onset: pd.DataFrame, cross: pd.DataFrame,
     ]
 
     ij = gs[4, :].subgridspec(
-        2, 12,
+        2,
+        12,
         width_ratios=[
-            0.62, 0.62, 0.62, 0.17, 0.74, 0.52,
-            0.62, 0.62, 0.62, 0.17, 0.74, 0.08,
+            0.62,
+            0.62,
+            0.62,
+            0.17,
+            0.74,
+            0.52,
+            0.62,
+            0.62,
+            0.62,
+            0.17,
+            0.74,
+            0.08,
         ],
         hspace=0.48,
         wspace=0.04,
@@ -1178,7 +1480,7 @@ def build_complete_figure(onset: pd.DataFrame, cross: pd.DataFrame,
         ((4, 6), "Transition", "M", "Transition metrics", 1),
         ((6, 8), "Bout", "N", "Bout durations", 2),
     ]:
-        ax = fig.add_subplot(gs[5, columns[0]:columns[1]])
+        ax = fig.add_subplot(gs[5, columns[0] : columns[1]])
         letter_artists.append(
             (ax, draw_individual_overtime(ax, individual_time, panel, letter, title, ncol=ncol))
         )
@@ -1188,8 +1490,9 @@ def build_complete_figure(onset: pd.DataFrame, cross: pd.DataFrame,
     return fig
 
 
-def snap_to_left_margin(fig: plt.Figure, letters: list[plt.Text],
-                        reference_axes: list[plt.Axes]) -> None:
+def snap_to_left_margin(
+    fig: plt.Figure, letters: list[plt.Text], reference_axes: list[plt.Axes]
+) -> None:
     """Move hand-placed letters onto the left margin the aligned ones settled on.
 
     ``align_panel_letters`` puts every letter it is given in its own panel's
@@ -1222,26 +1525,12 @@ def snap_to_left_margin(fig: plt.Figure, letters: list[plt.Text],
 # --------------------------------------------------------------------------
 # report
 # --------------------------------------------------------------------------
-def write_report(onset: pd.DataFrame, cross: pd.DataFrame, head: pd.DataFrame,
-                 shap: pd.DataFrame, n_perm: int) -> None:
+def write_report(
+    onset: pd.DataFrame, cross: pd.DataFrame, head: pd.DataFrame, shap: pd.DataFrame, n_perm: int
+) -> None:
     onset = onset.copy()
     onset["auc_above_null_mean"] = onset["roc_auc"] - onset["null_mean"]
     combined = onset.loc[onset["feature_set"] == COMBINED].sort_values("horizon_min")
-    positive = onset.loc[onset["auc_above_null_mean"] > 0].copy()
-    first = combined.loc[combined["auc_above_null_mean"] > 0]
-
-    if first.empty:
-        verdict = (
-            "The combined behaviour-dynamics model never rises above the mean "
-            "shuffled-label baseline."
-        )
-    else:
-        h = first["horizon_min"].iloc[0]
-        verdict = (
-            f"The combined behaviour-dynamics model is already above the mean "
-            f"shuffled-label baseline at **{h:.1f} min**, with the largest margins "
-            f"after 5 min."
-        )
 
     lines = [
         SECTION,
@@ -1262,11 +1551,13 @@ def write_report(onset: pd.DataFrame, cross: pd.DataFrame, head: pd.DataFrame,
         "| ---: | ---: | ---: |",
     ]
     for _, r in combined.iterrows():
-        lines.append(
-            f"| {r['horizon_min']:.1f} | {int(r['n_features'])} | {r['roc_auc']:.3f} |"
-        )
-    lines += ["", "The combined behaviour-dynamics curve is above chance from 0.5 min, "
-              "with the clearest rise after 5 min.", ""]
+        lines.append(f"| {r['horizon_min']:.1f} | {int(r['n_features'])} | {r['roc_auc']:.3f} |")
+    lines += [
+        "",
+        "The combined behaviour-dynamics curve is above chance from 0.5 min, "
+        "with the clearest rise after 5 min.",
+        "",
+    ]
     lines += [
         "",
         "### Complete A4 Figure 7 layout",
@@ -1287,8 +1578,10 @@ def write_report(onset: pd.DataFrame, cross: pd.DataFrame, head: pd.DataFrame,
         "linear, so phi_ij = coef_j * z_ij is the closed-form Shapley value against a",
         "mean-centred background - no sampling and no `shap` dependency. Ranked by",
         "mean |phi|: "
-        + ", ".join(f"{r['behaviour']} ({r['mean_abs_shap']:.3f}, toward {r['direction']})"
-                    for _, r in shap.head(3).iterrows())
+        + ", ".join(
+            f"{r['behaviour']} ({r['mean_abs_shap']:.3f}, toward {r['direction']})"
+            for _, r in shap.head(3).iterrows()
+        )
         + ".",
         "",
         "**Caveat carried from the pre-shock work.** The label is built from the",
@@ -1307,7 +1600,7 @@ def write_report(onset: pd.DataFrame, cross: pd.DataFrame, head: pd.DataFrame,
     if SECTION in text:
         head_txt, rest = text.split(SECTION, 1)
         nxt = rest.find("\n## ")
-        tail = rest[nxt + 1:] if nxt != -1 else ""
+        tail = rest[nxt + 1 :] if nxt != -1 else ""
         text = head_txt + block + tail
     else:
         text = text.rstrip() + "\n\n" + block
@@ -1320,15 +1613,20 @@ def main() -> None:
     ap.add_argument("--repo", type=Path, default=None)
     ap.add_argument("--perms", type=int, default=N_PERM_DEFAULT)
     ap.add_argument("--no-report", action="store_true")
-    ap.add_argument("--recompute-onset", action="store_true",
-                    help="rerun onset permutations instead of reading tracked source data")
+    ap.add_argument(
+        "--recompute-onset",
+        action="store_true",
+        help="rerun onset permutations instead of reading tracked source data",
+    )
     args = ap.parse_args()
 
     root = tier1.repo_root(args.repo)
     labels = tier1.load_labels(root)
-    print(f"repo: {root}\nanimals: {len(labels)} "
-          f"({int(labels['target'].sum())} resilient)\n"
-          f"permutations per point: {args.perms}\n")
+    print(
+        f"repo: {root}\nanimals: {len(labels)} "
+        f"({int(labels['target'].sum())} resilient)\n"
+        f"permutations per point: {args.perms}\n"
+    )
 
     print("panel A - onset of prediction")
     onset_path = SOURCE_OUT / "figure7_prediction_onset.csv"
@@ -1345,10 +1643,13 @@ def main() -> None:
     print("\npanels B/C - held-out cohort and full-session LOOCV")
     cross = held_out_cohort(labels, root)
     head, head_test = full_session_loocv(labels, root)
-    pd.concat([
-        cross.assign(panel="B held-out cohort"),
-        head.assign(panel="C full-session LOOCV"),
-    ], ignore_index=True).to_csv(SOURCE_OUT / "figure7_full_session_auc.csv", index=False)
+    pd.concat(
+        [
+            cross.assign(panel="B held-out cohort"),
+            head.assign(panel="C full-session LOOCV"),
+        ],
+        ignore_index=True,
+    ).to_csv(SOURCE_OUT / "figure7_full_session_auc.csv", index=False)
     cross.to_csv(STATISTICS_DIR / "figure7_cross_cohort_auc.csv", index=False)
     head.to_csv(STATISTICS_DIR / "figure7_full_session_auc.csv", index=False)
 
@@ -1379,32 +1680,45 @@ def main() -> None:
         SOURCE_OUT / "figure7_predictor_timecourse.csv", index=False
     )
 
-    summary = pd.concat([
-        pd.DataFrame({
-            "panel": "A",
-            "measure": "classifier_accuracy",
-            "category": FIGURE7_CLASSES + ["Overall"],
-            "value": FIGURE7_ACCURACY,
-        }),
-        cross[["feature_set", "roc_auc"]]
-        .assign(panel="D", measure="held_out_cohort_auc")
-        .rename(columns={"feature_set": "category", "roc_auc": "value"})[
-            ["panel", "measure", "category", "value"]
+    summary = pd.concat(
+        [
+            pd.DataFrame(
+                {
+                    "panel": "A",
+                    "measure": "classifier_accuracy",
+                    "category": FIGURE7_CLASSES + ["Overall"],
+                    "value": FIGURE7_ACCURACY,
+                }
+            ),
+            cross[["feature_set", "roc_auc"]]
+            .assign(panel="D", measure="held_out_cohort_auc")
+            .rename(columns={"feature_set": "category", "roc_auc": "value"})[
+                ["panel", "measure", "category", "value"]
+            ],
+            head[["feature_set", "roc_auc"]]
+            .assign(panel="E", measure="full_session_auc")
+            .rename(columns={"feature_set": "category", "roc_auc": "value"})[
+                ["panel", "measure", "category", "value"]
+            ],
         ],
-        head[["feature_set", "roc_auc"]]
-        .assign(panel="E", measure="full_session_auc")
-        .rename(columns={"feature_set": "category", "roc_auc": "value"})[
-            ["panel", "measure", "category", "value"]
-        ],
-    ], ignore_index=True, sort=False)
+        ignore_index=True,
+        sort=False,
+    )
     summary.to_csv(SOURCE_OUT / "figure7.csv", index=False)
 
-    complete = build_complete_figure(onset, cross, head, shap, individual_time, labels,
-                                     cross_tests=cross_tests, head_test=head_test)
+    complete = build_complete_figure(
+        onset,
+        cross,
+        head,
+        shap,
+        individual_time,
+        labels,
+        cross_tests=cross_tests,
+        head_test=head_test,
+    )
     for ext in ("png", "pdf", "svg"):
         path = OUT / f"figure7.{ext}"
-        complete.savefig(path, dpi=400 if ext == "png" else None,
-                         facecolor="white")
+        complete.savefig(path, dpi=400 if ext == "png" else None, facecolor="white")
         print(f"wrote {path}")
     plt.close(complete)
 

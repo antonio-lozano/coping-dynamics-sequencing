@@ -6,6 +6,7 @@ a small file-level index for review and audit.
 
 Run: python scripts/derive_tables/freezing_predictions_light.py
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -13,7 +14,6 @@ import re
 from pathlib import Path
 
 import pandas as pd
-
 
 REPO = Path(__file__).resolve().parents[2]
 RAW_DIR = REPO / "data" / "raw"
@@ -72,7 +72,12 @@ def main() -> None:
     for path in sorted(PRED_DIR.glob("*_freezing_predictions_only.csv")):
         base = parse_base(path)
         animal_id = short_id(base)
-        group = group_map.get(base) or group_map.get(normalize(base)) or group_map.get(animal_id) or "Unknown"
+        group = (
+            group_map.get(base)
+            or group_map.get(normalize(base))
+            or group_map.get(animal_id)
+            or "Unknown"
+        )
         df = pd.read_csv(path)
         if FREEZING_COL not in df.columns:
             raise ValueError(f"Missing {FREEZING_COL!r} in {path}")

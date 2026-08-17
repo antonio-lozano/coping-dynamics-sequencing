@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Save an openpyxl workbook with run-independent bytes."""
+
 from __future__ import annotations
 
 import datetime
@@ -9,7 +10,6 @@ import tempfile
 import zipfile
 from pathlib import Path
 
-
 # The earliest instant a zip container can store. Stamping every archive entry
 # and the document properties with the same fixed instant makes rebuilding an
 # unchanged workbook a byte-level no-op, so MANIFEST.csv can treat the report
@@ -17,9 +17,7 @@ from pathlib import Path
 FIXED_INSTANT = datetime.datetime(1980, 1, 1)
 _CORE_PROPS = "docProps/core.xml"
 _STAMP = FIXED_INSTANT.strftime("%Y-%m-%dT%H:%M:%SZ")
-_DCTERMS = re.compile(
-    r"(<dcterms:(created|modified)[^>]*>)[^<]*(</dcterms:\2>)"
-)
+_DCTERMS = re.compile(r"(<dcterms:(created|modified)[^>]*>)[^<]*(</dcterms:\2>)")
 
 
 def save_workbook(workbook, output: Path) -> None:
@@ -38,9 +36,10 @@ def save_workbook(workbook, output: Path) -> None:
 def _rewrite_container(path: Path) -> None:
     with tempfile.NamedTemporaryFile(delete=False, dir=path.parent, suffix=".zip") as handle:
         temp = Path(handle.name)
-    with zipfile.ZipFile(path) as source, zipfile.ZipFile(
-        temp, "w", zipfile.ZIP_DEFLATED
-    ) as target:
+    with (
+        zipfile.ZipFile(path) as source,
+        zipfile.ZipFile(temp, "w", zipfile.ZIP_DEFLATED) as target,
+    ):
         for info in source.infolist():
             data = source.read(info.filename)
             if info.filename == _CORE_PROPS:

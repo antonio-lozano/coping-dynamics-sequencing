@@ -7,6 +7,7 @@ Kept out of ``src.plotting`` on purpose: that module calls
 grid lines onto any figure that imported it just for this helper.  Nothing here
 touches global matplotlib or seaborn state.
 """
+
 from __future__ import annotations
 
 import matplotlib.pyplot as plt
@@ -41,9 +42,7 @@ def align_panel_letters(
         # fall back to the tick labels to keep the letter clear of the panel.
         if label_box.width <= 0:
             boxes = [
-                t.get_window_extent(renderer=renderer)
-                for t in ax.get_yticklabels()
-                if t.get_text()
+                t.get_window_extent(renderer=renderer) for t in ax.get_yticklabels() if t.get_text()
             ]
             x_px = min((b.x0 for b in boxes), default=axes_box.x0)
         else:

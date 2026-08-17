@@ -10,6 +10,7 @@ Run:
     python scripts/audit_manuscript_results.py
     python scripts/audit_manuscript_results.py --manuscript path/to/manuscript.docx
 """
+
 from __future__ import annotations
 
 import argparse
@@ -24,7 +25,6 @@ from xml.etree import ElementTree
 
 import pandas as pd
 from scipy import stats
-
 
 ROOT = Path(__file__).resolve().parents[1]
 STATISTICS_DIR = ROOT / "statistics"
@@ -220,7 +220,10 @@ CLAIMS = [
         "Figure 5D",
         "Freeze time resilient vs vulnerable ELS",
         "statistics/fig5_timecourse_mixedlm.csv",
-        (("cluster", "Freeze"), ("parameter", "C(group_ext, Treatment('ELS'))[T.ELS resilient]:time_bin_numeric")),
+        (
+            ("cluster", "Freeze"),
+            ("parameter", "C(group_ext, Treatment('ELS'))[T.ELS resilient]:time_bin_numeric"),
+        ),
         "1.865",
         "0.249",
         "7.484",

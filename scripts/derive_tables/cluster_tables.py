@@ -1,10 +1,10 @@
 """Derive analysis-ready cluster tables from the raw 30 s syllable table."""
+
 from __future__ import annotations
 
 from pathlib import Path
 
 import pandas as pd
-
 
 REPO = Path(__file__).resolve().parents[2]
 RAW = REPO / "data" / "raw" / "syllable_usage_per_timebin_30s.csv"
@@ -89,7 +89,9 @@ def derive_cluster_timecourse(df: pd.DataFrame) -> pd.DataFrame:
 def derive_s0s28_timecourse(df: pd.DataFrame) -> pd.DataFrame:
     subset = df[df["Syllable"].isin([0, 28])].copy()
     collapsed = (
-        subset.groupby(["animal_id", "group", "experiment", "time_bin"], as_index=False)["Percentage"]
+        subset.groupby(["animal_id", "group", "experiment", "time_bin"], as_index=False)[
+            "Percentage"
+        ]
         .sum()
         .rename(columns={"Percentage": "pct_s0s28"})
     )

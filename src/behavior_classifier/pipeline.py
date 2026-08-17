@@ -169,9 +169,7 @@ def cross_validate(
     for train_idx, test_idx in cv.split(X, y):
         model = _make_model(random_state=random_state, **model_kwargs)
         sample_weight = (
-            deps["compute_sample_weight"]("balanced", y[train_idx])
-            if balanced_weights
-            else None
+            deps["compute_sample_weight"]("balanced", y[train_idx]) if balanced_weights else None
         )
         model.fit(X[train_idx], y[train_idx], sample_weight=sample_weight)
         pred[test_idx] = model.predict(X[test_idx])

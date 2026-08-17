@@ -15,11 +15,11 @@ import sys
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
@@ -27,8 +27,8 @@ if str(REPO_ROOT) not in sys.path:
 
 from src.config import (
     CLUSTER_FREQUENCY_CSV,
-    FIGURES_DIR,
     FIGURE_SOURCE_DATA_DIR,
+    FIGURES_DIR,
     STATISTICS_DIR,
     SYLLABLE_TIMEBIN_30S,
 )
@@ -168,7 +168,9 @@ def plot_bar_panel(ax: plt.Axes, total_summary: pd.DataFrame) -> plt.Text:
     x = np.arange(len(PANEL_ORDER))
     width = 0.34
     for offset, group in [(-width / 2, "Control"), (width / 2, "ELS")]:
-        data = total_summary[total_summary["group"] == group].set_index("cluster").reindex(PANEL_ORDER)
+        data = (
+            total_summary[total_summary["group"] == group].set_index("cluster").reindex(PANEL_ORDER)
+        )
         ax.bar(
             x + offset,
             data["mean"],
@@ -191,9 +193,22 @@ def plot_bar_panel(ax: plt.Axes, total_summary: pd.DataFrame) -> plt.Text:
         idx = PANEL_ORDER.index(cluster)
         data = total_summary[total_summary["cluster"] == cluster]
         y = float((data["mean"] + data["sem"]).max()) + 8
-        ax.plot([idx - width / 2, idx - width / 2, idx + width / 2, idx + width / 2], [y, y + 5, y + 5, y],
-                color=AXIS_COLOR, linewidth=0.8)
-        ax.text(idx, y + 7, "*", ha="center", va="bottom", color=AXIS_COLOR, fontsize=9, fontweight="bold")
+        ax.plot(
+            [idx - width / 2, idx - width / 2, idx + width / 2, idx + width / 2],
+            [y, y + 5, y + 5, y],
+            color=AXIS_COLOR,
+            linewidth=0.8,
+        )
+        ax.text(
+            idx,
+            y + 7,
+            "*",
+            ha="center",
+            va="bottom",
+            color=AXIS_COLOR,
+            fontsize=9,
+            fontweight="bold",
+        )
     style_axis(ax)
     return panel_letter(ax, "A", x=-0.10, y=1.10)
 
@@ -213,7 +228,9 @@ def plot_time_panel(
         x = gdata["time_min"].to_numpy(dtype=float)
         mean = gdata["mean"].to_numpy(dtype=float)
         err = gdata["sem"].to_numpy(dtype=float)
-        ax.plot(x, mean, color=COLORS[group], marker="o", markersize=2.3, linewidth=1.4, label=group)
+        ax.plot(
+            x, mean, color=COLORS[group], marker="o", markersize=2.3, linewidth=1.4, label=group
+        )
         ax.fill_between(x, mean - err, mean + err, color=COLORS[group], alpha=0.22, linewidth=0)
     ymax = Y_LIMITS[cluster]
     ax.set_title(cluster, fontsize=7, pad=5, y=1.075)
@@ -235,7 +252,9 @@ def plot_time_panel(
         ax.set_yticks(np.arange(0, 20.1, 2.5))
     else:
         ax.set_yticks(np.arange(0, ymax + 1, 10))
-    ax.legend(frameon=False, loc=legend_loc, fontsize=6.5, ncol=2, handlelength=1.2, columnspacing=0.5)
+    ax.legend(
+        frameon=False, loc=legend_loc, fontsize=6.5, ncol=2, handlelength=1.2, columnspacing=0.5
+    )
     if star:
         ax.text(
             4.0,
@@ -255,27 +274,33 @@ def plot_time_panel(
     return panel_letter(ax, letter)
 
 
-def compute_and_export_source_data(cluster_df: pd.DataFrame, time_summary: pd.DataFrame, total_summary: pd.DataFrame) -> None:
+def compute_and_export_source_data(
+    cluster_df: pd.DataFrame, time_summary: pd.DataFrame, total_summary: pd.DataFrame
+) -> None:
     """Compute Figure 3 source statistics and export to CSV."""
-    import statsmodels.formula.api as smf
     import statsmodels.api as sm
+    import statsmodels.formula.api as smf
 
     rows = []
 
     # Extract per-cluster, per-group summary statistics from total_summary
     for cluster in PANEL_ORDER:
         for group in ["Control", "ELS"]:
-            data = total_summary[(total_summary["cluster"] == cluster) & (total_summary["group"] == group)]
+            data = total_summary[
+                (total_summary["cluster"] == cluster) & (total_summary["group"] == group)
+            ]
             if not data.empty:
                 row = data.iloc[0]
-                rows.append({
-                    "metric": f"{cluster} {group} frequency",
-                    "cluster": cluster,
-                    "group": group,
-                    "mean_seconds": row["mean"],
-                    "sem_seconds": row["sem"],
-                    "n_animals": row["n"],
-                })
+                rows.append(
+                    {
+                        "metric": f"{cluster} {group} frequency",
+                        "cluster": cluster,
+                        "group": group,
+                        "mean_seconds": row["mean"],
+                        "sem_seconds": row["sem"],
+                        "n_animals": row["n"],
+                    }
+                )
 
     # Extract timecourse summaries (mean, SEM per time bin and group)
     for cluster in PANEL_ORDER:
@@ -285,14 +310,16 @@ def compute_and_export_source_data(cluster_df: pd.DataFrame, time_summary: pd.Da
         for group in ["Control", "ELS"]:
             group_time = cluster_time[cluster_time["group"] == group]
             if not group_time.empty:
-                rows.append({
-                    "metric": f"{cluster} {group} timecourse mean",
-                    "cluster": cluster,
-                    "group": group,
-                    "mean_pct": group_time["mean"].mean(),
-                    "sem_pct": group_time["sem"].mean(),
-                    "n_timebins": len(group_time),
-                })
+                rows.append(
+                    {
+                        "metric": f"{cluster} {group} timecourse mean",
+                        "cluster": cluster,
+                        "group": group,
+                        "mean_pct": group_time["mean"].mean(),
+                        "sem_pct": group_time["sem"].mean(),
+                        "n_timebins": len(group_time),
+                    }
+                )
 
     df = pd.DataFrame(rows)
     if not df.empty:
@@ -323,17 +350,19 @@ def compute_and_export_source_data(cluster_df: pd.DataFrame, time_summary: pd.Da
                 ).fit()
                 ci = model.conf_int()
                 for param in model.params.index:
-                    gee_rows.append({
-                        "figure": "3A",
-                        "cluster": cluster,
-                        "parameter": param,
-                        "beta": model.params[param],
-                        "se": model.bse[param],
-                        "z": model.tvalues[param],
-                        "p_value": model.pvalues[param],
-                        "ci_low": ci.loc[param, 0],
-                        "ci_high": ci.loc[param, 1],
-                    })
+                    gee_rows.append(
+                        {
+                            "figure": "3A",
+                            "cluster": cluster,
+                            "parameter": param,
+                            "beta": model.params[param],
+                            "se": model.bse[param],
+                            "z": model.tvalues[param],
+                            "p_value": model.pvalues[param],
+                            "ci_low": ci.loc[param, 0],
+                            "ci_high": ci.loc[param, 1],
+                        }
+                    )
             except Exception as e:
                 print(f"GEE NegBin failed for {cluster}: {e}")
     else:
@@ -349,11 +378,13 @@ def compute_and_export_source_data(cluster_df: pd.DataFrame, time_summary: pd.Da
     mm_frames: list[pd.DataFrame] = []
     for cluster in PANEL_ORDER:
         sub = cluster_df[cluster_df["cluster"] == cluster].copy()
-        sub = sub.rename(columns={
-            "Animal": "animal_id",
-            "Experiment": "experiment",
-            "time_bin": "time_bin_numeric",
-        })
+        sub = sub.rename(
+            columns={
+                "Animal": "animal_id",
+                "Experiment": "experiment",
+                "time_bin": "time_bin_numeric",
+            }
+        )
         try:
             results = fit_mixed_models(sub, "Percentage")
             results.insert(0, "cluster", cluster)
@@ -430,7 +461,9 @@ def main() -> None:
     print(f"Saved {pdf_path}")
     print(f"Saved {svg_path}")
     print(f"Saved {png_path}")
-    print(f"Animals used: {raw['Animal'].nunique()} ({raw.groupby(['Experiment', 'group'])['Animal'].nunique().to_dict()})")
+    print(
+        f"Animals used: {raw['Animal'].nunique()} ({raw.groupby(['Experiment', 'group'])['Animal'].nunique().to_dict()})"
+    )
 
     # Compute and export source data
     print("Computing Figure 3 source statistics...")

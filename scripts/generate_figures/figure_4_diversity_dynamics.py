@@ -10,37 +10,36 @@ assembles them into the manuscript Figure 4 layout.
 
 from __future__ import annotations
 
-import math
 import json
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use("Agg")
+import sys
+
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.patches import Rectangle
-from matplotlib.transforms import blended_transform_factory
 from matplotlib.ticker import FormatStrFormatter
+from matplotlib.transforms import blended_transform_factory
 from scipy.stats import entropy
-
-import sys
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.plotting import plot_chord_diagram
 from src.config import (
     CLUSTER_JSON,
-    FIGURES_DIR,
     FIGURE_SOURCE_DATA_DIR,
+    FIGURES_DIR,
     PROCESSED_DATA_DIR,
     STATISTICS_DIR,
     SYLLABLE_TIMEBIN_250MS,
 )
-from src.statistics import compute_diversity_metrics, compute_bout_duration
+from src.plotting import plot_chord_diagram
 
 plt.rcParams["axes.grid"] = False
 
@@ -109,7 +108,9 @@ def syllable_to_cluster() -> dict[int, str]:
     return out
 
 
-def load_sequences() -> tuple[pd.DataFrame, dict[str, list[str]], dict[str, list[str]], pd.DataFrame]:
+def load_sequences() -> tuple[
+    pd.DataFrame, dict[str, list[str]], dict[str, list[str]], pd.DataFrame
+]:
     raw = read_timebin_data()
     raw = raw.rename(columns={"Time Bin": "time_bin", "Condition": "group"})
     raw = raw[raw["group"].isin(["Control", "ELS"])].copy()
@@ -136,7 +137,9 @@ def load_sequences() -> tuple[pd.DataFrame, dict[str, list[str]], dict[str, list
     return pred, pred_sequences, full_sequences, meta
 
 
-def compute_frequency_metrics(sequences: dict[str, list[str]], meta: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+def compute_frequency_metrics(
+    sequences: dict[str, list[str]], meta: pd.DataFrame
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     rows = []
     usage_rows = []
     meta_map = meta.set_index("Animal").to_dict("index")
@@ -151,7 +154,10 @@ def compute_frequency_metrics(sequences: dict[str, list[str]], meta: pd.DataFram
         shannon = entropy(nonzero)
         evenness = shannon / np.log(len(nonzero)) if len(nonzero) else np.nan
         simpson = 1 - np.sum(p**2)
-        named_p = np.array([counts_map.get(cluster, 0) for cluster in order if str(cluster).strip() != ""], dtype=float)
+        named_p = np.array(
+            [counts_map.get(cluster, 0) for cluster in order if str(cluster).strip() != ""],
+            dtype=float,
+        )
         named_p = named_p / counts.sum()
         sorted_p = np.sort(named_p)[::-1]
         cum = np.cumsum(sorted_p)
@@ -168,7 +174,14 @@ def compute_frequency_metrics(sequences: dict[str, list[str]], meta: pd.DataFram
                 "cui": cui,
             }
         )
-        usage_rows.append({"Animal": animal, "group": info["group"], "Experiment": info["Experiment"], **dict(zip(order, p))})
+        usage_rows.append(
+            {
+                "Animal": animal,
+                "group": info["group"],
+                "Experiment": info["Experiment"],
+                **dict(zip(order, p)),
+            }
+        )
     return pd.DataFrame(rows), pd.DataFrame(usage_rows)
 
 
@@ -282,7 +295,11 @@ def determinism(seq: list[str], min_length: int = 2) -> float:
     total = 0
     diag_sum = 0
     for offset in range(-n + 1, n):
-        diag = arr[: n - abs(offset)] == arr[abs(offset) :] if offset >= 0 else arr[-offset:] == arr[: n + offset]
+        diag = (
+            arr[: n - abs(offset)] == arr[abs(offset) :]
+            if offset >= 0
+            else arr[-offset:] == arr[: n + offset]
+        )
         if offset == 0:
             total += int(diag.sum()) - n
         else:
@@ -312,7 +329,9 @@ def markov_entropy(seq: list[str], smoothing_factor: float = 0.01) -> float:
     counts += smoothing_factor
     probs = counts / counts.sum(axis=1, keepdims=True)
     value_counts = pd.Series(states).value_counts()
-    stationary = np.array([value_counts.get(state, 0) for state in unique_states], dtype=float) / len(states)
+    stationary = np.array(
+        [value_counts.get(state, 0) for state in unique_states], dtype=float
+    ) / len(states)
     inner = np.array([-np.sum(row[row > 0] * np.log2(row[row > 0])) for row in probs])
     return float(np.sum(stationary * inner))
 
@@ -341,7 +360,18 @@ def style_axis(ax: plt.Axes, labelsize: float = 5.5) -> None:
 
 
 def tag(ax: plt.Axes, letter: str, x: float = -0.16, y: float = 1.12) -> None:
-    ax.text(x, y, letter, transform=ax.transAxes, ha="center", va="top", fontsize=7.5, fontweight="bold", color=AXIS, clip_on=False)
+    ax.text(
+        x,
+        y,
+        letter,
+        transform=ax.transAxes,
+        ha="center",
+        va="top",
+        fontsize=7.5,
+        fontweight="bold",
+        color=AXIS,
+        clip_on=False,
+    )
 
 
 def add_events(ax: plt.Axes, y: float = 1.030, height: float = 0.074) -> None:
@@ -374,7 +404,10 @@ def add_events(ax: plt.Axes, y: float = 1.030, height: float = 0.074) -> None:
 
 
 def behavior_legend(ax: plt.Axes, y_anchor: float = -0.28) -> None:
-    handles = [plt.Line2D([0], [0], color=COLORS[c], linewidth=2.3, label=DISPLAY_LABELS[c]) for c in DISPLAY_ORDER]
+    handles = [
+        plt.Line2D([0], [0], color=COLORS[c], linewidth=2.3, label=DISPLAY_LABELS[c])
+        for c in DISPLAY_ORDER
+    ]
     ax.legend(
         handles=handles,
         loc="upper center",
@@ -453,11 +486,21 @@ def box_scatter(
     for i, group in enumerate(["Control", "ELS"]):
         values = df[df["group"] == group][y].dropna()
         color = PALETTE[group]
-        ax.boxplot(values, positions=[i], widths=0.48, patch_artist=True, showfliers=False,
-                   boxprops={"facecolor": (*mcolors.to_rgb(color), 0.15), "edgecolor": color, "linewidth": 0.55},
-                   whiskerprops={"color": color, "linewidth": 0.55},
-                   capprops={"color": color, "linewidth": 0.55},
-                   medianprops={"color": color, "linewidth": 0.70})
+        ax.boxplot(
+            values,
+            positions=[i],
+            widths=0.48,
+            patch_artist=True,
+            showfliers=False,
+            boxprops={
+                "facecolor": (*mcolors.to_rgb(color), 0.15),
+                "edgecolor": color,
+                "linewidth": 0.55,
+            },
+            whiskerprops={"color": color, "linewidth": 0.55},
+            capprops={"color": color, "linewidth": 0.55},
+            medianprops={"color": color, "linewidth": 0.70},
+        )
         rng = np.random.default_rng(42 + i)
         jitter = rng.normal(i, 0.024, len(values))
         display_values = values.to_numpy(dtype=float)
@@ -467,15 +510,34 @@ def box_scatter(
             display_values = display_values + rng.normal(0, yr * 0.006, len(values))
             if ylim:
                 display_values = np.clip(display_values, *ax.get_ylim())
-        ax.scatter(jitter, display_values, color=color, s=4.0, alpha=0.76, edgecolors="none", zorder=3)
+        ax.scatter(
+            jitter, display_values, color=color, s=4.0, alpha=0.76, edgecolors="none", zorder=3
+        )
     ax.set_xticks(positions)
     ax.set_xticklabels(["Control", "ELS"], fontsize=7.2)
     ax.set_ylabel(ylabel, fontsize=5.4, labelpad=2)
     ax.yaxis.set_label_coords(BOX_LABEL_X, 0.5)
     if star:
         trans = blended_transform_factory(ax.transData, ax.transAxes)
-        ax.plot([0.0, 0.0, 1.0, 1.0], [1.005, 1.025, 1.025, 1.005], color=AXIS, linewidth=0.45, transform=trans, clip_on=False)
-        ax.text(0.5, 1.018, "*", transform=trans, ha="center", va="bottom", fontsize=7.0, color=AXIS, clip_on=False)
+        ax.plot(
+            [0.0, 0.0, 1.0, 1.0],
+            [1.005, 1.025, 1.025, 1.005],
+            color=AXIS,
+            linewidth=0.45,
+            transform=trans,
+            clip_on=False,
+        )
+        ax.text(
+            0.5,
+            1.018,
+            "*",
+            transform=trans,
+            ha="center",
+            va="bottom",
+            fontsize=7.0,
+            color=AXIS,
+            clip_on=False,
+        )
     if yticks is not None:
         ax.set_yticks(yticks)
     if yfmt is not None:
@@ -486,7 +548,6 @@ def box_scatter(
 
 def plot_cumulative(ax: plt.Axes, usage: pd.DataFrame, letter: str) -> None:
     named_usage = usage.copy()
-    total_including_blank = named_usage[[col for col in named_usage.columns if col not in {"Animal", "group", "Experiment"}]].sum(axis=1)
     cols = [col for col in DISPLAY_ORDER if col in named_usage.columns]
     rank_order = named_usage[cols].sum().sort_values(ascending=False).index.tolist()
     x = np.arange(len(rank_order))
@@ -513,10 +574,20 @@ def plot_cumulative(ax: plt.Axes, usage: pd.DataFrame, letter: str) -> None:
     ax.set_ylim(0.4, 0.92)
     ax.set_yticks(np.arange(0.4, 1.0, 0.1))
     handles = [
-        plt.Line2D([0], [0], color=PALETTE[group], marker="o", markersize=2.0, linewidth=0.75, label=group)
+        plt.Line2D(
+            [0], [0], color=PALETTE[group], marker="o", markersize=2.0, linewidth=0.75, label=group
+        )
         for group in ["Control", "ELS"]
     ]
-    ax.legend(handles=handles, frameon=False, fontsize=5.4, loc="lower right", ncol=2, columnspacing=0.9, handletextpad=0.35)
+    ax.legend(
+        handles=handles,
+        frameon=False,
+        fontsize=5.4,
+        loc="lower right",
+        ncol=2,
+        columnspacing=0.9,
+        handletextpad=0.35,
+    )
     style_axis(ax, labelsize=5.4)
     ax.spines[["top", "right"]].set_visible(True)
     for spine in ["top", "right"]:
@@ -540,7 +611,9 @@ def plot_group_cumulative(ax: plt.Axes, usage: pd.DataFrame, group: str, letter:
     tag(ax, letter, x=-0.16)
 
 
-def plot_chord(ax: plt.Axes, sequences: dict[str, list[str]], meta: pd.DataFrame, group: str, letter: str) -> None:
+def plot_chord(
+    ax: plt.Axes, sequences: dict[str, list[str]], meta: pd.DataFrame, group: str, letter: str
+) -> None:
     mats = []
     group_map = meta.set_index("Animal")["group"].to_dict()
     for animal, seq in sequences.items():
@@ -599,7 +672,9 @@ def expand_axes_left(axes: list[plt.Axes], amount: float) -> None:
         ax.set_position([pos.x0 - amount, pos.y0, pos.width + amount, pos.height])
 
 
-def export_source_data(metrics: pd.DataFrame, bouts: pd.DataFrame, transitions: pd.DataFrame) -> None:
+def export_source_data(
+    metrics: pd.DataFrame, bouts: pd.DataFrame, transitions: pd.DataFrame
+) -> None:
     """Export Figure 4 source data: diversity metrics, bout durations, and transitions."""
     import statsmodels.formula.api as smf
 
@@ -611,15 +686,17 @@ def export_source_data(metrics: pd.DataFrame, bouts: pd.DataFrame, transitions: 
             for group in ["Control", "ELS"]:
                 data = metrics[metrics["group"] == group][metric_name]
                 if len(data) > 0:
-                    rows.append({
-                        "metric_category": "diversity",
-                        "metric": metric_name,
-                        "group": group,
-                        "mean": data.mean(),
-                        "std": data.std(),
-                        "sem": data.sem(),
-                        "n": len(data),
-                    })
+                    rows.append(
+                        {
+                            "metric_category": "diversity",
+                            "metric": metric_name,
+                            "group": group,
+                            "mean": data.mean(),
+                            "std": data.std(),
+                            "sem": data.sem(),
+                            "n": len(data),
+                        }
+                    )
 
     # Descriptive stats: bout durations (per cluster)
     for cluster in ["Freezing", "Sniffing", "Grooming", "Turn", "Locomotion", "Climbing", "Jump"]:
@@ -628,15 +705,17 @@ def export_source_data(metrics: pd.DataFrame, bouts: pd.DataFrame, transitions: 
             for group in ["Control", "ELS"]:
                 group_bouts = cluster_bouts[cluster_bouts["group"] == group]["bout_duration"]
                 if len(group_bouts) > 0:
-                    rows.append({
-                        "metric_category": "bout_duration",
-                        "metric": cluster,
-                        "group": group,
-                        "mean": group_bouts.mean(),
-                        "std": group_bouts.std(),
-                        "sem": group_bouts.sem(),
-                        "n": len(group_bouts),
-                    })
+                    rows.append(
+                        {
+                            "metric_category": "bout_duration",
+                            "metric": cluster,
+                            "group": group,
+                            "mean": group_bouts.mean(),
+                            "std": group_bouts.std(),
+                            "sem": group_bouts.sem(),
+                            "n": len(group_bouts),
+                        }
+                    )
 
     # Descriptive stats: transition metrics
     for metric_name in ["lz", "recurrence", "determinism", "markov"]:
@@ -644,15 +723,17 @@ def export_source_data(metrics: pd.DataFrame, bouts: pd.DataFrame, transitions: 
             for group in ["Control", "ELS"]:
                 data = transitions[transitions["group"] == group][metric_name]
                 if len(data) > 0:
-                    rows.append({
-                        "metric_category": "transition",
-                        "metric": metric_name,
-                        "group": group,
-                        "mean": data.mean(),
-                        "std": data.std(),
-                        "sem": data.sem(),
-                        "n": len(data),
-                    })
+                    rows.append(
+                        {
+                            "metric_category": "transition",
+                            "metric": metric_name,
+                            "group": group,
+                            "mean": data.mean(),
+                            "std": data.std(),
+                            "sem": data.sem(),
+                            "n": len(data),
+                        }
+                    )
 
     df = pd.DataFrame(rows)
     if not df.empty:
@@ -679,17 +760,19 @@ def export_source_data(metrics: pd.DataFrame, bouts: pd.DataFrame, transitions: 
             model = smf.mixedlm(formula, sub, groups=sub["Animal"]).fit(reml=False)
             pk = "Condition[T.ELS]"
             conf = model.conf_int()
-            div_rows.append({
-                "metric": metric_name,
-                "parameter": pk,
-                "coef": float(model.params[pk]),
-                "se": float(model.bse[pk]),
-                "z": float(model.tvalues[pk]),
-                "p_value": float(model.pvalues[pk]),
-                "ci_low": float(conf.loc[pk, 0]),
-                "ci_high": float(conf.loc[pk, 1]),
-                "n_obs": int(model.nobs),
-            })
+            div_rows.append(
+                {
+                    "metric": metric_name,
+                    "parameter": pk,
+                    "coef": float(model.params[pk]),
+                    "se": float(model.bse[pk]),
+                    "z": float(model.tvalues[pk]),
+                    "p_value": float(model.pvalues[pk]),
+                    "ci_low": float(conf.loc[pk, 0]),
+                    "ci_high": float(conf.loc[pk, 1]),
+                    "n_obs": int(model.nobs),
+                }
+            )
         except Exception as e:
             print(f"MixedLM failed for {metric_name}: {e}")
     if div_rows:
@@ -716,17 +799,19 @@ def export_source_data(metrics: pd.DataFrame, bouts: pd.DataFrame, transitions: 
             model = smf.mixedlm(formula, sub, groups=sub["Animal"]).fit(reml=False)
             pk = "Condition[T.ELS]"
             conf = model.conf_int()
-            bout_rows.append({
-                "cluster": cluster,
-                "parameter": pk,
-                "coef": float(model.params[pk]),
-                "se": float(model.bse[pk]),
-                "z": float(model.tvalues[pk]),
-                "p_value": float(model.pvalues[pk]),
-                "ci_low": float(conf.loc[pk, 0]),
-                "ci_high": float(conf.loc[pk, 1]),
-                "n_obs": int(model.nobs),
-            })
+            bout_rows.append(
+                {
+                    "cluster": cluster,
+                    "parameter": pk,
+                    "coef": float(model.params[pk]),
+                    "se": float(model.bse[pk]),
+                    "z": float(model.tvalues[pk]),
+                    "p_value": float(model.pvalues[pk]),
+                    "ci_low": float(conf.loc[pk, 0]),
+                    "ci_high": float(conf.loc[pk, 1]),
+                    "n_obs": int(model.nobs),
+                }
+            )
         except Exception as e:
             print(f"MixedLM failed for {cluster} bouts: {e}")
     if bout_rows:
@@ -748,17 +833,19 @@ def export_source_data(metrics: pd.DataFrame, bouts: pd.DataFrame, transitions: 
             model = smf.mixedlm(formula, sub, groups=sub["Animal"]).fit(reml=False)
             pk = "Condition[T.ELS]"
             conf = model.conf_int()
-            trans_rows.append({
-                "metric": metric_name,
-                "parameter": pk,
-                "coef": float(model.params[pk]),
-                "se": float(model.bse[pk]),
-                "z": float(model.tvalues[pk]),
-                "p_value": float(model.pvalues[pk]),
-                "ci_low": float(conf.loc[pk, 0]),
-                "ci_high": float(conf.loc[pk, 1]),
-                "n_obs": int(model.nobs),
-            })
+            trans_rows.append(
+                {
+                    "metric": metric_name,
+                    "parameter": pk,
+                    "coef": float(model.params[pk]),
+                    "se": float(model.bse[pk]),
+                    "z": float(model.tvalues[pk]),
+                    "p_value": float(model.pvalues[pk]),
+                    "ci_low": float(conf.loc[pk, 0]),
+                    "ci_high": float(conf.loc[pk, 1]),
+                    "n_obs": int(model.nobs),
+                }
+            )
         except Exception as e:
             print(f"MixedLM failed for {metric_name}: {e}")
     if trans_rows:
@@ -804,14 +891,56 @@ def main() -> None:
 
     freq_grid = gs[2, 0:4].subgridspec(2, 2, hspace=0.22, wspace=0.52)
     box_axes: list[plt.Axes] = []
-    axE = fig.add_subplot(freq_grid[0, 0]); box_axes.append(axE)
-    axF = fig.add_subplot(freq_grid[0, 1]); box_axes.append(axF)
-    axG = fig.add_subplot(freq_grid[1, 0]); box_axes.append(axG)
-    axH = fig.add_subplot(freq_grid[1, 1]); box_axes.append(axH)
-    box_scatter(axE, metrics, "simpson", "Simpson index", "E", (0.58, 0.80), yticks=[0.60, 0.65, 0.70, 0.75, 0.80], yfmt="%.2f", star=False)
-    box_scatter(axF, metrics, "shannon", "Shannon entropy index", "F", (1.20, 1.65), yticks=np.arange(1.20, 1.66, 0.05).round(2).tolist(), yfmt="%.2f")
-    box_scatter(axG, metrics, "evenness", "Evenness index", "G", (0.58, 0.85), yticks=[0.60, 0.65, 0.70, 0.75, 0.80, 0.85], yfmt="%.2f")
-    box_scatter(axH, metrics, "cui", "Cumulative usage index", "H", (-0.25, 0.60), yticks=np.arange(-0.2, 0.61, 0.1).round(1).tolist(), yfmt="%.1f", star=True)
+    axE = fig.add_subplot(freq_grid[0, 0])
+    box_axes.append(axE)
+    axF = fig.add_subplot(freq_grid[0, 1])
+    box_axes.append(axF)
+    axG = fig.add_subplot(freq_grid[1, 0])
+    box_axes.append(axG)
+    axH = fig.add_subplot(freq_grid[1, 1])
+    box_axes.append(axH)
+    box_scatter(
+        axE,
+        metrics,
+        "simpson",
+        "Simpson index",
+        "E",
+        (0.58, 0.80),
+        yticks=[0.60, 0.65, 0.70, 0.75, 0.80],
+        yfmt="%.2f",
+        star=False,
+    )
+    box_scatter(
+        axF,
+        metrics,
+        "shannon",
+        "Shannon entropy index",
+        "F",
+        (1.20, 1.65),
+        yticks=np.arange(1.20, 1.66, 0.05).round(2).tolist(),
+        yfmt="%.2f",
+    )
+    box_scatter(
+        axG,
+        metrics,
+        "evenness",
+        "Evenness index",
+        "G",
+        (0.58, 0.85),
+        yticks=[0.60, 0.65, 0.70, 0.75, 0.80, 0.85],
+        yfmt="%.2f",
+    )
+    box_scatter(
+        axH,
+        metrics,
+        "cui",
+        "Cumulative usage index",
+        "H",
+        (-0.25, 0.60),
+        yticks=np.arange(-0.2, 0.61, 0.1).round(1).tolist(),
+        yfmt="%.1f",
+        star=True,
+    )
     axI = fig.add_subplot(gs[2, 5:10])
     plot_cumulative(axI, usage, "I")
     shift_axes([axI], dx=0.016)
@@ -829,18 +958,77 @@ def main() -> None:
     for ax_i, (label, data, ylim, yticks, yfmt, star) in enumerate(
         [
             ("Overall", overall, (0, 2.0), [0, 0.5, 1.0, 1.5, 2.0], "%.1f", False),
-            ("Freeze", cluster_means[cluster_means["cluster"] == "Freezing"], (0, 2.0), [0, 0.5, 1.0, 1.5, 2.0], "%.1f", True),
-            ("Sniff", cluster_means[cluster_means["cluster"] == "Sniffing"], (0, 4.0), [0, 1, 2, 3, 4], "%.0f", True),
-            ("Groom", cluster_means[cluster_means["cluster"] == "Grooming"], (0, 0.6), [0, 0.2, 0.4, 0.6], "%.1f", False),
-            ("Turn", cluster_means[cluster_means["cluster"] == "Turn"], (0, 2.5), [0, 0.5, 1.0, 1.5, 2.0, 2.5], "%.1f", True),
-            ("Locomotion", cluster_means[cluster_means["cluster"] == "Locomotion"], (0, 0.85), [0, 0.2, 0.4, 0.6, 0.8], "%.1f", False),
-            ("Climb", cluster_means[cluster_means["cluster"] == "Climbing"], (0, 2.0), [0, 0.5, 1.0, 1.5, 2.0], "%.1f", False),
-            ("Jump", cluster_means[cluster_means["cluster"] == "Jump"], (0, 1.25), [0, 0.25, 0.50, 0.75, 1.00, 1.25], "%.2f", False),
+            (
+                "Freeze",
+                cluster_means[cluster_means["cluster"] == "Freezing"],
+                (0, 2.0),
+                [0, 0.5, 1.0, 1.5, 2.0],
+                "%.1f",
+                True,
+            ),
+            (
+                "Sniff",
+                cluster_means[cluster_means["cluster"] == "Sniffing"],
+                (0, 4.0),
+                [0, 1, 2, 3, 4],
+                "%.0f",
+                True,
+            ),
+            (
+                "Groom",
+                cluster_means[cluster_means["cluster"] == "Grooming"],
+                (0, 0.6),
+                [0, 0.2, 0.4, 0.6],
+                "%.1f",
+                False,
+            ),
+            (
+                "Turn",
+                cluster_means[cluster_means["cluster"] == "Turn"],
+                (0, 2.5),
+                [0, 0.5, 1.0, 1.5, 2.0, 2.5],
+                "%.1f",
+                True,
+            ),
+            (
+                "Locomotion",
+                cluster_means[cluster_means["cluster"] == "Locomotion"],
+                (0, 0.85),
+                [0, 0.2, 0.4, 0.6, 0.8],
+                "%.1f",
+                False,
+            ),
+            (
+                "Climb",
+                cluster_means[cluster_means["cluster"] == "Climbing"],
+                (0, 2.0),
+                [0, 0.5, 1.0, 1.5, 2.0],
+                "%.1f",
+                False,
+            ),
+            (
+                "Jump",
+                cluster_means[cluster_means["cluster"] == "Jump"],
+                (0, 1.25),
+                [0, 0.25, 0.50, 0.75, 1.00, 1.25],
+                "%.2f",
+                False,
+            ),
         ]
     ):
         ax = fig.add_subplot(bout_grid[ax_i])
         box_axes.append(ax)
-        box_scatter(ax, data.rename(columns={"bout_duration": "value"}), "value", "Mean Bout Duration (s)", chr(ord("J") + ax_i), ylim, yticks=yticks, yfmt=yfmt, star=star)
+        box_scatter(
+            ax,
+            data.rename(columns={"bout_duration": "value"}),
+            "value",
+            "Mean Bout Duration (s)",
+            chr(ord("J") + ax_i),
+            ylim,
+            yticks=yticks,
+            yfmt=yfmt,
+            star=star,
+        )
         ax.set_title(label, fontsize=6.4, color=AXIS, pad=10)
 
     axR = fig.add_subplot(gs[4, 0:5])
@@ -850,14 +1038,57 @@ def main() -> None:
     shift_axes([axR], dx=-0.060)
     shift_axes([axS], dx=-0.085)
     metric_grid = gs[4, 10:14].subgridspec(2, 2, hspace=0.42, wspace=0.58)
-    axT = fig.add_subplot(metric_grid[0, 0]); box_axes.append(axT)
-    axU = fig.add_subplot(metric_grid[0, 1]); box_axes.append(axU)
-    axV = fig.add_subplot(metric_grid[1, 0]); box_axes.append(axV)
-    axW = fig.add_subplot(metric_grid[1, 1]); box_axes.append(axW)
-    box_scatter(axT, transitions, "lz", "Lempel-Ziv complexity", "T", (100, 260), yticks=list(range(100, 261, 20)), yfmt="%.0f")
-    box_scatter(axU, transitions, "recurrence", "Recurrence Rate", "U", (0.24, 0.43), yticks=[0.250, 0.275, 0.300, 0.325, 0.350, 0.375, 0.400, 0.430], yfmt="%.3f", star=False)
-    box_scatter(axV, transitions, "determinism", "Determinism", "V", (0.72, 0.90), yticks=np.arange(0.700, 0.901, 0.025).round(3).tolist(), yfmt="%.3f", star=True)
-    box_scatter(axW, transitions, "markov", "Markov Entropy", "W", (0.7, 1.5), yticks=np.arange(0.7, 1.51, 0.1).round(1).tolist(), yfmt="%.1f", star=False)
+    axT = fig.add_subplot(metric_grid[0, 0])
+    box_axes.append(axT)
+    axU = fig.add_subplot(metric_grid[0, 1])
+    box_axes.append(axU)
+    axV = fig.add_subplot(metric_grid[1, 0])
+    box_axes.append(axV)
+    axW = fig.add_subplot(metric_grid[1, 1])
+    box_axes.append(axW)
+    box_scatter(
+        axT,
+        transitions,
+        "lz",
+        "Lempel-Ziv complexity",
+        "T",
+        (100, 260),
+        yticks=list(range(100, 261, 20)),
+        yfmt="%.0f",
+    )
+    box_scatter(
+        axU,
+        transitions,
+        "recurrence",
+        "Recurrence Rate",
+        "U",
+        (0.24, 0.43),
+        yticks=[0.250, 0.275, 0.300, 0.325, 0.350, 0.375, 0.400, 0.430],
+        yfmt="%.3f",
+        star=False,
+    )
+    box_scatter(
+        axV,
+        transitions,
+        "determinism",
+        "Determinism",
+        "V",
+        (0.72, 0.90),
+        yticks=np.arange(0.700, 0.901, 0.025).round(3).tolist(),
+        yfmt="%.3f",
+        star=True,
+    )
+    box_scatter(
+        axW,
+        transitions,
+        "markov",
+        "Markov Entropy",
+        "W",
+        (0.7, 1.5),
+        yticks=np.arange(0.7, 1.51, 0.1).round(1).tolist(),
+        yfmt="%.1f",
+        star=False,
+    )
 
     equalize_boxplot_heights(box_axes)
 

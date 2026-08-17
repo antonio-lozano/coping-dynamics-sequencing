@@ -6,6 +6,7 @@ submission.
 
 Run: python scripts/build_raw_data_workbook.py
 """
+
 from __future__ import annotations
 
 import argparse
@@ -23,7 +24,6 @@ from openpyxl.utils import get_column_letter
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from save_deterministic import save_workbook  # noqa: E402
-
 
 REPO = Path(__file__).resolve().parents[1]
 OUT = REPO / "report" / "raw_data.xlsx"
@@ -224,7 +224,10 @@ def animal_from_name(name: str) -> str:
 
 
 def experiment_map() -> pd.DataFrame:
-    usage = pd.read_csv(RAW_DIR / "syllable_usage_per_timebin_30s.csv", usecols=["Animal", "Condition", "Experiment"])
+    usage = pd.read_csv(
+        RAW_DIR / "syllable_usage_per_timebin_30s.csv",
+        usecols=["Animal", "Condition", "Experiment"],
+    )
     out = usage.drop_duplicates().rename(columns={"Animal": "animal_id", "Condition": "group"})
     out["animal_id"] = out["animal_id"].map(format_animal)
     out["project"] = out["Experiment"].map(PROJECT_LABELS)
@@ -274,7 +277,9 @@ def display_column_name(column: object) -> str:
 def standardize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """Apply submission-facing metadata, headings, and behavior labels."""
     out = df.copy()
-    path_pattern = re.compile(r"(?:[A-Za-z]:[\\/]|(?:^|\s)[\\/](?:Users|home|mnt|data)[\\/])", re.IGNORECASE)
+    path_pattern = re.compile(
+        r"(?:[A-Za-z]:[\\/]|(?:^|\s)[\\/](?:Users|home|mnt|data)[\\/])", re.IGNORECASE
+    )
     drop_columns = []
     for column in out.columns:
         if str(column).strip().lower() == "recording":
@@ -286,7 +291,11 @@ def standardize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
                 drop_columns.append(column)
     out = out.drop(columns=drop_columns)
     out = out.drop(
-        columns=[column for column in ["figure_panel_current_export", "Figure Panel"] if column in out.columns]
+        columns=[
+            column
+            for column in ["figure_panel_current_export", "Figure Panel"]
+            if column in out.columns
+        ]
     )
     experiment_col = next((col for col in ["Experiment", "experiment"] if col in out.columns), None)
     has_dataset = any(col in out.columns for col in ["Dataset", "Citation", "project"])
@@ -309,7 +318,9 @@ def standardize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     out = out[metadata + remaining]
     if "Animal" in out.columns:
         out["__animal_sort"] = pd.to_numeric(out["Animal"], errors="coerce")
-        out = out.sort_values("__animal_sort", kind="stable", na_position="last").drop(columns="__animal_sort")
+        out = out.sort_values("__animal_sort", kind="stable", na_position="last").drop(
+            columns="__animal_sort"
+        )
     return out.reset_index(drop=True)
 
 
@@ -330,7 +341,9 @@ def style_widths(ws: openpyxl.worksheet.worksheet.Worksheet) -> None:
         ws.column_dimensions[letter].width = max_len + 2
 
 
-def write_titled_dataframe(wb: openpyxl.Workbook, sheet_name: str, title: str, df: pd.DataFrame) -> None:
+def write_titled_dataframe(
+    wb: openpyxl.Workbook, sheet_name: str, title: str, df: pd.DataFrame
+) -> None:
     df = standardize_dataframe(df)
     ws = wb.create_sheet(sheet_name[:31])
     ncols = max(len(df.columns), 1)
@@ -358,9 +371,15 @@ def write_titled_dataframe(wb: openpyxl.Workbook, sheet_name: str, title: str, d
     style_widths(ws)
 
 
-def pivot_time_table(df: pd.DataFrame, index_cols: list[str], time_col: str, value_col: str) -> pd.DataFrame:
-    wide = df.pivot_table(index=index_cols, columns=time_col, values=value_col, aggfunc="first").reset_index()
-    time_cols = sorted([col for col in wide.columns if isinstance(col, (int, float, np.integer, np.floating))])
+def pivot_time_table(
+    df: pd.DataFrame, index_cols: list[str], time_col: str, value_col: str
+) -> pd.DataFrame:
+    wide = df.pivot_table(
+        index=index_cols, columns=time_col, values=value_col, aggfunc="first"
+    ).reset_index()
+    time_cols = sorted(
+        [col for col in wide.columns if isinstance(col, (int, float, np.integer, np.floating))]
+    )
     rename = {col: f"t_{int(col):03d}s" for col in time_cols}
     wide = wide.rename(columns=rename)
     return wide[index_cols + [rename[col] for col in time_cols]]
@@ -376,8 +395,12 @@ def freezing_ground_truth() -> pd.DataFrame:
         .rename(columns={"freezing": "freezing_percent"})
     )
     grouped["freezing_percent"] *= 100
-    grouped = grouped.merge(experiment_map()[["animal_id", "Experiment", "project"]], on="animal_id", how="inner")
-    wide = pivot_time_table(grouped, ["animal_id", "group", "project", "Experiment"], "time_s", "freezing_percent")
+    grouped = grouped.merge(
+        experiment_map()[["animal_id", "Experiment", "project"]], on="animal_id", how="inner"
+    )
+    wide = pivot_time_table(
+        grouped, ["animal_id", "group", "project", "Experiment"], "time_s", "freezing_percent"
+    )
     wide = wide.rename(columns={"animal_id": "Animal", "group": "Group", "project": "Citation"})
     return ordered(wide, [("Animal", "astr")])
 
@@ -393,19 +416,28 @@ def cluster_frequency() -> pd.DataFrame:
     # those zero rows, so reindex to the full grid before writing.
     meta = df[["animal_id", "group", "experiment"]].drop_duplicates()
     grid = meta.merge(pd.DataFrame({"cluster": CLUSTER_ORDER}), how="cross")
-    df = grid.merge(df[["animal_id", "cluster", "frequency_seconds"]], on=["animal_id", "cluster"], how="left")
+    df = grid.merge(
+        df[["animal_id", "cluster", "frequency_seconds"]], on=["animal_id", "cluster"], how="left"
+    )
     df["frequency_seconds"] = df["frequency_seconds"].fillna(0.0)
     df["project"] = df["experiment"].map(PROJECT_LABELS)
     df = df[["animal_id", "group", "project", "experiment", "cluster", "frequency_seconds"]]
-    return ordered(df, [("experiment", "num"), ("group", "group"), ("animal_id", "anum"), ("cluster", "str")])
+    return ordered(
+        df, [("experiment", "num"), ("group", "group"), ("animal_id", "anum"), ("cluster", "str")]
+    )
 
 
 def cluster_timecourse() -> pd.DataFrame:
     df = pd.read_csv(PROCESSED_DIR / "cluster_timecourse_per_animal.csv")
     df["animal_id"] = df["animal_id"].map(format_animal)
     df["project"] = df["experiment"].map(PROJECT_LABELS)
-    wide = pivot_time_table(df, ["animal_id", "group", "project", "experiment", "cluster"], "time_s", "pct")
-    return wide.sort_values(["experiment", "animal_id", "cluster"], key=lambda s: s.map(sort_key) if s.name == "animal_id" else s)
+    wide = pivot_time_table(
+        df, ["animal_id", "group", "project", "experiment", "cluster"], "time_s", "pct"
+    )
+    return wide.sort_values(
+        ["experiment", "animal_id", "cluster"],
+        key=lambda s: s.map(sort_key) if s.name == "animal_id" else s,
+    )
 
 
 def fig4_frequency_metrics() -> pd.DataFrame:
@@ -421,7 +453,17 @@ def fig4_frequency_metrics() -> pd.DataFrame:
             "cui": "cumulative_usage_index",
         }
     )
-    df = df[["animal_id", "group", "experiment", "simpson_index", "shannon_entropy_index", "evenness_index", "cumulative_usage_index"]]
+    df = df[
+        [
+            "animal_id",
+            "group",
+            "experiment",
+            "simpson_index",
+            "shannon_entropy_index",
+            "evenness_index",
+            "cumulative_usage_index",
+        ]
+    ]
     return ordered(df, [("animal_id", "astr")])
 
 
@@ -431,7 +473,12 @@ def fig4_usage_profile() -> pd.DataFrame:
 
     df = pd.read_csv(PROCESSED_DIR / "cluster_frequency_per_animal.csv")
     df["animal_id"] = df["animal_id"].map(format_animal)
-    label_map = {"Climb": "Climbing", "Freeze": "Freezing", "Groom": "Grooming", "Sniff": "Sniffing"}
+    label_map = {
+        "Climb": "Climbing",
+        "Freeze": "Freezing",
+        "Groom": "Grooming",
+        "Sniff": "Sniffing",
+    }
     df["cluster"] = df["cluster"].replace(label_map)
     wide = df.pivot_table(
         index=["animal_id", "group", "experiment"],
@@ -464,12 +511,20 @@ def fig4_usage_profile() -> pd.DataFrame:
 
 def fig4_bout_duration() -> pd.DataFrame:
     overall = pd.read_csv(STATS_DIR / "fig4_bout_overall_per_animal.csv").rename(
-        columns={"Animal": "animal_id", "Experiment": "experiment", "bout_mean": "bout_duration_seconds"}
+        columns={
+            "Animal": "animal_id",
+            "Experiment": "experiment",
+            "bout_mean": "bout_duration_seconds",
+        }
     )
     overall["figure_panel_current_export"] = "J"
     overall["cluster"] = "Overall"
     clusters = pd.read_csv(STATS_DIR / "fig4_bout_cluster_per_animal.csv").rename(
-        columns={"Animal": "animal_id", "Experiment": "experiment", "bout_duration": "bout_duration_seconds"}
+        columns={
+            "Animal": "animal_id",
+            "Experiment": "experiment",
+            "bout_duration": "bout_duration_seconds",
+        }
     )
     panel_map = {
         "Freezing": "K",
@@ -483,8 +538,25 @@ def fig4_bout_duration() -> pd.DataFrame:
     clusters["figure_panel_current_export"] = clusters["cluster"].map(panel_map)
     out = pd.concat([overall, clusters], ignore_index=True)
     out["animal_id"] = out["animal_id"].map(format_animal)
-    out = out[["figure_panel_current_export", "animal_id", "group", "experiment", "cluster", "bout_duration_seconds"]]
-    return ordered(out, [("figure_panel_current_export", "str"), ("experiment", "num"), ("group", "group"), ("animal_id", "astr")])
+    out = out[
+        [
+            "figure_panel_current_export",
+            "animal_id",
+            "group",
+            "experiment",
+            "cluster",
+            "bout_duration_seconds",
+        ]
+    ]
+    return ordered(
+        out,
+        [
+            ("figure_panel_current_export", "str"),
+            ("experiment", "num"),
+            ("group", "group"),
+            ("animal_id", "astr"),
+        ],
+    )
 
 
 def fig4_transition_metrics() -> pd.DataFrame:
@@ -500,12 +572,24 @@ def fig4_transition_metrics() -> pd.DataFrame:
             "markov": "markov_entropy",
         }
     )
-    df = df[["animal_id", "group", "experiment", "lempel_ziv_complexity", "recurrence_rate", "determinism", "markov_entropy"]]
+    df = df[
+        [
+            "animal_id",
+            "group",
+            "experiment",
+            "lempel_ziv_complexity",
+            "recurrence_rate",
+            "determinism",
+            "markov_entropy",
+        ]
+    ]
     return ordered(df, [("animal_id", "astr")])
 
 
 def load_fig4_module():
-    spec = importlib.util.spec_from_file_location("fig4", REPO / "scripts" / "generate_figures" / "figure_4_diversity_dynamics.py")
+    spec = importlib.util.spec_from_file_location(
+        "fig4", REPO / "scripts" / "generate_figures" / "figure_4_diversity_dynamics.py"
+    )
     if spec is None or spec.loader is None:
         raise RuntimeError("Could not load Figure 4 script")
     module = importlib.util.module_from_spec(spec)
@@ -526,7 +610,11 @@ def fig4_transition_chords() -> pd.DataFrame:
             seq = full_sequences.get(animal)
             if seq:
                 mats.append(fig4.transition_matrix_flow(seq))
-        mat = np.mean(mats, axis=0) if mats else np.zeros((len(fig4.DISPLAY_ORDER), len(fig4.DISPLAY_ORDER)))
+        mat = (
+            np.mean(mats, axis=0)
+            if mats
+            else np.zeros((len(fig4.DISPLAY_ORDER), len(fig4.DISPLAY_ORDER)))
+        )
         for i, source in enumerate(fig4.DISPLAY_ORDER):
             for j, target in enumerate(fig4.DISPLAY_ORDER):
                 rows.append(
@@ -565,7 +653,9 @@ def figure5_dynamics() -> pd.DataFrame:
         right_on="animal_id",
         how="left",
     )
-    scores["group"] = scores.apply(lambda row: resilience_group(row["animal"], row["group"]), axis=1)
+    scores["group"] = scores.apply(
+        lambda row: resilience_group(row["animal"], row["group"]), axis=1
+    )
     scores = scores[
         [
             "animal",
@@ -604,16 +694,15 @@ def figure5_cluster_tables() -> tuple[pd.DataFrame, pd.DataFrame]:
         lambda row: resilience_group(row["Animal"], row["group"]), axis=1
     )
     timecourse_long["time_seconds"] = pd.to_numeric(timecourse_long["time_bin"]) + BIN_SECONDS
-    timecourse_long = timecourse_long.rename(columns={"Animal": "animal_id", "Percentage": "percent"})[
-        ["animal_id", "group", "Experiment", "cluster", "time_seconds", "percent"]
-    ]
+    timecourse_long = timecourse_long.rename(
+        columns={"Animal": "animal_id", "Percentage": "percent"}
+    )[["animal_id", "group", "Experiment", "cluster", "time_seconds", "percent"]]
 
     frequency = timecourse_long.copy()
     frequency["frequency_seconds"] = frequency["percent"] / 100.0 * BIN_SECONDS
-    frequency = (
-        frequency.groupby(["animal_id", "group", "Experiment", "cluster"], as_index=False)["frequency_seconds"]
-        .sum()
-    )
+    frequency = frequency.groupby(["animal_id", "group", "Experiment", "cluster"], as_index=False)[
+        "frequency_seconds"
+    ].sum()
     frequency = ordered(
         frequency,
         [("Experiment", "num"), ("group", "group"), ("animal_id", "anum"), ("cluster", "str")],
@@ -710,7 +799,14 @@ def figure6_tables() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataF
         }
     )
     bout_points = bout_points[
-        ["figure_panel_current_export", "animal_id", "group", "Experiment", "cluster", "bout_duration_seconds"]
+        [
+            "figure_panel_current_export",
+            "animal_id",
+            "group",
+            "Experiment",
+            "cluster",
+            "bout_duration_seconds",
+        ]
     ]
 
     chord_rows = []
@@ -725,7 +821,11 @@ def figure6_tables() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataF
             for animal, sequence in full_sequences.items()
             if group_map.get(str(animal)) == source_group
         ]
-        matrix = np.mean(matrices, axis=0) if matrices else np.zeros((len(fig6.DISPLAY_ORDER), len(fig6.DISPLAY_ORDER)))
+        matrix = (
+            np.mean(matrices, axis=0)
+            if matrices
+            else np.zeros((len(fig6.DISPLAY_ORDER), len(fig6.DISPLAY_ORDER)))
+        )
         for i, source in enumerate(fig6.DISPLAY_ORDER):
             for j, target in enumerate(fig6.DISPLAY_ORDER):
                 chord_rows.append(
@@ -754,15 +854,24 @@ def figure6_tables() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataF
 
 def supplementary_tracking_time() -> pd.DataFrame:
     df = pd.read_csv(PROCESSED_DIR / "supplementary_figure1_tracking_clusters.csv")
-    wide = pivot_time_table(df, ["animal_id", "group", "project", "experiment", "cluster"], "seconds", "percentage")
+    wide = pivot_time_table(
+        df, ["animal_id", "group", "project", "experiment", "cluster"], "seconds", "percentage"
+    )
     frequency = (
         df.assign(total_frequency_seconds=df["percentage"] / 100.0 * BIN_SECONDS)
-        .groupby(["animal_id", "group", "project", "experiment", "cluster"], as_index=False)["total_frequency_seconds"]
+        .groupby(["animal_id", "group", "project", "experiment", "cluster"], as_index=False)[
+            "total_frequency_seconds"
+        ]
         .sum()
     )
-    wide = wide.merge(frequency, on=["animal_id", "group", "project", "experiment", "cluster"], how="left")
+    wide = wide.merge(
+        frequency, on=["animal_id", "group", "project", "experiment", "cluster"], how="left"
+    )
     wide["animal_id"] = wide["animal_id"].map(format_animal)
-    return wide.sort_values(["experiment", "animal_id", "cluster"], key=lambda s: s.map(sort_key) if s.name == "animal_id" else s)
+    return wide.sort_values(
+        ["experiment", "animal_id", "cluster"],
+        key=lambda s: s.map(sort_key) if s.name == "animal_id" else s,
+    )
 
 
 def supplementary_tracking_frequency() -> pd.DataFrame:
@@ -772,12 +881,16 @@ def supplementary_tracking_frequency() -> pd.DataFrame:
     # (percentage of the 30 s bin), matching the manuscript workbook.
     df["cluster_seconds"] = df["percentage"] / 100.0 * BIN_SECONDS
     out = (
-        df.groupby(["animal_id", "group", "project", "experiment", "cluster"], as_index=False)["cluster_seconds"]
+        df.groupby(["animal_id", "group", "project", "experiment", "cluster"], as_index=False)[
+            "cluster_seconds"
+        ]
         .sum()
         .rename(columns={"cluster_seconds": "frequency_seconds"})
     )
     out["animal_id"] = out["animal_id"].map(format_animal)
-    return ordered(out, [("experiment", "num"), ("group", "group"), ("animal_id", "anum"), ("cluster", "str")])
+    return ordered(
+        out, [("experiment", "num"), ("group", "group"), ("animal_id", "anum"), ("cluster", "str")]
+    )
 
 
 def supplementary_figure3_scores() -> pd.DataFrame:
@@ -802,7 +915,9 @@ def supplementary_figure3_scores() -> pd.DataFrame:
             "loocv_accuracy",
         ]
     ]
-    return ordered(scores, [("metric", "str"), ("Experiment", "num"), ("group", "group"), ("animal", "anum")])
+    return ordered(
+        scores, [("metric", "str"), ("Experiment", "num"), ("group", "group"), ("animal", "anum")]
+    )
 
 
 def syllable_timebin_30s() -> pd.DataFrame:
@@ -821,17 +936,33 @@ def syllable_frames() -> pd.DataFrame:
     if (MANUSCRIPT_RAW_TABLE_DIR / "Syllable_frames.csv").exists():
         return manuscript_raw_table("Syllable_frames")
 
-    frames = pd.read_csv(RAW_DIR / "moseq_syllables_per_frame.csv.gz", usecols=["name", "syllable", "group"])
+    frames = pd.read_csv(
+        RAW_DIR / "moseq_syllables_per_frame.csv.gz", usecols=["name", "syllable", "group"]
+    )
     frames["animal_id"] = frames["name"].map(animal_from_name)
-    frames = frames.merge(experiment_map()[["animal_id", "Experiment", "project"]], on="animal_id", how="left")
+    frames = frames.merge(
+        experiment_map()[["animal_id", "Experiment", "project"]], on="animal_id", how="left"
+    )
     counts = (
-        frames.groupby(["animal_id", "name", "group", "project", "Experiment", "syllable"], as_index=False)
+        frames.groupby(
+            ["animal_id", "name", "group", "project", "Experiment", "syllable"], as_index=False
+        )
         .size()
         .rename(columns={"size": "frames_in_video", "Experiment": "experiment"})
     )
-    totals = frames.groupby(["animal_id", "name"], as_index=False).size().rename(columns={"size": "total_video_frames"})
-    all_syll = frames.groupby("syllable", as_index=False).size().rename(columns={"size": "total_frames_all_videos"})
-    counts = counts.merge(totals, on=["animal_id", "name"], how="left").merge(all_syll, on="syllable", how="left")
+    totals = (
+        frames.groupby(["animal_id", "name"], as_index=False)
+        .size()
+        .rename(columns={"size": "total_video_frames"})
+    )
+    all_syll = (
+        frames.groupby("syllable", as_index=False)
+        .size()
+        .rename(columns={"size": "total_frames_all_videos"})
+    )
+    counts = counts.merge(totals, on=["animal_id", "name"], how="left").merge(
+        all_syll, on="syllable", how="left"
+    )
     counts["percent_video_frames"] = counts["frames_in_video"] / counts["total_video_frames"] * 100
     counts["percent_all_frames"] = counts["total_frames_all_videos"] / frames.shape[0] * 100
     counts["tested_in_all_videos"] = "Yes, all 82 manuscript-cohort videos"
@@ -849,7 +980,10 @@ def syllable_frames() -> pd.DataFrame:
         "percent_all_frames",
         "tested_in_all_videos",
     ]
-    return counts[cols].sort_values(["syllable", "experiment", "animal_id"], key=lambda s: s.map(sort_key) if s.name == "animal_id" else s)
+    return counts[cols].sort_values(
+        ["syllable", "experiment", "animal_id"],
+        key=lambda s: s.map(sort_key) if s.name == "animal_id" else s,
+    )
 
 
 def precision_recall_tables() -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -858,10 +992,17 @@ def precision_recall_tables() -> tuple[pd.DataFrame, pd.DataFrame]:
     if precision_path.exists() and overlap_path.exists():
         return manuscript_raw_table("Precision_recall"), manuscript_raw_table("Overlap_0_28")
 
-    frames = pd.read_csv(RAW_DIR / "moseq_syllables_per_frame.csv.gz", usecols=["name", "frame_index", "syllable", "group"])
+    frames = pd.read_csv(
+        RAW_DIR / "moseq_syllables_per_frame.csv.gz",
+        usecols=["name", "frame_index", "syllable", "group"],
+    )
     frames["animal_id"] = frames["name"].map(animal_from_name)
-    frames = frames.merge(experiment_map()[["animal_id", "Experiment", "project"]], on="animal_id", how="left")
-    freezing = pd.read_csv(RAW_DIR / "freezing_predictions_light.csv.gz", usecols=["animal_id", "frame", "freezing"])
+    frames = frames.merge(
+        experiment_map()[["animal_id", "Experiment", "project"]], on="animal_id", how="left"
+    )
+    freezing = pd.read_csv(
+        RAW_DIR / "freezing_predictions_light.csv.gz", usecols=["animal_id", "frame", "freezing"]
+    )
     freezing["animal_id"] = freezing["animal_id"].map(format_animal)
     merged = frames.merge(
         freezing.rename(columns={"frame": "frame_index"}),
@@ -871,11 +1012,17 @@ def precision_recall_tables() -> tuple[pd.DataFrame, pd.DataFrame]:
     merged["freezing"] = merged["freezing"].fillna(0).astype(int)
 
     syllable_counts = (
-        merged.groupby(["animal_id", "name", "group", "project", "Experiment", "syllable"], as_index=False)
+        merged.groupby(
+            ["animal_id", "name", "group", "project", "Experiment", "syllable"], as_index=False
+        )
         .agg(syllable_frames=("syllable", "size"), overlap_frames=("freezing", "sum"))
         .rename(columns={"name": "animal", "Experiment": "experiment"})
     )
-    freezing_counts = merged.groupby("animal_id", as_index=False)["freezing"].sum().rename(columns={"freezing": "freezing_frames"})
+    freezing_counts = (
+        merged.groupby("animal_id", as_index=False)["freezing"]
+        .sum()
+        .rename(columns={"freezing": "freezing_frames"})
+    )
     syllable_counts = syllable_counts.merge(freezing_counts, on="animal_id", how="left")
     syllable_counts["precision_percent"] = np.where(
         syllable_counts["syllable_frames"] > 0,
@@ -902,7 +1049,10 @@ def precision_recall_tables() -> tuple[pd.DataFrame, pd.DataFrame]:
             "recall_percent",
         ]
     ]
-    precision = ordered(precision, [("experiment", "num"), ("group", "group"), ("animal_id", "astr"), ("syllable", "num")])
+    precision = ordered(
+        precision,
+        [("experiment", "num"), ("group", "group"), ("animal_id", "astr"), ("syllable", "num")],
+    )
 
     selected = merged[merged["syllable"].isin([0, 28])].copy()
     overlap = (
@@ -912,8 +1062,12 @@ def precision_recall_tables() -> tuple[pd.DataFrame, pd.DataFrame]:
     )
     overlap = overlap.merge(freezing_counts, on="animal_id", how="left")
     overlap["selected_syllables"] = "0 + 28"
-    overlap["percent_freezing_covered_by_syllable_0_28"] = overlap["overlap_frames"] / overlap["freezing_frames"] * 100
-    overlap["precision_syllable_0_28_vs_freezing"] = overlap["overlap_frames"] / overlap["syllable_0_28_frames"] * 100
+    overlap["percent_freezing_covered_by_syllable_0_28"] = (
+        overlap["overlap_frames"] / overlap["freezing_frames"] * 100
+    )
+    overlap["precision_syllable_0_28_vs_freezing"] = (
+        overlap["overlap_frames"] / overlap["syllable_0_28_frames"] * 100
+    )
     overlap = overlap[
         [
             "animal_id",
@@ -943,7 +1097,9 @@ def syllable_0_28_timecourse() -> pd.DataFrame:
     tc["animal_id"] = tc["animal_id"].map(format_animal)
     tc = tc.merge(name_map(), on="animal_id", how="left")
     tc["project"] = tc["experiment"].map(PROJECT_LABELS)
-    wide = pivot_time_table(tc, ["animal_id", "animal", "group", "project", "experiment"], "time_s", "pct")
+    wide = pivot_time_table(
+        tc, ["animal_id", "animal", "group", "project", "experiment"], "time_s", "pct"
+    )
     return ordered(wide, [("animal_id", "astr")])
 
 
@@ -962,7 +1118,9 @@ def figure2_syllable_usage_raw() -> pd.DataFrame:
         "percent_video_frames",
         "percent_all_frames",
     ]
-    return ordered(frames[columns], [("experiment", "num"), ("animal_id", "anum"), ("syllable", "num")])
+    return ordered(
+        frames[columns], [("experiment", "num"), ("animal_id", "anum"), ("syllable", "num")]
+    )
 
 
 def figure2_precision_recall_raw() -> pd.DataFrame:
@@ -981,7 +1139,9 @@ def figure2_precision_recall_raw() -> pd.DataFrame:
         "syllable_frames",
         "freezing_frames",
     ]
-    return ordered(precision[columns], [("experiment", "num"), ("animal_id", "anum"), ("syllable", "num")])
+    return ordered(
+        precision[columns], [("experiment", "num"), ("animal_id", "anum"), ("syllable", "num")]
+    )
 
 
 def figure2_freezing_overlap_raw() -> pd.DataFrame:
@@ -995,7 +1155,9 @@ def figure2_freezing_overlap_raw() -> pd.DataFrame:
         validate="one_to_one",
     )
     overlap["selected_syllables"] = "0 + 28 + 40"
-    overlap = overlap.rename(columns={"Experiment": "experiment", "overlap_pct": "freezing_overlap_percent"})
+    overlap = overlap.rename(
+        columns={"Experiment": "experiment", "overlap_pct": "freezing_overlap_percent"}
+    )
     columns = [
         "animal_id",
         "group",
@@ -1244,7 +1406,9 @@ def validate_figure_structure(wb: openpyxl.Workbook) -> None:
         values = {cell.value for row in worksheet.iter_rows() for cell in row}
         stale_datasets = {"Exp1", "Exp3"}.intersection(values)
         if stale_datasets:
-            raise AssertionError(f"{name} contains abbreviated dataset names: {sorted(stale_datasets)}")
+            raise AssertionError(
+                f"{name} contains abbreviated dataset names: {sorted(stale_datasets)}"
+            )
 
     shap_sheet = wb["Fig.7B_Classifier_SHAP"]
     if shap_sheet.max_row - 3 != 20 or shap_sheet.max_column != 9:
@@ -1265,8 +1429,12 @@ def build_raw_data_workbook(output: Path = OUT) -> None:
 
     wb = openpyxl.Workbook()
     wb.remove(wb.active)
-    simba = pd.read_csv(RAW_DIR / "simba_validation_manual_vs_automatic.csv").drop(columns=["phase"])
-    write_titled_dataframe(wb, "Fig.1A_SimBA_validation", "Figure 1A: SimBA automatic versus manual validation", simba)
+    simba = pd.read_csv(RAW_DIR / "simba_validation_manual_vs_automatic.csv").drop(
+        columns=["phase"]
+    )
+    write_titled_dataframe(
+        wb, "Fig.1A_SimBA_validation", "Figure 1A: SimBA automatic versus manual validation", simba
+    )
     write_titled_dataframe(
         wb,
         "Fig.2A_Ground_truth",
@@ -1279,37 +1447,194 @@ def build_raw_data_workbook(output: Path = OUT) -> None:
         "Figure 2B: freezing per time bin, Sanguino-Gomez et al., 2024",
         ground[ground["Experiment"] == 3].drop(columns=["Experiment"]).reset_index(drop=True),
     )
-    write_titled_dataframe(wb, "Fig.2C_Ground_truth", "Figure 2C: freezing per time bin, combined datasets", ground.reset_index(drop=True))
-    write_titled_dataframe(wb, "Fig.2D_Syllable_usage", "Figure 2D: per-animal usage of each syllable label", figure2_syllable_usage_raw())
-    write_titled_dataframe(wb, "Fig.2E-F_Precision_recall", "Figure 2E-F: per-animal precision and recall for each syllable label", figure2_precision_recall_raw())
-    write_titled_dataframe(wb, "Fig.2G_Freezing_overlap", "Figure 2G: animal-level freezing overlap for syllables 0, 28, and 40", figure2_freezing_overlap_raw())
-    write_titled_dataframe(wb, "Fig.2H_Freezing_syllables", "Figure 2H: per-animal freezing syllables 0 and 28 by time in minutes", figure2_freezing_syllables_raw())
-    write_titled_dataframe(wb, "Fig.3A_Cluster_frequency", "Figure 3A: behavior frequency in seconds per animal", numeric_animal(cluster_frequency()).reset_index(drop=True))
-    write_titled_dataframe(wb, "Fig.3B-H_Cluster_timecourse", "Figure 3B-H: behavior percentage per 30-second time bin", numeric_animal(cluster_timecourse()).reset_index(drop=True))
-    write_titled_dataframe(wb, "Fig.4E-H_Frequency_metrics", "Figure 4E-H: diversity and cumulative usage metrics per animal", fig4_frequency_metrics())
-    write_titled_dataframe(wb, "Fig.4I_Usage_profile", "Figure 4I: behavior usage proportions per animal", fig4_usage_profile())
-    write_titled_dataframe(wb, "Fig.4J-Q_Bout_duration", "Figure 4J-Q: mean bout duration per animal", fig4_bout_duration())
-    write_titled_dataframe(wb, "Fig.4R-S_Transition_chords", "Figure 4R-S: mean transitions per animal used in chord plots", fig4_transition_chords())
-    write_titled_dataframe(wb, "Fig.4T-W_Transition_metrics", "Figure 4T-W: sequence metrics per animal", fig4_transition_metrics())
-    write_titled_dataframe(wb, "Fig.5A-B_Dynamics", "Figure 5A-B: MDS coordinates and behavioral dynamics score per animal", figure5_dynamics())
-    write_titled_dataframe(wb, "Fig.5C_Cluster_frequency", "Figure 5C: behavior frequency in seconds per animal and resilience group", figure5_frequency)
-    write_titled_dataframe(wb, "Fig.5D-J_Cluster_timecourse", "Figure 5D-J: behavior percentage per 30-second time bin and resilience group", figure5_timecourse)
-    write_titled_dataframe(wb, "Fig.6G-K_Frequency_metrics", "Figure 6G-K: diversity metrics per animal", figure6_frequency)
-    write_titled_dataframe(wb, "Fig.6L-S_Bout_duration", "Figure 6L-S: mean bout duration per animal and resilience group", figure6_bouts)
-    write_titled_dataframe(wb, "Fig.6T-V_Transition_chords", "Figure 6T-V: mean transitions per animal used in resilience chord plots", figure6_chords)
-    write_titled_dataframe(wb, "Fig.6W-Z_Transition_metrics", "Figure 6W-Z: sequence metrics per animal and resilience group", figure6_transitions)
-    write_titled_dataframe(wb, "Fig.7A_Classifier_accuracy", "Figure 7A: behavior-classifier accuracy and chance reference", figure7_source("figure7_classifier_accuracy.csv"))
-    write_titled_dataframe(wb, "Fig.7B_Classifier_SHAP", "Figure 7B: all 20 plotted SHAP features across eight behavior classes", figure7_classifier_shap_raw())
-    write_titled_dataframe(wb, "Fig.7C_Confusion_matrix", "Figure 7C: normalized behavior-classifier confusion matrix", figure7_source("figure7_classifier_confusion_matrix.csv").rename(columns={"true_class": "actual_behavior"}))
-    write_titled_dataframe(wb, "Fig.7D-E_Prediction_AUC", "Figure 7D-E: plotted held-out-cohort and full-session AUC values", figure7_prediction_auc_raw())
-    write_titled_dataframe(wb, "Fig.7F_SHAP_contributions", "Figure 7F: animal-level Shapley contributions to full-session resilience prediction", figure7_shap_per_animal_raw())
-    write_titled_dataframe(wb, "Fig.7G-H_Predictor_catalog", "Figure 7G-H: held-out-cohort and cross-validation performance for all predictors", figure7_predictor_catalog_raw())
-    write_titled_dataframe(wb, "Fig.7I_Prediction_onset", "Figure 7I: plotted resilience-prediction onset values", figure7_prediction_onset_raw())
-    write_titled_dataframe(wb, "Fig.7J_Family_timecourse", "Figure 7J: predictor-family performance across opening-session horizons", figure7_family_timecourse_raw())
-    write_titled_dataframe(wb, "Fig.7K-N_Metric_timecourse", "Figure 7K-N: individual metric performance across opening-session horizons", figure7_metric_timecourse_raw())
-    write_titled_dataframe(wb, "Suppl.Fig.1A-D", "Supplementary Figure 1A-D: omitted behavior time courses and total frequencies", numeric_animal(supplementary_tracking_time()))
-    write_titled_dataframe(wb, "Suppl.Fig.3A-K", "Supplementary Figure 3A-K: distance-metric control scores per animal", supplementary_figure3_scores())
-    write_titled_dataframe(wb, "Suppl.Fig.4A-H_SHAP", "Supplementary Figure 4A-H: all 719 legacy classifier parameters per behavior; top 10 plotted per class", supplementary_figure4_shap_raw())
+    write_titled_dataframe(
+        wb,
+        "Fig.2C_Ground_truth",
+        "Figure 2C: freezing per time bin, combined datasets",
+        ground.reset_index(drop=True),
+    )
+    write_titled_dataframe(
+        wb,
+        "Fig.2D_Syllable_usage",
+        "Figure 2D: per-animal usage of each syllable label",
+        figure2_syllable_usage_raw(),
+    )
+    write_titled_dataframe(
+        wb,
+        "Fig.2E-F_Precision_recall",
+        "Figure 2E-F: per-animal precision and recall for each syllable label",
+        figure2_precision_recall_raw(),
+    )
+    write_titled_dataframe(
+        wb,
+        "Fig.2G_Freezing_overlap",
+        "Figure 2G: animal-level freezing overlap for syllables 0, 28, and 40",
+        figure2_freezing_overlap_raw(),
+    )
+    write_titled_dataframe(
+        wb,
+        "Fig.2H_Freezing_syllables",
+        "Figure 2H: per-animal freezing syllables 0 and 28 by time in minutes",
+        figure2_freezing_syllables_raw(),
+    )
+    write_titled_dataframe(
+        wb,
+        "Fig.3A_Cluster_frequency",
+        "Figure 3A: behavior frequency in seconds per animal",
+        numeric_animal(cluster_frequency()).reset_index(drop=True),
+    )
+    write_titled_dataframe(
+        wb,
+        "Fig.3B-H_Cluster_timecourse",
+        "Figure 3B-H: behavior percentage per 30-second time bin",
+        numeric_animal(cluster_timecourse()).reset_index(drop=True),
+    )
+    write_titled_dataframe(
+        wb,
+        "Fig.4E-H_Frequency_metrics",
+        "Figure 4E-H: diversity and cumulative usage metrics per animal",
+        fig4_frequency_metrics(),
+    )
+    write_titled_dataframe(
+        wb,
+        "Fig.4I_Usage_profile",
+        "Figure 4I: behavior usage proportions per animal",
+        fig4_usage_profile(),
+    )
+    write_titled_dataframe(
+        wb,
+        "Fig.4J-Q_Bout_duration",
+        "Figure 4J-Q: mean bout duration per animal",
+        fig4_bout_duration(),
+    )
+    write_titled_dataframe(
+        wb,
+        "Fig.4R-S_Transition_chords",
+        "Figure 4R-S: mean transitions per animal used in chord plots",
+        fig4_transition_chords(),
+    )
+    write_titled_dataframe(
+        wb,
+        "Fig.4T-W_Transition_metrics",
+        "Figure 4T-W: sequence metrics per animal",
+        fig4_transition_metrics(),
+    )
+    write_titled_dataframe(
+        wb,
+        "Fig.5A-B_Dynamics",
+        "Figure 5A-B: MDS coordinates and behavioral dynamics score per animal",
+        figure5_dynamics(),
+    )
+    write_titled_dataframe(
+        wb,
+        "Fig.5C_Cluster_frequency",
+        "Figure 5C: behavior frequency in seconds per animal and resilience group",
+        figure5_frequency,
+    )
+    write_titled_dataframe(
+        wb,
+        "Fig.5D-J_Cluster_timecourse",
+        "Figure 5D-J: behavior percentage per 30-second time bin and resilience group",
+        figure5_timecourse,
+    )
+    write_titled_dataframe(
+        wb,
+        "Fig.6G-K_Frequency_metrics",
+        "Figure 6G-K: diversity metrics per animal",
+        figure6_frequency,
+    )
+    write_titled_dataframe(
+        wb,
+        "Fig.6L-S_Bout_duration",
+        "Figure 6L-S: mean bout duration per animal and resilience group",
+        figure6_bouts,
+    )
+    write_titled_dataframe(
+        wb,
+        "Fig.6T-V_Transition_chords",
+        "Figure 6T-V: mean transitions per animal used in resilience chord plots",
+        figure6_chords,
+    )
+    write_titled_dataframe(
+        wb,
+        "Fig.6W-Z_Transition_metrics",
+        "Figure 6W-Z: sequence metrics per animal and resilience group",
+        figure6_transitions,
+    )
+    write_titled_dataframe(
+        wb,
+        "Fig.7A_Classifier_accuracy",
+        "Figure 7A: behavior-classifier accuracy and chance reference",
+        figure7_source("figure7_classifier_accuracy.csv"),
+    )
+    write_titled_dataframe(
+        wb,
+        "Fig.7B_Classifier_SHAP",
+        "Figure 7B: all 20 plotted SHAP features across eight behavior classes",
+        figure7_classifier_shap_raw(),
+    )
+    write_titled_dataframe(
+        wb,
+        "Fig.7C_Confusion_matrix",
+        "Figure 7C: normalized behavior-classifier confusion matrix",
+        figure7_source("figure7_classifier_confusion_matrix.csv").rename(
+            columns={"true_class": "actual_behavior"}
+        ),
+    )
+    write_titled_dataframe(
+        wb,
+        "Fig.7D-E_Prediction_AUC",
+        "Figure 7D-E: plotted held-out-cohort and full-session AUC values",
+        figure7_prediction_auc_raw(),
+    )
+    write_titled_dataframe(
+        wb,
+        "Fig.7F_SHAP_contributions",
+        "Figure 7F: animal-level Shapley contributions to full-session resilience prediction",
+        figure7_shap_per_animal_raw(),
+    )
+    write_titled_dataframe(
+        wb,
+        "Fig.7G-H_Predictor_catalog",
+        "Figure 7G-H: held-out-cohort and cross-validation performance for all predictors",
+        figure7_predictor_catalog_raw(),
+    )
+    write_titled_dataframe(
+        wb,
+        "Fig.7I_Prediction_onset",
+        "Figure 7I: plotted resilience-prediction onset values",
+        figure7_prediction_onset_raw(),
+    )
+    write_titled_dataframe(
+        wb,
+        "Fig.7J_Family_timecourse",
+        "Figure 7J: predictor-family performance across opening-session horizons",
+        figure7_family_timecourse_raw(),
+    )
+    write_titled_dataframe(
+        wb,
+        "Fig.7K-N_Metric_timecourse",
+        "Figure 7K-N: individual metric performance across opening-session horizons",
+        figure7_metric_timecourse_raw(),
+    )
+    write_titled_dataframe(
+        wb,
+        "Suppl.Fig.1A-D",
+        "Supplementary Figure 1A-D: omitted behavior time courses and total frequencies",
+        numeric_animal(supplementary_tracking_time()),
+    )
+    write_titled_dataframe(
+        wb,
+        "Suppl.Fig.3A-K",
+        "Supplementary Figure 3A-K: distance-metric control scores per animal",
+        supplementary_figure3_scores(),
+    )
+    write_titled_dataframe(
+        wb,
+        "Suppl.Fig.4A-H_SHAP",
+        "Supplementary Figure 4A-H: all 719 legacy classifier parameters per behavior; top 10 plotted per class",
+        supplementary_figure4_shap_raw(),
+    )
     validate_figure_structure(wb)
     save_workbook(wb, output)
     print(f"Saved: {output.relative_to(REPO)}")

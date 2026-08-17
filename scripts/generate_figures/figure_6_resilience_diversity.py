@@ -5,32 +5,32 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.patches import Rectangle
-from matplotlib.transforms import blended_transform_factory
 from matplotlib.ticker import FormatStrFormatter
+from matplotlib.transforms import blended_transform_factory
 from scipy.stats import entropy
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.plotting import plot_chord_diagram
 from src.config import (
     CLUSTER_JSON,
-    FIGURES_DIR,
     FIGURE_SOURCE_DATA_DIR,
+    FIGURES_DIR,
     SYLLABLE_TIMEBIN_250MS,
 )
-from src.statistics import compute_diversity_metrics
+from src.plotting import plot_chord_diagram
 
 FIGURE_OUTPUT_DIR = FIGURES_DIR
 SOURCE_OUTPUT_DIR = FIGURE_SOURCE_DATA_DIR
@@ -63,10 +63,10 @@ TRANSITION_TAG_Y = 1.16
 METRIC_BLOCK_DY = -0.022
 METRIC_ROW_EXTRA_GAP = 0.020
 BOUT_BLOCK_DY = -0.020
-SIGNIFICANCE_Y_BASE = 0.875   # inside the plot, below the top y-axis edge
-SIGNIFICANCE_Y_HEIGHT = 0.030 # bracket arm height in axes fraction
-SIGNIFICANCE_Y_STEP = 0.000   # step between non-overlapping brackets (same level)
-SIGNIFICANCE_STAR_PAD = 0.006 # gap between bracket and asterisk in axes fraction
+SIGNIFICANCE_Y_BASE = 0.875  # inside the plot, below the top y-axis edge
+SIGNIFICANCE_Y_HEIGHT = 0.030  # bracket arm height in axes fraction
+SIGNIFICANCE_Y_STEP = 0.000  # step between non-overlapping brackets (same level)
+SIGNIFICANCE_STAR_PAD = 0.006  # gap between bracket and asterisk in axes fraction
 SIGNIFICANCE_JOIN_GAP = 0.10  # horizontal split between adjacent brackets
 CONTROL = "#F9C74F"
 ELS = "#C37BA0"
@@ -149,7 +149,9 @@ def syllable_to_cluster() -> dict[int, str]:
     return out
 
 
-def load_sequences() -> tuple[pd.DataFrame, dict[str, list[str]], dict[str, list[str]], pd.DataFrame]:
+def load_sequences() -> tuple[
+    pd.DataFrame, dict[str, list[str]], dict[str, list[str]], pd.DataFrame
+]:
     raw = read_timebin_data()
     raw = raw.rename(columns={"Time Bin": "time_bin", "Condition": "group"})
     raw = raw[raw["group"].isin(["Control", "ELS"])].copy()
@@ -168,11 +170,17 @@ def load_sequences() -> tuple[pd.DataFrame, dict[str, list[str]], dict[str, list
         str(animal): group["cluster"].tolist()
         for animal, group in pred.groupby("Animal", sort=False)
     }
-    meta = pred[["Animal", "group", "group_ext", "Experiment"]].drop_duplicates().reset_index(drop=True)
+    meta = (
+        pred[["Animal", "group", "group_ext", "Experiment"]]
+        .drop_duplicates()
+        .reset_index(drop=True)
+    )
     return pred, pred_sequences, full_sequences, meta
 
 
-def compute_frequency_metrics(sequences: dict[str, list[str]], meta: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+def compute_frequency_metrics(
+    sequences: dict[str, list[str]], meta: pd.DataFrame
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     rows = []
     usage_rows = []
     meta_map = meta.set_index("Animal").to_dict("index")
@@ -187,7 +195,10 @@ def compute_frequency_metrics(sequences: dict[str, list[str]], meta: pd.DataFram
         shannon = entropy(nonzero)
         evenness = shannon / np.log(len(nonzero)) if len(nonzero) else np.nan
         simpson = 1 - np.sum(p**2)
-        named_p = np.array([counts_map.get(cluster, 0) for cluster in order if str(cluster).strip() != ""], dtype=float)
+        named_p = np.array(
+            [counts_map.get(cluster, 0) for cluster in order if str(cluster).strip() != ""],
+            dtype=float,
+        )
         named_p = named_p / counts.sum()
         sorted_p = np.sort(named_p)[::-1]
         cum = np.cumsum(sorted_p)
@@ -204,7 +215,14 @@ def compute_frequency_metrics(sequences: dict[str, list[str]], meta: pd.DataFram
                 "cui": cui,
             }
         )
-        usage_rows.append({"Animal": animal, "group_ext": info["group_ext"], "Experiment": info["Experiment"], **dict(zip(order, p))})
+        usage_rows.append(
+            {
+                "Animal": animal,
+                "group_ext": info["group_ext"],
+                "Experiment": info["Experiment"],
+                **dict(zip(order, p)),
+            }
+        )
     return pd.DataFrame(rows), pd.DataFrame(usage_rows)
 
 
@@ -219,7 +237,15 @@ def bout_table(sequences: dict[str, list[str]], meta: pd.DataFrame) -> pd.DataFr
             if cluster == prev:
                 length += 1
                 continue
-            rows.append({"Animal": animal, "group_ext": info["group_ext"], "Experiment": info["Experiment"], "cluster": prev, "bout_duration": length * 0.25})
+            rows.append(
+                {
+                    "Animal": animal,
+                    "group_ext": info["group_ext"],
+                    "Experiment": info["Experiment"],
+                    "cluster": prev,
+                    "bout_duration": length * 0.25,
+                }
+            )
             prev = cluster
             length = 1
     return pd.DataFrame(rows)
@@ -277,7 +303,11 @@ def determinism(seq: list[str], min_length: int = 2) -> float:
     total = 0
     diag_sum = 0
     for offset in range(-n + 1, n):
-        diag = arr[: n - abs(offset)] == arr[abs(offset) :] if offset >= 0 else arr[-offset:] == arr[: n + offset]
+        diag = (
+            arr[: n - abs(offset)] == arr[abs(offset) :]
+            if offset >= 0
+            else arr[-offset:] == arr[: n + offset]
+        )
         if offset == 0:
             total += int(diag.sum()) - n
         else:
@@ -306,7 +336,9 @@ def markov_entropy(seq: list[str], smoothing_factor: float = 0.01) -> float:
     counts += smoothing_factor
     probs = counts / counts.sum(axis=1, keepdims=True)
     value_counts = pd.Series(seq).value_counts()
-    stationary = np.array([value_counts.get(state, 0) for state in unique_states], dtype=float) / len(seq)
+    stationary = np.array(
+        [value_counts.get(state, 0) for state in unique_states], dtype=float
+    ) / len(seq)
     inner = np.array([-np.sum(row[row > 0] * np.log2(row[row > 0])) for row in probs])
     return float(np.sum(stationary * inner))
 
@@ -316,7 +348,17 @@ def transition_metrics(sequences: dict[str, list[str]], meta: pd.DataFrame) -> p
     meta_map = meta.set_index("Animal").to_dict("index")
     for animal, seq in sequences.items():
         info = meta_map[animal]
-        rows.append({"Animal": animal, "group_ext": info["group_ext"], "Experiment": info["Experiment"], "lz": lz_complexity(seq), "recurrence": recurrence_rate(seq), "determinism": determinism(seq), "markov": markov_entropy(seq)})
+        rows.append(
+            {
+                "Animal": animal,
+                "group_ext": info["group_ext"],
+                "Experiment": info["Experiment"],
+                "lz": lz_complexity(seq),
+                "recurrence": recurrence_rate(seq),
+                "determinism": determinism(seq),
+                "markov": markov_entropy(seq),
+            }
+        )
     return pd.DataFrame(rows)
 
 
@@ -343,22 +385,73 @@ def style_axis(ax: plt.Axes, labelsize: float = 5.2) -> None:
 
 
 def tag(ax: plt.Axes, letter: str, x: float = -0.12, y: float = 1.12) -> None:
-    ax.text(x, y, letter, transform=ax.transAxes, ha="center", va="top", fontsize=7.2, fontweight="bold", color=AXIS, clip_on=False)
+    ax.text(
+        x,
+        y,
+        letter,
+        transform=ax.transAxes,
+        ha="center",
+        va="top",
+        fontsize=7.2,
+        fontweight="bold",
+        color=AXIS,
+        clip_on=False,
+    )
 
 
 def add_events(ax: plt.Axes, y: float = 1.030, height: float = 0.068) -> None:
     trans = blended_transform_factory(ax.transData, ax.transAxes)
     for start, end in EVENT_SPANS:
-        ax.add_patch(Rectangle((start, y), end - start, height, transform=trans, facecolor="#E0E0E0", edgecolor="none", clip_on=False, zorder=5))
-        ax.add_patch(Rectangle((end - SHOCK_DURATION_MIN, y), SHOCK_DURATION_MIN, height, transform=trans, facecolor="#F1C232", edgecolor="none", clip_on=False, zorder=6))
+        ax.add_patch(
+            Rectangle(
+                (start, y),
+                end - start,
+                height,
+                transform=trans,
+                facecolor="#E0E0E0",
+                edgecolor="none",
+                clip_on=False,
+                zorder=5,
+            )
+        )
+        ax.add_patch(
+            Rectangle(
+                (end - SHOCK_DURATION_MIN, y),
+                SHOCK_DURATION_MIN,
+                height,
+                transform=trans,
+                facecolor="#F1C232",
+                edgecolor="none",
+                clip_on=False,
+                zorder=6,
+            )
+        )
 
 
 def behavior_legend(ax: plt.Axes, y_anchor: float = -0.30) -> None:
-    handles = [plt.Line2D([0], [0], color=COLORS[c], linewidth=2.0, label=DISPLAY_LABELS[c]) for c in DISPLAY_ORDER]
-    ax.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.5, y_anchor), frameon=True, facecolor="white", edgecolor="#D0D0D0", fontsize=4.2, ncol=7, handlelength=1.8, columnspacing=0.9, handletextpad=0.35, borderaxespad=0.1)
+    handles = [
+        plt.Line2D([0], [0], color=COLORS[c], linewidth=2.0, label=DISPLAY_LABELS[c])
+        for c in DISPLAY_ORDER
+    ]
+    ax.legend(
+        handles=handles,
+        loc="upper center",
+        bbox_to_anchor=(0.5, y_anchor),
+        frameon=True,
+        facecolor="white",
+        edgecolor="#D0D0D0",
+        fontsize=4.2,
+        ncol=7,
+        handlelength=1.8,
+        columnspacing=0.9,
+        handletextpad=0.35,
+        borderaxespad=0.1,
+    )
 
 
-def plot_ethogram(ax: plt.Axes, pred: pd.DataFrame, animal: str, letter: str, show_legend: bool = False) -> None:
+def plot_ethogram(
+    ax: plt.Axes, pred: pd.DataFrame, animal: str, letter: str, show_legend: bool = False
+) -> None:
     sub = pred[pred["Animal"].astype(str) == str(animal)].sort_values("time_bin")
     for yi, cluster in enumerate(DISPLAY_ORDER):
         x = sub.loc[sub["cluster"] == cluster, "time_bin"].to_numpy() / 60.0
@@ -379,7 +472,9 @@ def plot_ethogram(ax: plt.Axes, pred: pd.DataFrame, animal: str, letter: str, sh
     tag(ax, letter, x=-0.10, y=1.13)
 
 
-def plot_barcode(ax: plt.Axes, pred: pd.DataFrame, animal: str, letter: str, show_legend: bool = False) -> None:
+def plot_barcode(
+    ax: plt.Axes, pred: pd.DataFrame, animal: str, letter: str, show_legend: bool = False
+) -> None:
     sub = pred[pred["Animal"].astype(str) == str(animal)].sort_values("time_bin")
     rgb = np.array([mcolors.to_rgb(COLORS.get(c, "#FFFFFF")) for c in sub["cluster"]])[None, :, :]
     ax.imshow(rgb, aspect="auto", extent=[0, 7.5, 0.00, 0.66])
@@ -410,7 +505,14 @@ def plot_barcode(ax: plt.Axes, pred: pd.DataFrame, animal: str, letter: str, sho
     tag(ax, letter, x=-0.020, y=0.80)
 
 
-def sig_bracket(ax: plt.Axes, x1: float, x2: float, level: int, n_levels: int, y_base: float = SIGNIFICANCE_Y_BASE) -> None:
+def sig_bracket(
+    ax: plt.Axes,
+    x1: float,
+    x2: float,
+    level: int,
+    n_levels: int,
+    y_base: float = SIGNIFICANCE_Y_BASE,
+) -> None:
     trans = blended_transform_factory(ax.transData, ax.transAxes)
     if y_base < 0:
         y_top = y_base - SIGNIFICANCE_Y_STEP * (n_levels - level - 1)
@@ -452,7 +554,9 @@ def bracket_ylim(ylim: tuple[float, float], n_brackets: int) -> tuple[float, flo
     return lo, hi + (hi - lo) * 0.18
 
 
-def split_touching_bracket(pair: tuple[int, int], pairs: list[tuple[int, int]]) -> tuple[float, float]:
+def split_touching_bracket(
+    pair: tuple[int, int], pairs: list[tuple[int, int]]
+) -> tuple[float, float]:
     x1, x2 = map(float, pair)
     if any(other != pair and other[1] == pair[0] for other in pairs):
         x1 += SIGNIFICANCE_JOIN_GAP
@@ -461,10 +565,23 @@ def split_touching_bracket(pair: tuple[int, int], pairs: list[tuple[int, int]]) 
     return x1, x2
 
 
-def box_scatter(ax: plt.Axes, df: pd.DataFrame, y: str, ylabel: str, letter: str, ylim: tuple[float, float], yticks: list[float], yfmt: str, stars: list[tuple[int, int]] | None = None, sig_y_base: float = SIGNIFICANCE_Y_BASE) -> None:
+def box_scatter(
+    ax: plt.Axes,
+    df: pd.DataFrame,
+    y: str,
+    ylabel: str,
+    letter: str,
+    ylim: tuple[float, float],
+    yticks: list[float],
+    yfmt: str,
+    stars: list[tuple[int, int]] | None = None,
+    sig_y_base: float = SIGNIFICANCE_Y_BASE,
+) -> None:
     rng = np.random.default_rng(42)
     data = [df[df["group_ext"] == g][y].dropna().to_numpy() for g in GROUP_ORDER]
-    bp = ax.boxplot(data, positions=np.arange(3), widths=BOXPLOT_WIDTH, patch_artist=True, showfliers=False)
+    bp = ax.boxplot(
+        data, positions=np.arange(3), widths=BOXPLOT_WIDTH, patch_artist=True, showfliers=False
+    )
     for patch, group in zip(bp["boxes"], GROUP_ORDER):
         patch.set_facecolor((*mcolors.to_rgb(PALETTE[group]), 0.30))
         patch.set_edgecolor(PALETTE[group])
@@ -478,7 +595,15 @@ def box_scatter(ax: plt.Axes, df: pd.DataFrame, y: str, ylabel: str, letter: str
         median.set_linewidth(1.2)
     for i, group in enumerate(GROUP_ORDER):
         vals = df[df["group_ext"] == group][y].dropna().to_numpy()
-        ax.scatter(rng.normal(i, 0.050, len(vals)), vals, s=3.8, color=PALETTE[group], alpha=0.62, linewidth=0, zorder=3)
+        ax.scatter(
+            rng.normal(i, 0.050, len(vals)),
+            vals,
+            s=3.8,
+            color=PALETTE[group],
+            alpha=0.62,
+            linewidth=0,
+            zorder=3,
+        )
     ax.set_xticks(np.arange(3))
     ax.set_xticklabels(["Control", "ELS", "ELS\nresilient"], fontsize=4.9)
     ax.set_ylabel(ylabel, fontsize=4.6, labelpad=0.8)
@@ -502,18 +627,38 @@ def plot_cumulative(ax: plt.Axes, usage: pd.DataFrame, letter: str) -> None:
         cols = [col for col in DISPLAY_ORDER if col in sub.columns]
         row = sub[cols].mean().sort_values(ascending=False).cumsum()
         x = np.arange(len(row))
-        ax.plot(x, row, color=PALETTE[group], marker="o", markersize=2.0, linewidth=0.75, label=group)
-        ax.errorbar(x, row, yerr=sub[cols].reindex(columns=row.index).cumsum(axis=1).sem(), fmt="none", ecolor=PALETTE[group], elinewidth=0.45, capsize=1.3)
+        ax.plot(
+            x, row, color=PALETTE[group], marker="o", markersize=2.0, linewidth=0.75, label=group
+        )
+        ax.errorbar(
+            x,
+            row,
+            yerr=sub[cols].reindex(columns=row.index).cumsum(axis=1).sem(),
+            fmt="none",
+            ecolor=PALETTE[group],
+            elinewidth=0.45,
+            capsize=1.3,
+        )
     ax.set_ylim(0.4, 0.92)
     ax.set_yticks(np.arange(0.4, 0.91, 0.1))
     ax.set_xticks(np.arange(len(DISPLAY_ORDER)))
     ax.set_xticklabels([DISPLAY_LABELS.get(c, c) for c in row.index], fontsize=4.7)
     ax.set_ylabel("Cumulative Usage", fontsize=6.0, labelpad=0.5)
     handles = [
-        plt.Line2D([0], [0], color=PALETTE[group], marker="o", markersize=2.0, linewidth=0.75, label=group)
+        plt.Line2D(
+            [0], [0], color=PALETTE[group], marker="o", markersize=2.0, linewidth=0.75, label=group
+        )
         for group in GROUP_ORDER
     ]
-    ax.legend(handles=handles, loc="lower right", frameon=False, fontsize=4.4, ncol=3, handlelength=1.0, columnspacing=0.6)
+    ax.legend(
+        handles=handles,
+        loc="lower right",
+        frameon=False,
+        fontsize=4.4,
+        ncol=3,
+        handlelength=1.0,
+        columnspacing=0.6,
+    )
     style_axis(ax, labelsize=4.9)
     ax.yaxis.set_label_coords(K_TAG_X, 0.5)
     ax.spines[["top", "right"]].set_visible(True)
@@ -538,7 +683,9 @@ def plot_group_cumulative(ax: plt.Axes, usage: pd.DataFrame, group: str) -> None
     style_axis(ax, labelsize=4.2)
 
 
-def plot_chord(ax: plt.Axes, sequences: dict[str, list[str]], meta: pd.DataFrame, group: str, letter: str) -> None:
+def plot_chord(
+    ax: plt.Axes, sequences: dict[str, list[str]], meta: pd.DataFrame, group: str, letter: str
+) -> None:
     mats = []
     group_map = meta.set_index("Animal")["group_ext"].to_dict()
     for animal, seq in sequences.items():
@@ -547,16 +694,49 @@ def plot_chord(ax: plt.Axes, sequences: dict[str, list[str]], meta: pd.DataFrame
     mat = np.mean(mats, axis=0)
     labels = [DISPLAY_LABELS[c] for c in DISPLAY_ORDER]
     color_map = {DISPLAY_LABELS[c]: COLORS[c] for c in DISPLAY_ORDER}
-    plot_chord_diagram(mat, labels, color_map, title=group, ax=ax, r=0.98, gap=0.0, arc_width=0.047, label_fontsize=5.6, title_fontsize=6.4, title_pad=7, limit_pad=1.12, label_radius_factor=1.20, flip_labels=False, edge_lw_scale=6.5, edge_lw_offset=0.16, edge_alpha=0.90, edge_alpha_min=None, delta_angle=0.15)
+    plot_chord_diagram(
+        mat,
+        labels,
+        color_map,
+        title=group,
+        ax=ax,
+        r=0.98,
+        gap=0.0,
+        arc_width=0.047,
+        label_fontsize=5.6,
+        title_fontsize=6.4,
+        title_pad=7,
+        limit_pad=1.12,
+        label_radius_factor=1.20,
+        flip_labels=False,
+        edge_lw_scale=6.5,
+        edge_lw_offset=0.16,
+        edge_alpha=0.90,
+        edge_alpha_min=None,
+        delta_angle=0.15,
+    )
     tag(ax, letter, x=0.00, y=0.98)
 
 
-def shift_axes(axes: list[plt.Axes], dx: float = 0.0, dy: float = 0.0, scale_w: float = 1.0, scale_h: float = 1.0) -> None:
+def shift_axes(
+    axes: list[plt.Axes],
+    dx: float = 0.0,
+    dy: float = 0.0,
+    scale_w: float = 1.0,
+    scale_h: float = 1.0,
+) -> None:
     for ax in axes:
         pos = ax.get_position()
         cx = pos.x0 + pos.width / 2 + dx
         cy = pos.y0 + pos.height / 2 + dy
-        ax.set_position([cx - pos.width * scale_w / 2, cy - pos.height * scale_h / 2, pos.width * scale_w, pos.height * scale_h])
+        ax.set_position(
+            [
+                cx - pos.width * scale_w / 2,
+                cy - pos.height * scale_h / 2,
+                pos.width * scale_w,
+                pos.height * scale_h,
+            ]
+        )
 
 
 def set_panel_tag_position(ax: plt.Axes, letter: str, x: float, y: float | None = None) -> None:
@@ -567,7 +747,9 @@ def set_panel_tag_position(ax: plt.Axes, letter: str, x: float, y: float | None 
             return
 
 
-def align_panel_tags_to_titles(fig: plt.Figure, axes_and_letters: list[tuple[plt.Axes, str]]) -> None:
+def align_panel_tags_to_titles(
+    fig: plt.Figure, axes_and_letters: list[tuple[plt.Axes, str]]
+) -> None:
     """Place panel letters at the same vertical height as the axes titles."""
     fig.canvas.draw()
     renderer = fig.canvas.get_renderer()
@@ -598,7 +780,9 @@ def set_boxplot_axis_width(fig: plt.Figure, axes: list[plt.Axes], width_in: floa
         ax.set_xlim(x_center - x_range / 2, x_center + x_range / 2)
 
 
-def widen_metric_row_gap(top_axes: list[plt.Axes], bottom_axes: list[plt.Axes], extra_gap: float = METRIC_ROW_EXTRA_GAP) -> None:
+def widen_metric_row_gap(
+    top_axes: list[plt.Axes], bottom_axes: list[plt.Axes], extra_gap: float = METRIC_ROW_EXTRA_GAP
+) -> None:
     for ax in top_axes:
         pos = ax.get_position()
         ax.set_position([pos.x0, pos.y0 + extra_gap / 2, pos.width, pos.height])
@@ -617,7 +801,13 @@ def align_axes_row(axes: list[plt.Axes], left: float, right: float) -> None:
         ax.set_position([left + i * (width + gap), pos.y0, width, pos.height])
 
 
-def set_cumulative_layout(fig: plt.Figure, main_ax: plt.Axes, side_axes: list[plt.Axes], top_ref_ax: plt.Axes, bottom_ref_ax: plt.Axes) -> None:
+def set_cumulative_layout(
+    fig: plt.Figure,
+    main_ax: plt.Axes,
+    side_axes: list[plt.Axes],
+    top_ref_ax: plt.Axes,
+    bottom_ref_ax: plt.Axes,
+) -> None:
     fig_width, _ = fig.get_size_inches()
     main_width = FIGURE4_CUMULATIVE_AXIS_WIDTH_IN / fig_width
     top_pos = top_ref_ax.get_position()
@@ -649,7 +839,9 @@ def equalize_boxplot_heights(axes: list[plt.Axes]) -> None:
         pos = ax.get_position()
         y_center = pos.y0 + pos.height / 2
         x_center = pos.x0 + pos.width / 2
-        ax.set_position([x_center - target_width / 2, y_center - target_height / 2, target_width, target_height])
+        ax.set_position(
+            [x_center - target_width / 2, y_center - target_height / 2, target_width, target_height]
+        )
 
 
 def add_section_label(fig: plt.Figure, axes: list[plt.Axes], label: str) -> None:
@@ -665,7 +857,9 @@ def add_section_label(fig: plt.Figure, axes: list[plt.Axes], label: str) -> None
     label_ax.text(0.5, 0.5, label, rotation=90, ha="center", va="center", fontsize=7.7, color=AXIS)
 
 
-def export_source_data(metrics: pd.DataFrame, bouts: pd.DataFrame, transitions: pd.DataFrame, output_dir: Path) -> None:
+def export_source_data(
+    metrics: pd.DataFrame, bouts: pd.DataFrame, transitions: pd.DataFrame, output_dir: Path
+) -> None:
     """Export Figure 6 source data: resilience-stratified diversity, bouts, and transitions."""
     rows = []
 
@@ -675,15 +869,17 @@ def export_source_data(metrics: pd.DataFrame, bouts: pd.DataFrame, transitions: 
             for group in ["Control", "ELS", "ELS resilient"]:
                 data = metrics[metrics["group_ext"] == group][metric_name]
                 if len(data) > 0:
-                    rows.append({
-                        "metric_category": "diversity",
-                        "metric": metric_name,
-                        "group": group,
-                        "mean": data.mean(),
-                        "std": data.std(),
-                        "sem": data.sem(),
-                        "n": len(data),
-                    })
+                    rows.append(
+                        {
+                            "metric_category": "diversity",
+                            "metric": metric_name,
+                            "group": group,
+                            "mean": data.mean(),
+                            "std": data.std(),
+                            "sem": data.sem(),
+                            "n": len(data),
+                        }
+                    )
 
     # Bout durations (per cluster, per resilience group)
     for cluster in DISPLAY_ORDER:
@@ -692,15 +888,17 @@ def export_source_data(metrics: pd.DataFrame, bouts: pd.DataFrame, transitions: 
             for group in ["Control", "ELS", "ELS resilient"]:
                 group_bouts = cluster_bouts[cluster_bouts["group_ext"] == group]["bout_duration"]
                 if len(group_bouts) > 0:
-                    rows.append({
-                        "metric_category": "bout_duration",
-                        "metric": cluster,
-                        "group": group,
-                        "mean": group_bouts.mean(),
-                        "std": group_bouts.std(),
-                        "sem": group_bouts.sem(),
-                        "n": len(group_bouts),
-                    })
+                    rows.append(
+                        {
+                            "metric_category": "bout_duration",
+                            "metric": cluster,
+                            "group": group,
+                            "mean": group_bouts.mean(),
+                            "std": group_bouts.std(),
+                            "sem": group_bouts.sem(),
+                            "n": len(group_bouts),
+                        }
+                    )
 
     # Transition metrics (lz, recurrence, determinism, markov) stratified by resilience group
     for metric_name in ["lz", "recurrence", "determinism", "markov"]:
@@ -708,15 +906,17 @@ def export_source_data(metrics: pd.DataFrame, bouts: pd.DataFrame, transitions: 
             for group in ["Control", "ELS", "ELS resilient"]:
                 data = transitions[transitions["group_ext"] == group][metric_name]
                 if len(data) > 0:
-                    rows.append({
-                        "metric_category": "transition",
-                        "metric": metric_name,
-                        "group": group,
-                        "mean": data.mean(),
-                        "std": data.std(),
-                        "sem": data.sem(),
-                        "n": len(data),
-                    })
+                    rows.append(
+                        {
+                            "metric_category": "transition",
+                            "metric": metric_name,
+                            "group": group,
+                            "mean": data.mean(),
+                            "std": data.std(),
+                            "sem": data.sem(),
+                            "n": len(data),
+                        }
+                    )
 
     df = pd.DataFrame(rows)
     if not df.empty:
@@ -735,7 +935,17 @@ def main() -> None:
     reps = {group: representative(usage, group) for group in GROUP_ORDER}
 
     fig = plt.figure(figsize=(8.22, 11.28), dpi=300, facecolor="white")
-    gs = fig.add_gridspec(6, 14, left=0.075, right=0.960, top=0.982, bottom=0.045, wspace=0.58, hspace=0.54, height_ratios=[0.54, 0.54, 0.54, 0.94, 0.82, 1.02])
+    gs = fig.add_gridspec(
+        6,
+        14,
+        left=0.075,
+        right=0.960,
+        top=0.982,
+        bottom=0.045,
+        wspace=0.58,
+        hspace=0.54,
+        height_ratios=[0.54, 0.54, 0.54, 0.94, 0.82, 1.02],
+    )
 
     top = [("A", "B", "Control"), ("C", "D", "ELS"), ("E", "F", "ELS resilient")]
     top_axes: dict[str, list[plt.Axes]] = {}
@@ -746,7 +956,9 @@ def main() -> None:
         plot_barcode(ax2, pred, reps[group], l2, show_legend=True)
         top_axes[group] = [ax1, ax2]
     e_pos = top_axes["ELS resilient"][0].get_position()
-    top_axes["ELS resilient"][0].set_position([e_pos.x0, e_pos.y0, e_pos.width - TOP_ETHOGRAM_SPACING_TRIM, e_pos.height])
+    top_axes["ELS resilient"][0].set_position(
+        [e_pos.x0, e_pos.y0, e_pos.width - TOP_ETHOGRAM_SPACING_TRIM, e_pos.height]
+    )
 
     metric_grid = gs[3, 0:4].subgridspec(2, 2, hspace=0.50, wspace=0.58)
     box_axes: list[plt.Axes] = []
@@ -755,11 +967,49 @@ def main() -> None:
     axI = fig.add_subplot(metric_grid[1, 0])
     axJ = fig.add_subplot(metric_grid[1, 1])
     box_axes.extend([axG, axH, axI, axJ])
-    box_scatter(axG, metrics, "simpson", "Simpson index", "G", (0.58, 0.80), [0.60, 0.65, 0.70, 0.75, 0.80], "%.2f", stars=[(0, 1), (1, 2)])
-    box_scatter(axH, metrics, "shannon", "Shannon entropy index", "H", (1.20, 1.70), [1.30, 1.40, 1.50, 1.60, 1.70], "%.1f")
-    box_scatter(axI, metrics, "evenness", "Evenness index", "I", (0.58, 0.85), [0.60, 0.65, 0.70, 0.75, 0.80, 0.85], "%.2f")
+    box_scatter(
+        axG,
+        metrics,
+        "simpson",
+        "Simpson index",
+        "G",
+        (0.58, 0.80),
+        [0.60, 0.65, 0.70, 0.75, 0.80],
+        "%.2f",
+        stars=[(0, 1), (1, 2)],
+    )
+    box_scatter(
+        axH,
+        metrics,
+        "shannon",
+        "Shannon entropy index",
+        "H",
+        (1.20, 1.70),
+        [1.30, 1.40, 1.50, 1.60, 1.70],
+        "%.1f",
+    )
+    box_scatter(
+        axI,
+        metrics,
+        "evenness",
+        "Evenness index",
+        "I",
+        (0.58, 0.85),
+        [0.60, 0.65, 0.70, 0.75, 0.80, 0.85],
+        "%.2f",
+    )
     # CUI resilient-vs-vulnerable p=0.393 -> not significant; only vuln-vs-control is starred.
-    box_scatter(axJ, metrics, "cui", "Cumulative usage index", "J", (-0.25, 0.80), [-0.2, 0.0, 0.2, 0.4, 0.6, 0.8], "%.1f", stars=[(0, 1)])
+    box_scatter(
+        axJ,
+        metrics,
+        "cui",
+        "Cumulative usage index",
+        "J",
+        (-0.25, 0.80),
+        [-0.2, 0.0, 0.2, 0.4, 0.6, 0.8],
+        "%.1f",
+        stars=[(0, 1)],
+    )
 
     axK = fig.add_subplot(gs[3, 4:11])
     plot_cumulative(axK, usage, "K")
@@ -769,33 +1019,99 @@ def main() -> None:
         side_ax = fig.add_subplot(side[i])
         side_axes.append(side_ax)
         plot_group_cumulative(side_ax, usage, group)
-    frequency_axes = [axG, axH, axI, axJ, axK] + side_axes
 
     bout_grid = gs[4, :].subgridspec(1, 8, wspace=0.46)
     bout_axes: list[plt.Axes] = []
     overall = bouts.groupby(["Animal", "group_ext"])["bout_duration"].mean().reset_index()
-    cluster_means = bouts[bouts["cluster"].isin(DISPLAY_ORDER)].groupby(["Animal", "group_ext", "cluster"], as_index=False)["bout_duration"].mean()
+    cluster_means = (
+        bouts[bouts["cluster"].isin(DISPLAY_ORDER)]
+        .groupby(["Animal", "group_ext", "cluster"], as_index=False)["bout_duration"]
+        .mean()
+    )
     bout_specs = [
         ("Overall", overall, (0, 3.0), [0, 1, 2, 3], "%.0f", [(0, 1)]),
-        ("Freeze", cluster_means[cluster_means["cluster"] == "Freezing"], (0, 2.5), [0, 0.5, 1, 1.5, 2, 2.5], "%.1f", [(0, 1), (1, 2)]),
-        ("Sniff", cluster_means[cluster_means["cluster"] == "Sniffing"], (0, 4.0), [0, 1, 2, 3, 4], "%.0f", [(0, 1)]),
-        ("Groom", cluster_means[cluster_means["cluster"] == "Grooming"], (0, 0.6), [0, 0.2, 0.4, 0.6], "%.1f", [(0, 1)]),
-        ("Turn", cluster_means[cluster_means["cluster"] == "Turn"], (0, 3.0), [0, 0.5, 1, 1.5, 2, 2.5, 3], "%.1f", [(0, 1), (1, 2)]),
-        ("Locomotion", cluster_means[cluster_means["cluster"] == "Locomotion"], (0, 0.8), [0, 0.2, 0.4, 0.6, 0.8], "%.1f", None),
-        ("Climb", cluster_means[cluster_means["cluster"] == "Climbing"], (0, 2.0), [0, 0.5, 1, 1.5, 2], "%.1f", None),
-        ("Jump", cluster_means[cluster_means["cluster"] == "Jump"], (0, 1.20), [0, 0.4, 0.8, 1.2], "%.1f", None),
+        (
+            "Freeze",
+            cluster_means[cluster_means["cluster"] == "Freezing"],
+            (0, 2.5),
+            [0, 0.5, 1, 1.5, 2, 2.5],
+            "%.1f",
+            [(0, 1), (1, 2)],
+        ),
+        (
+            "Sniff",
+            cluster_means[cluster_means["cluster"] == "Sniffing"],
+            (0, 4.0),
+            [0, 1, 2, 3, 4],
+            "%.0f",
+            [(0, 1)],
+        ),
+        (
+            "Groom",
+            cluster_means[cluster_means["cluster"] == "Grooming"],
+            (0, 0.6),
+            [0, 0.2, 0.4, 0.6],
+            "%.1f",
+            [(0, 1)],
+        ),
+        (
+            "Turn",
+            cluster_means[cluster_means["cluster"] == "Turn"],
+            (0, 3.0),
+            [0, 0.5, 1, 1.5, 2, 2.5, 3],
+            "%.1f",
+            [(0, 1), (1, 2)],
+        ),
+        (
+            "Locomotion",
+            cluster_means[cluster_means["cluster"] == "Locomotion"],
+            (0, 0.8),
+            [0, 0.2, 0.4, 0.6, 0.8],
+            "%.1f",
+            None,
+        ),
+        (
+            "Climb",
+            cluster_means[cluster_means["cluster"] == "Climbing"],
+            (0, 2.0),
+            [0, 0.5, 1, 1.5, 2],
+            "%.1f",
+            None,
+        ),
+        (
+            "Jump",
+            cluster_means[cluster_means["cluster"] == "Jump"],
+            (0, 1.20),
+            [0, 0.4, 0.8, 1.2],
+            "%.1f",
+            None,
+        ),
     ]
     for i, (title, data, ylim, yticks, yfmt, stars) in enumerate(bout_specs):
         ax = fig.add_subplot(bout_grid[i])
         bout_axes.append(ax)
         box_axes.append(ax)
-        box_scatter(ax, data.rename(columns={"bout_duration": "value"}), "value", "Mean Bout Duration (s)", chr(ord("L") + i), ylim, yticks, yfmt, stars=stars)
+        box_scatter(
+            ax,
+            data.rename(columns={"bout_duration": "value"}),
+            "value",
+            "Mean Bout Duration (s)",
+            chr(ord("L") + i),
+            ylim,
+            yticks,
+            yfmt,
+            stars=stars,
+        )
         ax.set_title(title, fontsize=5.4, color=AXIS, pad=3)
 
     axT = fig.add_subplot(gs[5, 0:3])
     axU = fig.add_subplot(gs[5, 3:6])
     axV = fig.add_subplot(gs[5, 6:9])
-    for ax, group, letter in [(axT, "Control", "T"), (axU, "ELS", "U"), (axV, "ELS resilient", "V")]:
+    for ax, group, letter in [
+        (axT, "Control", "T"),
+        (axU, "ELS", "U"),
+        (axV, "ELS resilient", "V"),
+    ]:
         plot_chord(ax, full_sequences, meta, group, letter)
     shift_axes([axT], dx=-0.012, scale_w=1.04, scale_h=1.04)
     shift_axes([axU], scale_w=1.04, scale_h=1.04)
@@ -807,10 +1123,50 @@ def main() -> None:
     axY = fig.add_subplot(trans_grid[1, 0])
     axZ = fig.add_subplot(trans_grid[1, 1])
     box_axes.extend([axW, axX, axY, axZ])
-    box_scatter(axW, transitions, "lz", "Lempel-Ziv complexity", "W", (100, 260), list(range(100, 261, 40)), "%.0f")
-    box_scatter(axX, transitions, "recurrence", "Recurrence Rate", "X", (0.24, 0.450), [0.250, 0.275, 0.300, 0.325, 0.350, 0.375, 0.400, 0.425, 0.450], "%.3f", stars=[(0, 1), (1, 2)])
-    box_scatter(axY, transitions, "determinism", "Determinism", "Y", (0.70, 1.00), [0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 1.00], "%.2f", stars=[(0, 1)])
-    box_scatter(axZ, transitions, "markov", "Markov Entropy", "Z", (0.7, 1.5), np.arange(0.7, 1.51, 0.2).round(1).tolist(), "%.1f", stars=[(0, 1)], sig_y_base=0.930)
+    box_scatter(
+        axW,
+        transitions,
+        "lz",
+        "Lempel-Ziv complexity",
+        "W",
+        (100, 260),
+        list(range(100, 261, 40)),
+        "%.0f",
+    )
+    box_scatter(
+        axX,
+        transitions,
+        "recurrence",
+        "Recurrence Rate",
+        "X",
+        (0.24, 0.450),
+        [0.250, 0.275, 0.300, 0.325, 0.350, 0.375, 0.400, 0.425, 0.450],
+        "%.3f",
+        stars=[(0, 1), (1, 2)],
+    )
+    box_scatter(
+        axY,
+        transitions,
+        "determinism",
+        "Determinism",
+        "Y",
+        (0.70, 1.00),
+        [0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 1.00],
+        "%.2f",
+        stars=[(0, 1)],
+    )
+    box_scatter(
+        axZ,
+        transitions,
+        "markov",
+        "Markov Entropy",
+        "Z",
+        (0.7, 1.5),
+        np.arange(0.7, 1.51, 0.2).round(1).tolist(),
+        "%.1f",
+        stars=[(0, 1)],
+        sig_y_base=0.930,
+    )
 
     equalize_boxplot_heights(box_axes)
     set_boxplot_axis_width(fig, [axG, axH, axI, axJ], FREQUENCY_METRIC_AXIS_WIDTH_IN)
@@ -837,7 +1193,9 @@ def main() -> None:
         set_panel_tag_position(ax, letter, TRANSITION_TAG_X, TRANSITION_TAG_Y)
     set_cumulative_layout(fig, axK, side_axes, axH, axJ)
     set_panel_tag_position(axK, "K", K_TAG_X, K_TAG_Y)
-    align_panel_tags_to_titles(fig, list(zip(bout_axes, [chr(ord("L") + i) for i in range(len(bout_axes))])))
+    align_panel_tags_to_titles(
+        fig, list(zip(bout_axes, [chr(ord("L") + i) for i in range(len(bout_axes))]))
+    )
     align_panel_tags_to_titles(fig, [(axW, "W"), (axX, "X"), (axY, "Y"), (axZ, "Z")])
 
     pdf = FIGURE_OUTPUT_DIR / "figure6.pdf"

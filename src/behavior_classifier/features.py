@@ -7,7 +7,6 @@ from collections.abc import Iterable, Sequence
 import numpy as np
 import pandas as pd
 
-
 BASE_FEATURES: tuple[str, ...] = (
     "centroid_x",
     "centroid_y",

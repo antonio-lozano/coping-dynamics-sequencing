@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Validate the publication repository from a clean clone."""
+
 from __future__ import annotations
 
 import csv
@@ -142,7 +143,9 @@ FIGURE_EXTS = (".pdf", ".svg", ".png")
 FORBIDDEN_TOP_LEVEL = {"results", "dataset", "external"}
 FORBIDDEN_PATHS = {"data/" + "derived"}
 TEXT_SUFFIXES = {".md", ".py", ".txt", ".json", ".yml", ".yaml", ".cff", ".toml"}
-LOCAL_PATH_PATTERN = re.compile(r"(?i)\b[a-z]:\\(?:users|downloads|jen|antonio|big_computer)|/mnt/[a-z]/")
+LOCAL_PATH_PATTERN = re.compile(
+    r"(?i)\b[a-z]:\\(?:users|downloads|jen|antonio|big_computer)|/mnt/[a-z]/"
+)
 SKIP_DIRS = {".git", ".venv", "__pycache__", ".mypy_cache", ".pytest_cache", ".uv-cache"}
 # Reading a file back to explain a hash mismatch is only worth it while it fits
 # comfortably in memory; past that the plain mismatch is the more useful report.
@@ -184,9 +187,7 @@ def iter_files() -> list[Path]:
     included = clean_clone_paths()
     candidates = (ROOT / rel for rel in included) if included is not None else ROOT.rglob("*")
     return [
-        path
-        for path in candidates
-        if not SKIP_DIRS.intersection(path.parts) and path.is_file()
+        path for path in candidates if not SKIP_DIRS.intersection(path.parts) and path.is_file()
     ]
 
 
@@ -302,7 +303,10 @@ def check_manifest(errors: list[str]) -> None:
         actual_size = path.stat().st_size
         if expected_size != actual_size:
             hint = line_ending_hint(path, expected_sha)
-            fail(f"manifest size mismatch: {rel} (recorded {expected_size}, found {actual_size}){hint}", errors)
+            fail(
+                f"manifest size mismatch: {rel} (recorded {expected_size}, found {actual_size}){hint}",
+                errors,
+            )
         if expected_sha != sha256(path):
             fail(f"manifest sha256 mismatch: {rel}{line_ending_hint(path, expected_sha)}", errors)
 
@@ -402,7 +406,9 @@ def main() -> int:
         return 1
 
     print("Reproducibility checks passed.")
-    print("Verified required inputs, processed data, source data, figures, reports, classifier artifact, and hashes.")
+    print(
+        "Verified required inputs, processed data, source data, figures, reports, classifier artifact, and hashes."
+    )
     return 0
 
 

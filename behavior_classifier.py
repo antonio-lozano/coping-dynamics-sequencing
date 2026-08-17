@@ -12,6 +12,7 @@ Usage
     python behavior_classifier.py train-from-dlc --help
     python behavior_classifier.py predict
 """
+
 from __future__ import annotations
 
 import sys
@@ -22,7 +23,6 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from src.behavior_classifier.cli import main
-
 
 if __name__ == "__main__":
     main()

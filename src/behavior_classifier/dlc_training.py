@@ -25,9 +25,7 @@ def _read_labels(path: Path) -> pd.DataFrame:
         labels = labels.rename(columns={first: "frame_index"})
     if "behavior_label" not in labels.columns:
         if "syllable" not in labels.columns:
-            raise ValueError(
-                f"{path} must contain either 'behavior_label' or 'syllable'."
-            )
+            raise ValueError(f"{path} must contain either 'behavior_label' or 'syllable'.")
         lookup = behavior_lookup()
         labels["behavior_label"] = (
             pd.to_numeric(labels["syllable"], errors="coerce")

@@ -28,3 +28,22 @@ dependencies = [
 
 [tool.uv]
 package = false
+
+[tool.ruff]
+line-length = 100
+# The vendored tool manages its own environment and style; the archive folder is
+# not part of the repository.
+extend-exclude = ["tools", "_archive_main"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# Entry points set matplotlib's backend and the import path before importing
+# repository modules, so some imports cannot sit at the top of the file.
+"scripts/**" = ["E402"]
+"behavior_classifier.py" = ["E402"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src", "scripts"]

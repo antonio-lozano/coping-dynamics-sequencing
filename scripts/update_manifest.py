@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Write MANIFEST.csv with hashes for publication artifacts."""
+
 from __future__ import annotations
 
 import csv
@@ -7,7 +8,6 @@ import hashlib
 import subprocess
 from functools import lru_cache
 from pathlib import Path
-
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "MANIFEST.csv"
@@ -58,7 +58,16 @@ def clean_clone_paths() -> frozenset[str] | None:
     """
     try:
         completed = subprocess.run(
-            ["git", "-C", str(ROOT), "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+            [
+                "git",
+                "-C",
+                str(ROOT),
+                "ls-files",
+                "--cached",
+                "--others",
+                "--exclude-standard",
+                "-z",
+            ],
             capture_output=True,
             check=True,
         )

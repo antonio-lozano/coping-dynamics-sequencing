@@ -18,7 +18,6 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 
-
 RANDOM_SEED = 13
 # Sampled every 30 s to match the behaviour-dynamics time courses in
 # Figures 3, 5 and Supplementary 1 (0.5-7.5 min, 15 points).
@@ -92,10 +91,6 @@ def metric_row(
         "fn_resilient_as_vulnerable": int(fn),
         "tp_resilient": int(tp),
     }
-    cohort_labels = {
-        "Exp1": "Sanguino Gómez\n& Krugers",
-        "Exp3": "Sanguino Gómez\net al.",
-    }
 
 
 def bootstrap_auc_ci(
@@ -134,7 +129,11 @@ def bootstrap_delta_ci(
         idx = rng.integers(0, n, n)
         if len(np.unique(y_true[idx])) < 2:
             continue
-        deltas.append(float(roc_auc_score(y_true[idx], score_a[idx]) - roc_auc_score(y_true[idx], score_b[idx])))
+        deltas.append(
+            float(
+                roc_auc_score(y_true[idx], score_a[idx]) - roc_auc_score(y_true[idx], score_b[idx])
+            )
+        )
     if not deltas:
         return (float("nan"), float("nan"))
     lo, hi = np.percentile(deltas, [2.5, 97.5])
@@ -170,18 +169,29 @@ def paired_auc_test(
         if len(np.unique(y_true[idx])) < 2:
             continue
         deltas.append(
-            float(roc_auc_score(y_true[idx], score_a[idx])
-                  - roc_auc_score(y_true[idx], score_b[idx]))
+            float(
+                roc_auc_score(y_true[idx], score_a[idx]) - roc_auc_score(y_true[idx], score_b[idx])
+            )
         )
     if not deltas:
-        return {"delta_auc": observed, "ci_low": float("nan"),
-                "ci_high": float("nan"), "p_value": float("nan"), "n_boot": 0}
+        return {
+            "delta_auc": observed,
+            "ci_low": float("nan"),
+            "ci_high": float("nan"),
+            "p_value": float("nan"),
+            "n_boot": 0,
+        }
     arr = np.asarray(deltas, dtype=float)
     lo, hi = np.percentile(arr, [2.5, 97.5])
     tail = np.sum(arr <= 0) if observed > 0 else np.sum(arr >= 0)
     p = min(1.0, 2.0 * (float(tail) + 1.0) / (len(arr) + 1.0))
-    return {"delta_auc": observed, "ci_low": float(lo), "ci_high": float(hi),
-            "p_value": p, "n_boot": len(arr)}
+    return {
+        "delta_auc": observed,
+        "ci_low": float(lo),
+        "ci_high": float(hi),
+        "p_value": p,
+        "n_boot": len(arr),
+    }
 
 
 def significance_stars(p: float) -> str:
@@ -215,7 +225,13 @@ def load_labels(root: Path) -> pd.DataFrame:
 def full_repertoire_features(root: Path) -> pd.DataFrame:
     freq = pd.read_csv(root / "data/processed/cluster_frequency_per_animal.csv")
     wide = (
-        freq.pivot_table(index="animal_id", columns="cluster", values="frequency_seconds", aggfunc="sum", fill_value=0)
+        freq.pivot_table(
+            index="animal_id",
+            columns="cluster",
+            values="frequency_seconds",
+            aggfunc="sum",
+            fill_value=0,
+        )
         .sort_index(axis=1)
         .reset_index()
     )
@@ -226,7 +242,9 @@ def full_repertoire_features(root: Path) -> pd.DataFrame:
 
 
 def freezing_features(root: Path) -> pd.DataFrame:
-    freezing = pd.read_csv(root / "data/raw/freezing_predictions_light.csv.gz", usecols=["animal_id", "freezing"])
+    freezing = pd.read_csv(
+        root / "data/raw/freezing_predictions_light.csv.gz", usecols=["animal_id", "freezing"]
+    )
     out = freezing.groupby("animal_id", as_index=False)["freezing"].mean()
     out["supervised_freezing_pct"] = out["freezing"] * 100.0
     return out.drop(columns=["freezing"])
@@ -237,7 +255,9 @@ def early_repertoire_features(root: Path, horizon_min: float) -> pd.DataFrame:
     tc = tc.loc[tc["time_s"] <= horizon_min * 60].copy()
     tc["early_feature"] = "early_motif_" + tc["cluster"] + "_t" + tc["time_bin"].astype(str)
     wide = (
-        tc.pivot_table(index="animal_id", columns="early_feature", values="pct", aggfunc="mean", fill_value=0)
+        tc.pivot_table(
+            index="animal_id", columns="early_feature", values="pct", aggfunc="mean", fill_value=0
+        )
         .sort_index(axis=1)
         .reset_index()
     )
@@ -246,7 +266,10 @@ def early_repertoire_features(root: Path, horizon_min: float) -> pd.DataFrame:
 
 def early_freezing_features(root: Path, horizon_min: float, fps: float = 25.0) -> pd.DataFrame:
     max_frame = int(round(horizon_min * 60 * fps))
-    freezing = pd.read_csv(root / "data/raw/freezing_predictions_light.csv.gz", usecols=["animal_id", "frame", "freezing"])
+    freezing = pd.read_csv(
+        root / "data/raw/freezing_predictions_light.csv.gz",
+        usecols=["animal_id", "frame", "freezing"],
+    )
     freezing = freezing.loc[freezing["frame"] < max_frame]
     out = freezing.groupby("animal_id", as_index=False)["freezing"].mean()
     out["early_supervised_freezing_pct"] = out["freezing"] * 100.0
@@ -255,11 +278,27 @@ def early_freezing_features(root: Path, horizon_min: float, fps: float = 25.0) -
 
 def assemble(labels: pd.DataFrame, features: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
     data = labels.merge(features, on="animal_id", how="inner")
-    feature_cols = [c for c in data.columns if c not in {"animal_id", "animal_label", "group", "dynamics_score", "resilient_by_zero", "target", "profile", "experiment"}]
+    feature_cols = [
+        c
+        for c in data.columns
+        if c
+        not in {
+            "animal_id",
+            "animal_label",
+            "group",
+            "dynamics_score",
+            "resilient_by_zero",
+            "target",
+            "profile",
+            "experiment",
+        }
+    ]
     return data, feature_cols
 
 
-def fit_ridge_classifier(train: pd.DataFrame, feature_cols: list[str]) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def fit_ridge_classifier(
+    train: pd.DataFrame, feature_cols: list[str]
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     x = train[feature_cols].to_numpy(dtype=float)
     y = train["target"].to_numpy(dtype=int)
     y_signed = np.where(y == 1, 1.0, -1.0)
@@ -282,20 +321,30 @@ def fit_ridge_classifier(train: pd.DataFrame, feature_cols: list[str]) -> tuple[
     return coef, mean, scale
 
 
-def score_ridge(test: pd.DataFrame, feature_cols: list[str], coef: np.ndarray, mean: np.ndarray, scale: np.ndarray) -> np.ndarray:
+def score_ridge(
+    test: pd.DataFrame,
+    feature_cols: list[str],
+    coef: np.ndarray,
+    mean: np.ndarray,
+    scale: np.ndarray,
+) -> np.ndarray:
     x = test[feature_cols].to_numpy(dtype=float)
     xs = (x - mean) / scale
     return coef[0] + xs @ coef[1:]
 
 
-def fit_predict(train: pd.DataFrame, test: pd.DataFrame, feature_cols: list[str]) -> tuple[np.ndarray, np.ndarray]:
+def fit_predict(
+    train: pd.DataFrame, test: pd.DataFrame, feature_cols: list[str]
+) -> tuple[np.ndarray, np.ndarray]:
     coef, mean, scale = fit_ridge_classifier(train, feature_cols)
     score = score_ridge(test, feature_cols, coef, mean, scale)
     pred = (score >= 0).astype(int)
     return score, pred
 
 
-def cross_cohort(labels: pd.DataFrame, feature_sets: dict[str, pd.DataFrame]) -> tuple[pd.DataFrame, pd.DataFrame]:
+def cross_cohort(
+    labels: pd.DataFrame, feature_sets: dict[str, pd.DataFrame]
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     metric_rows: list[dict[str, object]] = []
     prediction_rows: list[pd.DataFrame] = []
     for feature_name, features in feature_sets.items():
@@ -318,7 +367,9 @@ def cross_cohort(labels: pd.DataFrame, feature_sets: dict[str, pd.DataFrame]) ->
                     n_features=len(feature_cols),
                 )
             )
-            pred_df = test[["animal_id", "animal_label", "experiment", "profile", "target", "dynamics_score"]].copy()
+            pred_df = test[
+                ["animal_id", "animal_label", "experiment", "profile", "target", "dynamics_score"]
+            ].copy()
             pred_df["analysis"] = "cross_cohort"
             pred_df["feature_set"] = feature_name
             pred_df["train_experiment"] = f"Exp{train_exp}"
@@ -366,7 +417,9 @@ def loocv(
         else:
             row["roc_auc_ci95_low"], row["roc_auc_ci95_high"] = np.nan, np.nan
         metric_rows.append(row)
-        pred_df = data[["animal_id", "animal_label", "experiment", "profile", "target", "dynamics_score"]].copy()
+        pred_df = data[
+            ["animal_id", "animal_label", "experiment", "profile", "target", "dynamics_score"]
+        ].copy()
         pred_df["analysis"] = analysis
         pred_df["feature_set"] = feature_name
         pred_df["train_experiment"] = "LOOCV"
@@ -385,7 +438,9 @@ def early_prediction(labels: pd.DataFrame, root: Path) -> tuple[pd.DataFrame, pd
             "early_motif_repertoire": early_repertoire_features(root, horizon),
             "early_freezing_only": early_freezing_features(root, horizon),
         }
-        metrics, preds = loocv(labels, feature_sets, analysis="early_prediction", bootstrap_ci=False)
+        metrics, preds = loocv(
+            labels, feature_sets, analysis="early_prediction", bootstrap_ci=False
+        )
         metrics["horizon_min"] = horizon
         preds["horizon_min"] = horizon
         metric_frames.append(metrics)
@@ -399,11 +454,24 @@ def coefficient_table(labels: pd.DataFrame, feature_sets: dict[str, pd.DataFrame
         data, feature_cols = assemble(labels, features)
         coef, _, _ = fit_ridge_classifier(data, feature_cols)
         for feature, coef_value in zip(feature_cols, coef[1:]):
-            rows.append({"feature_set": feature_name, "feature": feature, "standardized_linear_coefficient": float(coef_value)})
-    return pd.DataFrame(rows).sort_values(["feature_set", "standardized_linear_coefficient"], ascending=[True, False])
+            rows.append(
+                {
+                    "feature_set": feature_name,
+                    "feature": feature,
+                    "standardized_linear_coefficient": float(coef_value),
+                }
+            )
+    return pd.DataFrame(rows).sort_values(
+        ["feature_set", "standardized_linear_coefficient"], ascending=[True, False]
+    )
 
 
-def plot_summary(cross_metrics: pd.DataFrame, head_metrics: pd.DataFrame, early_metrics: pd.DataFrame, out_dir: Path) -> None:
+def plot_summary(
+    cross_metrics: pd.DataFrame,
+    head_metrics: pd.DataFrame,
+    early_metrics: pd.DataFrame,
+    out_dir: Path,
+) -> None:
     plt.rcParams.update(
         {
             "font.family": "Arial",
@@ -435,7 +503,9 @@ def plot_summary(cross_metrics: pd.DataFrame, head_metrics: pd.DataFrame, early_
     width = 0.34
     for offset, feature in [(-width / 2, "motif_repertoire"), (width / 2, "freezing_only")]:
         vals = cross.loc[cross["feature_set"] == feature, "roc_auc"].to_numpy()
-        ax.bar(x_positions + offset, vals, width=width, color=colors[feature], label=labels[feature])
+        ax.bar(
+            x_positions + offset, vals, width=width, color=colors[feature], label=labels[feature]
+        )
         for x, y in zip(x_positions + offset, vals):
             ax.text(x, min(y + 0.025, 1.02), f"{y:.2f}", ha="center", va="bottom", fontsize=7)
     ax.axhline(0.5, color="#6B6B6B", lw=0.8, ls=":")
@@ -468,7 +538,13 @@ def plot_summary(cross_metrics: pd.DataFrame, head_metrics: pd.DataFrame, early_
         capsize=2,
     )
     for bar, (_, row) in zip(bars, head.iterrows()):
-        ax.text(bar.get_x() + bar.get_width() / 2, min(row["roc_auc"] + 0.04, 1.02), f"{row['roc_auc']:.2f}", ha="center", fontsize=7)
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            min(row["roc_auc"] + 0.04, 1.02),
+            f"{row['roc_auc']:.2f}",
+            ha="center",
+            fontsize=7,
+        )
     ax.axhline(0.5, color="#6B6B6B", lw=0.8, ls=":")
     ax.set_xticks(x)
     ax.set_xticklabels([labels[f] for f in head["feature_set"]], rotation=18, ha="right")
@@ -478,7 +554,14 @@ def plot_summary(cross_metrics: pd.DataFrame, head_metrics: pd.DataFrame, early_
     ax = axes[2]
     for feature in ["early_motif_repertoire", "early_freezing_only"]:
         sub = early_metrics.loc[early_metrics["feature_set"] == feature].sort_values("horizon_min")
-        ax.plot(sub["horizon_min"], sub["roc_auc"], marker="o", lw=1.5, color=colors[feature], label=labels[feature])
+        ax.plot(
+            sub["horizon_min"],
+            sub["roc_auc"],
+            marker="o",
+            lw=1.5,
+            color=colors[feature],
+            label=labels[feature],
+        )
     ax.axhline(0.5, color="#6B6B6B", lw=0.8, ls=":")
     ax.set_ylim(0, 1.08)
     ax.set_xlabel("First minutes included")
@@ -502,7 +585,9 @@ def markdown_count_table(labels: pd.DataFrame) -> str:
         "| --- | ---: | ---: |",
     ]
     for _, row in counts.iterrows():
-        lines.append(f"| {int(row['experiment'])} | {int(row['vulnerable'])} | {int(row['resilient'])} |")
+        lines.append(
+            f"| {int(row['experiment'])} | {int(row['vulnerable'])} | {int(row['resilient'])} |"
+        )
     return "\n".join(lines)
 
 
@@ -517,7 +602,9 @@ def write_report(
     motif_cross = cross_metrics.loc[cross_metrics["feature_set"] == "motif_repertoire"].copy()
     freezing_cross = cross_metrics.loc[cross_metrics["feature_set"] == "freezing_only"].copy()
     head = head_metrics.set_index("feature_set")
-    early_motif = early_metrics.loc[early_metrics["feature_set"] == "early_motif_repertoire"].sort_values("horizon_min")
+    early_motif = early_metrics.loc[
+        early_metrics["feature_set"] == "early_motif_repertoire"
+    ].sort_values("horizon_min")
     best_early = early_motif.loc[early_motif["roc_auc"].idxmax()]
     first_two = early_motif.loc[early_motif["horizon_min"].eq(2.0)].iloc[0]
     first_three = early_motif.loc[early_motif["horizon_min"].eq(3.0)].iloc[0]
@@ -673,8 +760,15 @@ def write_report(
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--repo", type=Path, default=None, help="Path to the manuscript repository.")
-    parser.add_argument("--out", type=Path, required=True, help="Output directory outside the manuscript repository.")
+    parser.add_argument(
+        "--repo", type=Path, default=None, help="Path to the manuscript repository."
+    )
+    parser.add_argument(
+        "--out",
+        type=Path,
+        required=True,
+        help="Output directory outside the manuscript repository.",
+    )
     args = parser.parse_args()
 
     root = repo_root(args.repo)
@@ -686,14 +780,19 @@ def main() -> None:
         "motif_repertoire": full_repertoire_features(root),
         "freezing_only": freezing_features(root),
     }
-    analysis_data, _ = assemble(labels, feature_sets["motif_repertoire"].merge(feature_sets["freezing_only"], on="animal_id"))
+    analysis_data, _ = assemble(
+        labels,
+        feature_sets["motif_repertoire"].merge(feature_sets["freezing_only"], on="animal_id"),
+    )
     analysis_data.to_csv(out_dir / "analysis_dataset.csv", index=False)
 
     cross_metrics, cross_predictions = cross_cohort(labels, feature_sets)
     cross_metrics.to_csv(out_dir / "cross_cohort_metrics.csv", index=False)
     cross_predictions.to_csv(out_dir / "cross_cohort_predictions.csv", index=False)
 
-    head_metrics, head_predictions = loocv(labels, feature_sets, analysis="full_session_head_to_head")
+    head_metrics, head_predictions = loocv(
+        labels, feature_sets, analysis="full_session_head_to_head"
+    )
     head_metrics.to_csv(out_dir / "head_to_head_loocv_metrics.csv", index=False)
     head_predictions.to_csv(out_dir / "head_to_head_loocv_predictions.csv", index=False)
 
@@ -705,10 +804,14 @@ def main() -> None:
     coeffs.to_csv(out_dir / "feature_coefficients.csv", index=False)
 
     head_scores = {
-        name: head_predictions.loc[head_predictions["feature_set"].eq(name), "resilience_score"].to_numpy()
+        name: head_predictions.loc[
+            head_predictions["feature_set"].eq(name), "resilience_score"
+        ].to_numpy()
         for name in ["motif_repertoire", "freezing_only"]
     }
-    y = head_predictions.loc[head_predictions["feature_set"].eq("motif_repertoire"), "target"].to_numpy()
+    y = head_predictions.loc[
+        head_predictions["feature_set"].eq("motif_repertoire"), "target"
+    ].to_numpy()
     delta_ci = bootstrap_delta_ci(y, head_scores["motif_repertoire"], head_scores["freezing_only"])
 
     plot_summary(cross_metrics, head_metrics, early_metrics, out_dir)
@@ -719,9 +822,21 @@ def main() -> None:
         shutil.copy2(script_src, script_dst)
 
     print(f"Wrote Tier 1 reanalysis to {out_dir}")
-    print(cross_metrics[["feature_set", "train_experiment", "test_experiment", "roc_auc", "balanced_accuracy"]].to_string(index=False))
-    print(head_metrics[["feature_set", "roc_auc", "balanced_accuracy", "roc_auc_ci95_low", "roc_auc_ci95_high"]].to_string(index=False))
-    print(early_metrics[["feature_set", "horizon_min", "roc_auc", "balanced_accuracy"]].to_string(index=False))
+    print(
+        cross_metrics[
+            ["feature_set", "train_experiment", "test_experiment", "roc_auc", "balanced_accuracy"]
+        ].to_string(index=False)
+    )
+    print(
+        head_metrics[
+            ["feature_set", "roc_auc", "balanced_accuracy", "roc_auc_ci95_low", "roc_auc_ci95_high"]
+        ].to_string(index=False)
+    )
+    print(
+        early_metrics[["feature_set", "horizon_min", "roc_auc", "balanced_accuracy"]].to_string(
+            index=False
+        )
+    )
 
 
 if __name__ == "__main__":

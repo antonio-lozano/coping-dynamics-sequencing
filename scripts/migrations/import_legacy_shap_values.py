@@ -18,6 +18,7 @@ needs ``--source``.  Values are preserved exactly (float32, verified on write).
 Run:
     python scripts/import_legacy_shap_values.py --source DIR
 """
+
 from __future__ import annotations
 
 import argparse
@@ -26,7 +27,6 @@ from pathlib import Path
 import joblib
 import numpy as np
 import pandas as pd
-
 
 REPO = Path(__file__).resolve().parents[1]
 OUT = REPO / "classifier" / "legacy_shap" / "shap_values.npz"
@@ -86,7 +86,9 @@ def main() -> None:
     output = args.output.resolve()
     shown = output.relative_to(REPO) if output.is_relative_to(REPO) else output
     print(f"Wrote {shown} ({size_mb:.1f} MB)")
-    print(f"  {stacked.shape[0]} classes x {stacked.shape[1]} frames x {stacked.shape[2]} parameters")
+    print(
+        f"  {stacked.shape[0]} classes x {stacked.shape[1]} frames x {stacked.shape[2]} parameters"
+    )
 
 
 if __name__ == "__main__":

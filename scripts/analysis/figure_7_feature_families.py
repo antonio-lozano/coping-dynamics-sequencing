@@ -18,7 +18,6 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 
-
 REPO = Path(__file__).resolve().parents[2]
 OUT = REPO / "figure_source_data"
 RIDGE_ALPHA = 1.0
@@ -43,7 +42,9 @@ CLUSTER_MAP = {
     "Climb": [111],
     "Jump": [23, 29, 30, 34],
 }
-SYLLABLE_TO_CLUSTER = {syllable: cluster for cluster, syllables in CLUSTER_MAP.items() for syllable in syllables}
+SYLLABLE_TO_CLUSTER = {
+    syllable: cluster for cluster, syllables in CLUSTER_MAP.items() for syllable in syllables
+}
 
 BLOCK_COLORS = {
     "freezing_only": FREEZING,
@@ -100,7 +101,13 @@ def load_labels() -> pd.DataFrame:
 
 def frequency_features() -> tuple[pd.DataFrame, dict[str, str]]:
     freq = pd.read_csv(REPO / "data/processed/cluster_frequency_per_animal.csv")
-    wide = freq.pivot_table(index="animal_id", columns="cluster", values="frequency_seconds", aggfunc="sum", fill_value=0)
+    wide = freq.pivot_table(
+        index="animal_id",
+        columns="cluster",
+        values="frequency_seconds",
+        aggfunc="sum",
+        fill_value=0,
+    )
     totals = wide.sum(axis=1).replace(0, np.nan)
     wide = wide.div(totals, axis=0).mul(100.0).reset_index()
     rename = {c: f"frequency__{c}" for c in wide.columns if c != "animal_id"}
@@ -108,14 +115,18 @@ def frequency_features() -> tuple[pd.DataFrame, dict[str, str]]:
 
 
 def freezing_features() -> tuple[pd.DataFrame, dict[str, str]]:
-    freezing = pd.read_csv(REPO / "data/raw/freezing_predictions_light.csv.gz", usecols=["animal_id", "freezing"])
+    freezing = pd.read_csv(
+        REPO / "data/raw/freezing_predictions_light.csv.gz", usecols=["animal_id", "freezing"]
+    )
     out = freezing.groupby("animal_id", as_index=False)["freezing"].mean()
     out["freezing__supervised_pct"] = out["freezing"] * 100.0
     return out.drop(columns=["freezing"]), {"freezing__supervised_pct": "freezing"}
 
 
 def transition_features() -> tuple[pd.DataFrame, dict[str, str]]:
-    trans = pd.read_csv(REPO / "statistics/fig4_transition_per_animal.csv").rename(columns={"Animal": "animal_id"})
+    trans = pd.read_csv(REPO / "statistics/fig4_transition_per_animal.csv").rename(
+        columns={"Animal": "animal_id"}
+    )
     cols = ["lz", "recurrence", "determinism", "markov"]
     out = trans[["animal_id", *cols]].copy()
     rename = {c: f"transition__{c}" for c in cols}
@@ -158,11 +169,17 @@ def transition_pair_features() -> tuple[pd.DataFrame, dict[str, str], dict[str, 
                 transition_feature_map[feature] = (a, b)
         rows.append(row)
     out = pd.DataFrame(rows)
-    return out, {c: "transition_pairs" for c in out.columns if c != "animal_id"}, transition_feature_map
+    return (
+        out,
+        {c: "transition_pairs" for c in out.columns if c != "animal_id"},
+        transition_feature_map,
+    )
 
 
 def diversity_features() -> tuple[pd.DataFrame, dict[str, str]]:
-    div = pd.read_csv(REPO / "statistics/fig4_diversity_per_animal.csv").rename(columns={"Animal": "animal_id"})
+    div = pd.read_csv(REPO / "statistics/fig4_diversity_per_animal.csv").rename(
+        columns={"Animal": "animal_id"}
+    )
     cols = ["simpson", "shannon", "evenness", "cui"]
     out = div[["animal_id", *cols]].copy()
     rename = {c: f"diversity__{c}" for c in cols}
@@ -170,10 +187,18 @@ def diversity_features() -> tuple[pd.DataFrame, dict[str, str]]:
 
 
 def bout_features() -> tuple[pd.DataFrame, dict[str, str]]:
-    overall = pd.read_csv(REPO / "statistics/fig4_bout_overall_per_animal.csv").rename(columns={"Animal": "animal_id"})
-    overall = overall[["animal_id", "bout_mean"]].rename(columns={"bout_mean": "bout__overall_mean"})
-    cluster = pd.read_csv(REPO / "statistics/fig4_bout_cluster_per_animal.csv").rename(columns={"Animal": "animal_id"})
-    wide = cluster.pivot_table(index="animal_id", columns="cluster", values="bout_duration", aggfunc="mean", fill_value=0)
+    overall = pd.read_csv(REPO / "statistics/fig4_bout_overall_per_animal.csv").rename(
+        columns={"Animal": "animal_id"}
+    )
+    overall = overall[["animal_id", "bout_mean"]].rename(
+        columns={"bout_mean": "bout__overall_mean"}
+    )
+    cluster = pd.read_csv(REPO / "statistics/fig4_bout_cluster_per_animal.csv").rename(
+        columns={"Animal": "animal_id"}
+    )
+    wide = cluster.pivot_table(
+        index="animal_id", columns="cluster", values="bout_duration", aggfunc="mean", fill_value=0
+    )
     wide = wide.reset_index()
     rename = {c: f"bout__{c}" for c in wide.columns if c != "animal_id"}
     out = overall.merge(wide.rename(columns=rename), on="animal_id", how="outer")
@@ -210,12 +235,22 @@ def fit_ridge(train: pd.DataFrame, cols: list[str]) -> tuple[np.ndarray, np.ndar
     return coef, mean, scale
 
 
-def score(test: pd.DataFrame, cols: list[str], coef: np.ndarray, mean: np.ndarray, scale: np.ndarray) -> np.ndarray:
+def score(
+    test: pd.DataFrame, cols: list[str], coef: np.ndarray, mean: np.ndarray, scale: np.ndarray
+) -> np.ndarray:
     xs = (test[cols].to_numpy(dtype=float) - mean) / scale
     return coef[0] + xs @ coef[1:]
 
 
-def metric_row(y: np.ndarray, scores: np.ndarray, pred: np.ndarray, model_name: str, train: str, test: str, n_features: int) -> dict[str, object]:
+def metric_row(
+    y: np.ndarray,
+    scores: np.ndarray,
+    pred: np.ndarray,
+    model_name: str,
+    train: str,
+    test: str,
+    n_features: int,
+) -> dict[str, object]:
     tn, fp, fn, tp = confusion_matrix(y, pred, labels=[0, 1]).ravel()
     return {
         "model": model_name,
@@ -236,7 +271,9 @@ def metric_row(y: np.ndarray, scores: np.ndarray, pred: np.ndarray, model_name: 
     }
 
 
-def evaluate_loocv(data: pd.DataFrame, cols: list[str], model_name: str) -> tuple[dict[str, object], pd.DataFrame]:
+def evaluate_loocv(
+    data: pd.DataFrame, cols: list[str], model_name: str
+) -> tuple[dict[str, object], pd.DataFrame]:
     scores = np.zeros(len(data))
     preds = np.zeros(len(data), dtype=int)
     for i in range(len(data)):
@@ -255,7 +292,9 @@ def evaluate_loocv(data: pd.DataFrame, cols: list[str], model_name: str) -> tupl
     return row, pred_df
 
 
-def evaluate_cross(data: pd.DataFrame, cols: list[str], model_name: str) -> tuple[list[dict[str, object]], pd.DataFrame]:
+def evaluate_cross(
+    data: pd.DataFrame, cols: list[str], model_name: str
+) -> tuple[list[dict[str, object]], pd.DataFrame]:
     rows = []
     pred_frames = []
     for train_exp, test_exp in [(1, 3), (3, 1)]:
@@ -264,7 +303,17 @@ def evaluate_cross(data: pd.DataFrame, cols: list[str], model_name: str) -> tupl
         coef, mean, scale = fit_ridge(train, cols)
         scores = score(test, cols, coef, mean, scale)
         preds = (scores >= 0).astype(int)
-        rows.append(metric_row(test["target"].to_numpy(), scores, preds, model_name, f"Exp{train_exp}", f"Exp{test_exp}", len(cols)))
+        rows.append(
+            metric_row(
+                test["target"].to_numpy(),
+                scores,
+                preds,
+                model_name,
+                f"Exp{train_exp}",
+                f"Exp{test_exp}",
+                len(cols),
+            )
+        )
         pred = test[["animal_id", "experiment", "profile", "target", "dynamics_score"]].copy()
         pred["model"] = model_name
         pred["train_experiment"] = f"Exp{train_exp}"
@@ -297,7 +346,17 @@ def clean_axis(ax: plt.Axes) -> None:
 
 
 def panel_label(ax: plt.Axes, letter: str) -> None:
-    ax.text(-0.15, 1.08, letter, transform=ax.transAxes, ha="left", va="top", fontsize=9, fontweight="bold", color=TEXT)
+    ax.text(
+        -0.15,
+        1.08,
+        letter,
+        transform=ax.transAxes,
+        ha="left",
+        va="top",
+        fontsize=9,
+        fontweight="bold",
+        color=TEXT,
+    )
 
 
 def short_feature_name(feature: str) -> str:
@@ -320,7 +379,9 @@ def short_feature_name(feature: str) -> str:
     return label
 
 
-def feature_behavior_links(feature: str, transition_feature_map: dict[str, tuple[str, str]]) -> list[str]:
+def feature_behavior_links(
+    feature: str, transition_feature_map: dict[str, tuple[str, str]]
+) -> list[str]:
     if feature.startswith("frequency__"):
         return [feature.split("__", 1)[1]]
     if feature.startswith("bout__"):
@@ -331,7 +392,9 @@ def feature_behavior_links(feature: str, transition_feature_map: dict[str, tuple
     return []
 
 
-def behavior_category_importance(coefs: pd.DataFrame, transition_feature_map: dict[str, tuple[str, str]]) -> pd.DataFrame:
+def behavior_category_importance(
+    coefs: pd.DataFrame, transition_feature_map: dict[str, tuple[str, str]]
+) -> pd.DataFrame:
     rows = []
     for _, row in coefs.iterrows():
         links = feature_behavior_links(str(row["feature"]), transition_feature_map)
@@ -339,7 +402,9 @@ def behavior_category_importance(coefs: pd.DataFrame, transition_feature_map: di
             continue
         share = float(row["standardized_linear_weight"]) / len(links)
         for behavior in links:
-            rows.append({"behavior": behavior, "signed_weight_share": share, "abs_weight_share": abs(share)})
+            rows.append(
+                {"behavior": behavior, "signed_weight_share": share, "abs_weight_share": abs(share)}
+            )
     out = (
         pd.DataFrame(rows)
         .groupby("behavior", as_index=False)
@@ -349,11 +414,15 @@ def behavior_category_importance(coefs: pd.DataFrame, transition_feature_map: di
         )
     )
     total = out["total_abs_weight"].sum()
-    out["percent_of_behavior_linked_weight"] = out["total_abs_weight"] / total * 100.0 if total else np.nan
+    out["percent_of_behavior_linked_weight"] = (
+        out["total_abs_weight"] / total * 100.0 if total else np.nan
+    )
     return out.sort_values("total_abs_weight", ascending=False)
 
 
-def transition_pair_importance(coefs: pd.DataFrame, transition_feature_map: dict[str, tuple[str, str]]) -> pd.DataFrame:
+def transition_pair_importance(
+    coefs: pd.DataFrame, transition_feature_map: dict[str, tuple[str, str]]
+) -> pd.DataFrame:
     sub = coefs[coefs["feature"].str.startswith("transition_pair__")].copy()
     if sub.empty:
         return sub
@@ -390,8 +459,12 @@ def plot_figure(
         }
     )
     fig = plt.figure(figsize=(10.2, 5.7))
-    gs = fig.add_gridspec(2, 3, left=0.065, right=0.99, bottom=0.105, top=0.93, wspace=0.43, hspace=0.50)
-    ax_a, ax_b, ax_c, ax_d, ax_e, ax_f = [fig.add_subplot(gs[i, j]) for i in range(2) for j in range(3)]
+    gs = fig.add_gridspec(
+        2, 3, left=0.065, right=0.99, bottom=0.105, top=0.93, wspace=0.43, hspace=0.50
+    )
+    ax_a, ax_b, ax_c, ax_d, ax_e, ax_f = [
+        fig.add_subplot(gs[i, j]) for i in range(2) for j in range(3)
+    ]
 
     order = [
         "freezing_only",
@@ -410,7 +483,14 @@ def plot_figure(
     ax_a.bar(x, sub["roc_auc"], color=colors, edgecolor="white", linewidth=0.4)
     ax_a.axhline(0.5, color=AXIS, linewidth=0.65, linestyle=(0, (1.5, 1.5)))
     for i, row in sub.iterrows():
-        ax_a.text(i, min(row["roc_auc"] + 0.025, 1.03), f"{row['roc_auc']:.2f}", ha="center", va="bottom", fontsize=5.6)
+        ax_a.text(
+            i,
+            min(row["roc_auc"] + 0.025, 1.03),
+            f"{row['roc_auc']:.2f}",
+            ha="center",
+            va="bottom",
+            fontsize=5.6,
+        )
     ax_a.set_xticks(x)
     ax_a.set_xticklabels([BLOCK_LABELS[m] for m in sub["model"]], rotation=28, ha="right")
     ax_a.set_ylim(0, 1.05)
@@ -420,7 +500,12 @@ def plot_figure(
     panel_label(ax_a, "A")
 
     directions = [("Exp1", "Exp3"), ("Exp3", "Exp1")]
-    models = ["freezing_only", "frequency", "behavior_integrated_with_pairs", "behavior_plus_freezing"]
+    models = [
+        "freezing_only",
+        "frequency",
+        "behavior_integrated_with_pairs",
+        "behavior_plus_freezing",
+    ]
     width = 0.19
     base_x = np.arange(len(directions))
     offsets = np.linspace(-1.5 * width, 1.5 * width, len(models))
@@ -435,10 +520,20 @@ def plot_figure(
                     "roc_auc",
                 ].iloc[0]
             )
-        ax_b.bar(base_x + offset, vals, width=width, color=BLOCK_COLORS[model_name], edgecolor="white", linewidth=0.35, label=BLOCK_LABELS[model_name])
+        ax_b.bar(
+            base_x + offset,
+            vals,
+            width=width,
+            color=BLOCK_COLORS[model_name],
+            edgecolor="white",
+            linewidth=0.35,
+            label=BLOCK_LABELS[model_name],
+        )
     ax_b.axhline(0.5, color=AXIS, linewidth=0.65, linestyle=(0, (1.5, 1.5)))
     ax_b.set_xticks(base_x)
-    ax_b.set_xticklabels([f"{COHORT_LABELS[train]} ->\n{COHORT_LABELS[test]}" for train, test in directions])
+    ax_b.set_xticklabels(
+        [f"{COHORT_LABELS[train]} ->\n{COHORT_LABELS[test]}" for train, test in directions]
+    )
     ax_b.set_ylim(0, 1.05)
     ax_b.set_ylabel("Held-out ROC AUC")
     ax_b.set_title("Cross-cohort transfer", pad=4)
@@ -448,7 +543,13 @@ def plot_figure(
 
     ab = ablation.sort_values("auc_loss_when_removed")
     y = np.arange(len(ab))
-    ax_c.barh(y, ab["auc_loss_when_removed"], color=[BLOCK_COLORS.get(m, AXIS) for m in ab["removed_block"]], edgecolor="white", linewidth=0.4)
+    ax_c.barh(
+        y,
+        ab["auc_loss_when_removed"],
+        color=[BLOCK_COLORS.get(m, AXIS) for m in ab["removed_block"]],
+        edgecolor="white",
+        linewidth=0.4,
+    )
     ax_c.axvline(0, color=AXIS, linewidth=0.7)
     ax_c.set_yticks(y)
     ax_c.set_yticklabels([BLOCK_LABELS.get(m, m) for m in ab["removed_block"]])
@@ -460,7 +561,13 @@ def plot_figure(
     beh = behavior_importance.sort_values("total_abs_weight")
     y = np.arange(len(beh))
     beh_colors = [CLUSTER_COLOR_LOOKUP.get(b, AXIS) for b in beh["behavior"]]
-    ax_d.barh(y, beh["percent_of_behavior_linked_weight"], color=beh_colors, edgecolor="white", linewidth=0.4)
+    ax_d.barh(
+        y,
+        beh["percent_of_behavior_linked_weight"],
+        color=beh_colors,
+        edgecolor="white",
+        linewidth=0.4,
+    )
     ax_d.set_yticks(y)
     ax_d.set_yticklabels(beh["behavior"])
     ax_d.set_xlabel("Share of behavior-linked weight (%)")
@@ -471,7 +578,9 @@ def plot_figure(
     top_pairs = pair_importance.head(10).iloc[::-1]
     y = np.arange(len(top_pairs))
     colors = [CLUSTER_COLOR_LOOKUP.get(v, TRANSITION) for v in top_pairs["from_behavior"]]
-    ax_e.barh(y, top_pairs["standardized_linear_weight"], color=colors, edgecolor="white", linewidth=0.4)
+    ax_e.barh(
+        y, top_pairs["standardized_linear_weight"], color=colors, edgecolor="white", linewidth=0.4
+    )
     ax_e.axvline(0, color=AXIS, linewidth=0.7)
     ax_e.set_yticks(y)
     ax_e.set_yticklabels(top_pairs["transition"])
@@ -482,7 +591,10 @@ def plot_figure(
 
     top = coefs.head(12).iloc[::-1]
     y = np.arange(len(top))
-    colors = [BLOCK_COLORS.get(block if block != "freezing" else "freezing_only", AXIS) for block in top["block"]]
+    colors = [
+        BLOCK_COLORS.get(block if block != "freezing" else "freezing_only", AXIS)
+        for block in top["block"]
+    ]
     ax_f.barh(y, top["standardized_linear_weight"], color=colors, edgecolor="white", linewidth=0.4)
     ax_f.axvline(0, color=AXIS, linewidth=0.7)
     ax_f.set_yticks(y)
@@ -507,7 +619,9 @@ def main() -> None:
     bout, bout_map = bout_features()
 
     behavior = merge_feature_frames([frequency, transition, diversity, bout])
-    behavior_with_pairs = merge_feature_frames([frequency, transition, transition_pairs, diversity, bout])
+    behavior_with_pairs = merge_feature_frames(
+        [frequency, transition, transition_pairs, diversity, bout]
+    )
     behavior_freezing = behavior_with_pairs.merge(freezing, on="animal_id", how="inner")
     feature_sets = {
         "freezing_only": (freezing, freezing_map),
@@ -516,14 +630,24 @@ def main() -> None:
         "transition_pairs": (transition_pairs, transition_pair_map),
         "diversity": (diversity, diversity_map),
         "bout_duration": (bout, bout_map),
-        "behavior_integrated": (behavior, {**frequency_map, **transition_map, **diversity_map, **bout_map}),
+        "behavior_integrated": (
+            behavior,
+            {**frequency_map, **transition_map, **diversity_map, **bout_map},
+        ),
         "behavior_integrated_with_pairs": (
             behavior_with_pairs,
             {**frequency_map, **transition_map, **transition_pair_map, **diversity_map, **bout_map},
         ),
         "behavior_plus_freezing": (
             behavior_freezing,
-            {**frequency_map, **transition_map, **transition_pair_map, **diversity_map, **bout_map, **freezing_map},
+            {
+                **frequency_map,
+                **transition_map,
+                **transition_pair_map,
+                **diversity_map,
+                **bout_map,
+                **freezing_map,
+            },
         ),
     }
 
@@ -549,7 +673,9 @@ def main() -> None:
     behavior_data = labels.merge(behavior_with_pairs, on="animal_id", how="inner")
     behavior_cols = [c for c in behavior_data.columns if "__" in c]
     block_map = feature_sets["behavior_integrated_with_pairs"][1]
-    full_auc = loocv_metrics.loc[loocv_metrics["model"].eq("behavior_integrated_with_pairs"), "roc_auc"].iloc[0]
+    full_auc = loocv_metrics.loc[
+        loocv_metrics["model"].eq("behavior_integrated_with_pairs"), "roc_auc"
+    ].iloc[0]
     ablation_rows = []
     for block in ["frequency", "transition", "transition_pairs", "diversity", "bout_duration"]:
         keep = [c for c in behavior_cols if block_map[c] != block]
@@ -571,22 +697,36 @@ def main() -> None:
     loocv_metrics.to_csv(OUT / "expanded_feature_model_loocv_metrics.csv", index=False)
     cross_metrics.to_csv(OUT / "expanded_feature_model_cross_cohort_metrics.csv", index=False)
     loocv_predictions.to_csv(OUT / "expanded_feature_model_loocv_predictions.csv", index=False)
-    cross_predictions.to_csv(OUT / "expanded_feature_model_cross_cohort_predictions.csv", index=False)
+    cross_predictions.to_csv(
+        OUT / "expanded_feature_model_cross_cohort_predictions.csv", index=False
+    )
     ablation.to_csv(OUT / "expanded_feature_block_ablation.csv", index=False)
     coefs.to_csv(OUT / "expanded_feature_importance_coefficients.csv", index=False)
     behavior_importance.to_csv(OUT / "expanded_behavior_category_importance.csv", index=False)
     pair_importance.to_csv(OUT / "expanded_transition_pair_importance.csv", index=False)
     plot_figure(loocv_metrics, cross_metrics, ablation, coefs, behavior_importance, pair_importance)
     print("LOOCV model comparison")
-    print(loocv_metrics[["model", "n_features", "roc_auc", "balanced_accuracy"]].to_string(index=False))
+    print(
+        loocv_metrics[["model", "n_features", "roc_auc", "balanced_accuracy"]].to_string(
+            index=False
+        )
+    )
     print("\nBlock ablation")
     print(ablation.to_string(index=False))
     print("\nTop features")
-    print(coefs.head(12)[["display_feature", "block", "standardized_linear_weight"]].to_string(index=False))
+    print(
+        coefs.head(12)[["display_feature", "block", "standardized_linear_weight"]].to_string(
+            index=False
+        )
+    )
     print("\nBehavior category importance")
     print(behavior_importance.to_string(index=False))
     print("\nTop transition pairs")
-    print(pair_importance.head(12)[["transition", "standardized_linear_weight", "abs_weight"]].to_string(index=False))
+    print(
+        pair_importance.head(12)[
+            ["transition", "standardized_linear_weight", "abs_weight"]
+        ].to_string(index=False)
+    )
 
 
 if __name__ == "__main__":

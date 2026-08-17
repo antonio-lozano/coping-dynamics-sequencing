@@ -16,6 +16,7 @@ behavior, matching the legacy figure script.  The per-parameter values behind
 the panels are tracked in
 ``figure_source_data/supplementary_figure4_shap_summary.csv``.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -32,7 +33,6 @@ import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 import shap  # noqa: E402
 from matplotlib.colors import LinearSegmentedColormap, Normalize  # noqa: E402
-
 
 REPO = Path(__file__).resolve().parents[2]
 if str(REPO) not in sys.path:
@@ -122,8 +122,7 @@ def load_legacy(source: Path | None) -> tuple[dict[str, np.ndarray], pd.DataFram
 
     sample.columns = [parameter_label(column) for column in sample.columns]
     by_behavior = {
-        CLASS_LABELS.get(name, name): shap_values[index]
-        for index, name in enumerate(classes)
+        CLASS_LABELS.get(name, name): shap_values[index] for index, name in enumerate(classes)
     }
     missing = [behavior for behavior in BEHAVIOR_ORDER if behavior not in by_behavior]
     if missing:
@@ -132,12 +131,14 @@ def load_legacy(source: Path | None) -> tuple[dict[str, np.ndarray], pd.DataFram
 
 
 def build_figure(by_behavior: dict[str, np.ndarray], sample: pd.DataFrame) -> plt.Figure:
-    plt.rcParams.update({
-        "font.family": "sans-serif",
-        "font.sans-serif": ["Arial", "DejaVu Sans"],
-        "pdf.fonttype": 42,
-        "svg.fonttype": "none",
-    })
+    plt.rcParams.update(
+        {
+            "font.family": "sans-serif",
+            "font.sans-serif": ["Arial", "DejaVu Sans"],
+            "pdf.fonttype": 42,
+            "svg.fonttype": "none",
+        }
+    )
     # summary_plot jitters beeswarm dots through the global numpy RNG; seeding
     # here pins the dot positions so rebuilding the figure reproduces it.
     np.random.seed(0)

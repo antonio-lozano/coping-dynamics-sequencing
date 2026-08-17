@@ -36,7 +36,7 @@ FIGURE_SCRIPTS = [
 
 
 def run_script(label: str, script_path: Path) -> tuple[str, float]:
-    print(f"\n{'='*70}\n  {label}\n  Script: {script_path.name}\n{'='*70}\n")
+    print(f"\n{'=' * 70}\n  {label}\n  Script: {script_path.name}\n{'=' * 70}\n")
     start = time.time()
     env = os.environ.copy()
     env["BATCH_MODE"] = "1"  # skip plt.show()
@@ -46,8 +46,9 @@ def run_script(label: str, script_path: Path) -> tuple[str, float]:
     # matplotlibrc this makes an unchanged figure an unchanged file.
     env.setdefault("SOURCE_DATE_EPOCH", "0")
     try:
-        subprocess.run([sys.executable, str(script_path)],
-                       cwd=script_path.parents[2], check=True, env=env)
+        subprocess.run(
+            [sys.executable, str(script_path)], cwd=script_path.parents[2], check=True, env=env
+        )
         duration = time.time() - start
         print(f"\n[OK] {label} completed in {duration:.1f}s")
         return "SUCCESS", duration

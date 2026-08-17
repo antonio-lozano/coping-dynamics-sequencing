@@ -7,7 +7,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-
 NOSE_CANDIDATES = ("nose", "snout", "Nose")
 TAIL_CANDIDATES = ("tailbase", "tail_base", "TailBase", "body", "center")
 
@@ -126,7 +125,9 @@ def dlc_tracks_to_pose_table(
         centered_y = y - np.nanmean(y, axis=1, keepdims=True)
         body_length = np.nanmax(np.sqrt(centered_x * centered_x + centered_y * centered_y), axis=1)
 
-    heading = pd.Series(np.unwrap(heading)).interpolate(limit_direction="both").fillna(0.0).to_numpy()
+    heading = (
+        pd.Series(np.unwrap(heading)).interpolate(limit_direction="both").fillna(0.0).to_numpy()
+    )
     dx = np.diff(centroid_x, prepend=centroid_x[0])
     dy = np.diff(centroid_y, prepend=centroid_y[0])
     velocity_px_s = np.sqrt(dx * dx + dy * dy) * float(fps)
@@ -135,11 +136,7 @@ def dlc_tracks_to_pose_table(
     body_tilt_delta = _wrap_angle_delta(body_tilt) * float(fps)
     body_tilt_abs_delta = np.abs(body_tilt_delta)
     body_tilt_variability = (
-        pd.Series(body_tilt_delta)
-        .rolling(window=15, min_periods=1)
-        .std()
-        .fillna(0.0)
-        .to_numpy()
+        pd.Series(body_tilt_delta).rolling(window=15, min_periods=1).std().fillna(0.0).to_numpy()
     )
     global_turning_speed = np.abs(angular_velocity)
 

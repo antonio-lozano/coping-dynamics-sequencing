@@ -49,7 +49,6 @@ import pandas as pd
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_auc_score, roc_curve
 from sklearn.model_selection import StratifiedKFold
 
 REPO = Path(__file__).resolve().parents[2]
@@ -116,7 +115,9 @@ def ridge_fit_np(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray, 
     return coef, mean, scale
 
 
-def ridge_score_np(x: np.ndarray, coef: np.ndarray, mean: np.ndarray, scale: np.ndarray) -> np.ndarray:
+def ridge_score_np(
+    x: np.ndarray, coef: np.ndarray, mean: np.ndarray, scale: np.ndarray
+) -> np.ndarray:
     return coef[0] + ((x - mean) / scale) @ coef[1:]
 
 
@@ -149,16 +150,26 @@ def fit_score(train: pd.DataFrame, test: pd.DataFrame, cols: list[str]) -> np.nd
 def strat_key(data: pd.DataFrame, by_cohort: bool = True) -> np.ndarray:
     """Stratify folds on class, and on cohort as well when both are present."""
     if by_cohort and data["experiment"].nunique() > 1:
-        return (data["experiment"].astype(int).astype(str) + "_" + data["target"].astype(int).astype(str)).to_numpy()
+        return (
+            data["experiment"].astype(int).astype(str)
+            + "_"
+            + data["target"].astype(int).astype(str)
+        ).to_numpy()
     return data["target"].astype(int).to_numpy()
 
 
-def make_folds(key: np.ndarray, n_splits: int, n_repeats: int, seed: int) -> list[list[tuple[np.ndarray, np.ndarray]]]:
+def make_folds(
+    key: np.ndarray, n_splits: int, n_repeats: int, seed: int
+) -> list[list[tuple[np.ndarray, np.ndarray]]]:
     """Fold indices depend only on the stratification key, so build them once and reuse."""
     n = len(key)
     dummy = np.zeros(n)
     return [
-        list(StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=seed + r).split(dummy, key))
+        list(
+            StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=seed + r).split(
+                dummy, key
+            )
+        )
         for r in range(n_repeats)
     ]
 
@@ -197,7 +208,9 @@ def repeated_cv_auc(
     return cv_auc_np(x, y, folds)
 
 
-def stratified_bootstrap_ci(y: np.ndarray, score: np.ndarray, *, n_boot: int = N_BOOT, seed: int = RANDOM_SEED) -> tuple[float, float]:
+def stratified_bootstrap_ci(
+    y: np.ndarray, score: np.ndarray, *, n_boot: int = N_BOOT, seed: int = RANDOM_SEED
+) -> tuple[float, float]:
     """Resample positives and negatives separately so both classes always survive.
 
     AUC is the mean over positive/negative pairs of 1[s_pos > s_neg] + 0.5*1[tie],
@@ -218,7 +231,9 @@ def stratified_bootstrap_ci(y: np.ndarray, score: np.ndarray, *, n_boot: int = N
     return float(lo), float(hi)
 
 
-def cross_cohort(data: pd.DataFrame, cols: list[str], *, with_ci: bool = True) -> list[dict[str, object]]:
+def cross_cohort(
+    data: pd.DataFrame, cols: list[str], *, with_ci: bool = True
+) -> list[dict[str, object]]:
     rows: list[dict[str, object]] = []
     for train_exp, test_exp in DIRECTIONS:
         train = data.loc[data["experiment"] == train_exp]
@@ -264,7 +279,10 @@ def _timecourse() -> pd.DataFrame:
 
 @lru_cache(maxsize=1)
 def _freezing_frames() -> pd.DataFrame:
-    return pd.read_csv(REPO / "data/raw/freezing_predictions_light.csv.gz", usecols=["animal_id", "frame", "freezing"])
+    return pd.read_csv(
+        REPO / "data/raw/freezing_predictions_light.csv.gz",
+        usecols=["animal_id", "frame", "freezing"],
+    )
 
 
 def cumulative_motif_features(horizon_min: float) -> pd.DataFrame:
@@ -276,7 +294,9 @@ def cumulative_motif_features(horizon_min: float) -> pd.DataFrame:
     tc = _timecourse()
     tc = tc.loc[tc["time_s"] <= horizon_min * 60].copy()
     wide = (
-        tc.pivot_table(index="animal_id", columns="cluster", values="pct", aggfunc="mean", fill_value=0)
+        tc.pivot_table(
+            index="animal_id", columns="cluster", values="pct", aggfunc="mean", fill_value=0
+        )
         .sort_index(axis=1)
         .reset_index()
     )
@@ -360,7 +380,9 @@ def attach(labels: pd.DataFrame, features: pd.DataFrame) -> pd.DataFrame:
 # --------------------------------------------------------------------------
 
 
-def calibrate(train: pd.DataFrame, test: pd.DataFrame, cols: list[str], raw_test_score: np.ndarray) -> np.ndarray:
+def calibrate(
+    train: pd.DataFrame, test: pd.DataFrame, cols: list[str], raw_test_score: np.ndarray
+) -> np.ndarray:
     """Map the ridge decision value onto a probability of being resilient.
 
     The ridge score is a least-squares fit to +/-1 targets, so its units are
@@ -379,7 +401,9 @@ def calibrate(train: pd.DataFrame, test: pd.DataFrame, cols: list[str], raw_test
     return calibrator.predict_proba(np.asarray(raw_test_score, dtype=float).reshape(-1, 1))[:, 1]
 
 
-def panel_a_data(labels: pd.DataFrame, frequency: pd.DataFrame, freq_cols: list[str]) -> list[dict[str, object]]:
+def panel_a_data(
+    labels: pd.DataFrame, frequency: pd.DataFrame, freq_cols: list[str]
+) -> list[dict[str, object]]:
     """Pre-specified 7-motif repertoire model, transferred both ways."""
     data = attach(labels, frequency)
     rows = cross_cohort(data, freq_cols)
@@ -395,7 +419,9 @@ def panel_a_data(labels: pd.DataFrame, frequency: pd.DataFrame, freq_cols: list[
     return rows
 
 
-def panel_b_data(labels: pd.DataFrame, families: dict[str, tuple[pd.DataFrame, list[str], str]]) -> pd.DataFrame:
+def panel_b_data(
+    labels: pd.DataFrame, families: dict[str, tuple[pd.DataFrame, list[str], str]]
+) -> pd.DataFrame:
     rows = []
     for name, (frame, cols, color) in families.items():
         data = attach(labels, frame)
@@ -418,7 +444,9 @@ def panel_b_data(labels: pd.DataFrame, families: dict[str, tuple[pd.DataFrame, l
                 "internal_cv_auc_sd": float(cv_aucs.std(ddof=1)),
             }
         )
-    return pd.DataFrame(rows).sort_values("worst_direction_auc", ascending=True).reset_index(drop=True)
+    return (
+        pd.DataFrame(rows).sort_values("worst_direction_auc", ascending=True).reset_index(drop=True)
+    )
 
 
 def nested_combination_search(
@@ -430,7 +458,9 @@ def nested_combination_search(
     cohort never influences which combination is picked.
     """
     data = attach(labels, frequency)
-    combos = [list(c) for k in range(1, len(freq_cols) + 1) for c in itertools.combinations(freq_cols, k)]
+    combos = [
+        list(c) for k in range(1, len(freq_cols) + 1) for c in itertools.combinations(freq_cols, k)
+    ]
     col_index = {c: i for i, c in enumerate(freq_cols)}
     results: list[dict[str, object]] = []
     trace_rows: list[dict[str, object]] = []
@@ -534,7 +564,9 @@ def panel_c_data(
     return pd.DataFrame(rows)
 
 
-def permutation_null(data: pd.DataFrame, cols: list[str], *, n_perm: int = N_PERM, seed: int = RANDOM_SEED) -> tuple[float, float]:
+def permutation_null(
+    data: pd.DataFrame, cols: list[str], *, n_perm: int = N_PERM, seed: int = RANDOM_SEED
+) -> tuple[float, float]:
     """Null AUC band from labels shuffled within cohort (keeps cohort composition)."""
     rng = np.random.default_rng(seed)
     y = data["target"].to_numpy(dtype=int)
@@ -550,9 +582,9 @@ def permutation_null(data: pd.DataFrame, cols: list[str], *, n_perm: int = N_PER
         key = exp.astype(str)
         key = np.char.add(np.char.add(key, "_"), y_perm.astype(str))
         oof = np.empty(n, dtype=float)
-        for tr_idx, te_idx in StratifiedKFold(n_splits=N_SPLITS, shuffle=True, random_state=seed + p).split(
-            np.zeros(n), key
-        ):
+        for tr_idx, te_idx in StratifiedKFold(
+            n_splits=N_SPLITS, shuffle=True, random_state=seed + p
+        ).split(np.zeros(n), key):
             coef, mean, scale = ridge_fit_np(x[tr_idx], y_perm[tr_idx])
             oof[te_idx] = ridge_score_np(x[te_idx], coef, mean, scale)
         draws[p] = fast_auc(y_perm, oof)
@@ -610,7 +642,16 @@ def clean_axis(ax: plt.Axes) -> None:
 def stamp_letter(fig: plt.Figure, ax: plt.Axes, letter: str, dx: float = 0.085) -> None:
     """Place panel letters in figure coordinates so long tick labels cannot push them around."""
     pos = ax.get_position()
-    fig.text(max(pos.x0 - dx, 0.004), min(pos.y1 + 0.018, 0.995), letter, fontsize=11, fontweight="bold", color=TEXT, va="bottom", ha="left")
+    fig.text(
+        max(pos.x0 - dx, 0.004),
+        min(pos.y1 + 0.018, 0.995),
+        letter,
+        fontsize=11,
+        fontweight="bold",
+        color=TEXT,
+        va="bottom",
+        ha="left",
+    )
 
 
 def draw_panel_a(axes: list[plt.Axes], rows: list[dict[str, object]]) -> None:
@@ -634,7 +675,10 @@ def draw_panel_a(axes: list[plt.Axes], rows: list[dict[str, object]]) -> None:
             ax.hlines(np.median(prob[mask]), xpos - 0.26, xpos + 0.26, color=AXIS, lw=1.3, zorder=4)
         ax.axhline(0.5, color=AXIS, lw=0.8, ls=(0, (4, 3)), zorder=1)
         ax.set_xticks([0, 1])
-        ax.set_xticklabels([f"vulnerable\nn={int((y == 0).sum())}", f"resilient\nn={int((y == 1).sum())}"], fontsize=7)
+        ax.set_xticklabels(
+            [f"vulnerable\nn={int((y == 0).sum())}", f"resilient\nn={int((y == 1).sum())}"],
+            fontsize=7,
+        )
         ax.set_xlim(-0.5, 1.5)
         ax.set_ylim(-0.03, 1.03)
         ax.set_yticks([0, 0.25, 0.5, 0.75, 1.0])
@@ -655,7 +699,15 @@ def draw_panel_a(axes: list[plt.Axes], rows: list[dict[str, object]]) -> None:
 def draw_panel_b(ax: plt.Axes, table: pd.DataFrame) -> None:
     ypos = np.arange(len(table))
     ax.axvline(0.5, color=NULL_GREY, lw=0.9, ls=(0, (4, 3)), zorder=1)
-    ax.barh(ypos, table["worst_direction_auc"], color=table["color"], height=0.62, zorder=2, edgecolor="white", linewidth=0.5)
+    ax.barh(
+        ypos,
+        table["worst_direction_auc"],
+        color=table["color"],
+        height=0.62,
+        zorder=2,
+        edgecolor="white",
+        linewidth=0.5,
+    )
     ax.hlines(
         ypos,
         table["worst_ci_low"],
@@ -664,16 +716,54 @@ def draw_panel_b(ax: plt.Axes, table: pd.DataFrame) -> None:
         lw=1.0,
         zorder=4,
     )
-    ax.scatter(table["auc_kru_to_gom"], ypos, s=16, facecolor="white", edgecolor=AXIS, linewidth=0.8, zorder=5, marker="o")
-    ax.scatter(table["auc_gom_to_kru"], ypos, s=18, facecolor=AXIS, edgecolor="white", linewidth=0.5, zorder=5, marker="D")
+    ax.scatter(
+        table["auc_kru_to_gom"],
+        ypos,
+        s=16,
+        facecolor="white",
+        edgecolor=AXIS,
+        linewidth=0.8,
+        zorder=5,
+        marker="o",
+    )
+    ax.scatter(
+        table["auc_gom_to_kru"],
+        ypos,
+        s=18,
+        facecolor=AXIS,
+        edgecolor="white",
+        linewidth=0.5,
+        zorder=5,
+        marker="D",
+    )
     ax.set_yticks(ypos)
-    ax.set_yticklabels([f"{n}  ({k})" for n, k in zip(table["family"], table["n_features"])], fontsize=7)
+    ax.set_yticklabels(
+        [f"{n}  ({k})" for n, k in zip(table["family"], table["n_features"])], fontsize=7
+    )
     ax.set_xlim(0.0, 1.0)
     ax.set_xlabel("cross-cohort AUC (bar = worse direction)", fontsize=7.5, color=TEXT)
     clean_axis(ax)
     handles = [
-        Line2D([], [], marker="o", ls="none", markerfacecolor="white", markeredgecolor=AXIS, markersize=4, label="Krugers → Gómez"),
-        Line2D([], [], marker="D", ls="none", markerfacecolor=AXIS, markeredgecolor="white", markersize=4, label="Gómez → Krugers"),
+        Line2D(
+            [],
+            [],
+            marker="o",
+            ls="none",
+            markerfacecolor="white",
+            markeredgecolor=AXIS,
+            markersize=4,
+            label="Krugers → Gómez",
+        ),
+        Line2D(
+            [],
+            [],
+            marker="D",
+            ls="none",
+            markerfacecolor=AXIS,
+            markeredgecolor="white",
+            markersize=4,
+            label="Gómez → Krugers",
+        ),
         Line2D([], [], color=AXIS, lw=1.0, label="95% CI, worse direction"),
     ]
     ax.legend(
@@ -711,8 +801,26 @@ def draw_panel_c(ax: plt.Axes, table: pd.DataFrame) -> None:
             hatch="////" if post_hoc else None,
         )
     ax.hlines(ypos, order["worst_ci_low"], order["worst_ci_high"], color=AXIS, lw=1.0, zorder=4)
-    ax.scatter(order["auc_kru_to_gom"], ypos, s=16, facecolor="white", edgecolor=AXIS, linewidth=0.8, zorder=5, marker="o")
-    ax.scatter(order["auc_gom_to_kru"], ypos, s=18, facecolor=AXIS, edgecolor="white", linewidth=0.5, zorder=5, marker="D")
+    ax.scatter(
+        order["auc_kru_to_gom"],
+        ypos,
+        s=16,
+        facecolor="white",
+        edgecolor=AXIS,
+        linewidth=0.8,
+        zorder=5,
+        marker="o",
+    )
+    ax.scatter(
+        order["auc_gom_to_kru"],
+        ypos,
+        s=18,
+        facecolor=AXIS,
+        edgecolor="white",
+        linewidth=0.5,
+        zorder=5,
+        marker="D",
+    )
     ax.set_yticks(ypos)
     ax.set_yticklabels(order["model"], fontsize=7)
     for tick, selection in zip(ax.get_yticklabels(), order["selection"]):
@@ -723,7 +831,9 @@ def draw_panel_c(ax: plt.Axes, table: pd.DataFrame) -> None:
     clean_axis(ax)
     handles = [
         Patch(facecolor=MOTIF, edgecolor=MOTIF, label="a priori"),
-        Patch(facecolor="white", edgecolor=MOTIF, hatch="////", label="post hoc (picked on test data)"),
+        Patch(
+            facecolor="white", edgecolor=MOTIF, hatch="////", label="post hoc (picked on test data)"
+        ),
         Patch(facecolor="#7A7A7A", edgecolor="#7A7A7A", label="nested (picked in training cohort)"),
     ]
     ax.legend(
@@ -779,16 +889,63 @@ def draw_panel_d(ax: plt.Axes, data: pd.DataFrame, boundary: tuple[float, float,
         va="bottom",
     )
     handles = [
-        Line2D([], [], marker="o", ls="none", markerfacecolor=VULNERABLE, markeredgecolor="white", markersize=5, label="vulnerable"),
-        Line2D([], [], marker="o", ls="none", markerfacecolor=RESILIENT, markeredgecolor="white", markersize=5, label="resilient"),
-        Line2D([], [], marker="o", ls="none", markerfacecolor="none", markeredgecolor=AXIS, markersize=5, label="Krugers"),
-        Line2D([], [], marker="^", ls="none", markerfacecolor="none", markeredgecolor=AXIS, markersize=5, label="Gómez"),
+        Line2D(
+            [],
+            [],
+            marker="o",
+            ls="none",
+            markerfacecolor=VULNERABLE,
+            markeredgecolor="white",
+            markersize=5,
+            label="vulnerable",
+        ),
+        Line2D(
+            [],
+            [],
+            marker="o",
+            ls="none",
+            markerfacecolor=RESILIENT,
+            markeredgecolor="white",
+            markersize=5,
+            label="resilient",
+        ),
+        Line2D(
+            [],
+            [],
+            marker="o",
+            ls="none",
+            markerfacecolor="none",
+            markeredgecolor=AXIS,
+            markersize=5,
+            label="Krugers",
+        ),
+        Line2D(
+            [],
+            [],
+            marker="^",
+            ls="none",
+            markerfacecolor="none",
+            markeredgecolor=AXIS,
+            markersize=5,
+            label="Gómez",
+        ),
     ]
-    ax.legend(handles=handles, fontsize=6, frameon=False, loc="upper right", handletextpad=0.4, labelspacing=0.3, ncol=2, columnspacing=0.8)
+    ax.legend(
+        handles=handles,
+        fontsize=6,
+        frameon=False,
+        loc="upper right",
+        handletextpad=0.4,
+        labelspacing=0.3,
+        ncol=2,
+        columnspacing=0.8,
+    )
 
 
 def draw_panel_e(ax: plt.Axes, table: pd.DataFrame) -> None:
-    null_rows = table[table["feature_set"] == "Cumulative motif repertoire"].sort_values("horizon_min")
+    null_rows = table[table["feature_set"] == "Cumulative motif repertoire"].sort_values(
+        "horizon_min"
+    )
     ax.fill_between(
         null_rows["horizon_min"],
         null_rows["null_auc_p2.5"],
@@ -802,10 +959,45 @@ def draw_panel_e(ax: plt.Axes, table: pd.DataFrame) -> None:
     for name, group in table.groupby("feature_set"):
         group = group.sort_values("horizon_min")
         color = group["color"].iloc[0]
-        ax.fill_between(group["horizon_min"], group["cv_auc_p10"], group["cv_auc_p90"], color=color, alpha=0.18, lw=0, zorder=2)
-        ax.plot(group["horizon_min"], group["cv_auc_mean"], color=color, lw=1.6, marker="o", markersize=3.5, zorder=4, label=name)
-        ax.scatter(group["horizon_min"], group["auc_kru_to_gom"], s=13, facecolor="white", edgecolor=color, linewidth=0.8, zorder=3, marker="o")
-        ax.scatter(group["horizon_min"], group["auc_gom_to_kru"], s=14, facecolor="none", edgecolor=color, linewidth=0.8, zorder=3, marker="D")
+        ax.fill_between(
+            group["horizon_min"],
+            group["cv_auc_p10"],
+            group["cv_auc_p90"],
+            color=color,
+            alpha=0.18,
+            lw=0,
+            zorder=2,
+        )
+        ax.plot(
+            group["horizon_min"],
+            group["cv_auc_mean"],
+            color=color,
+            lw=1.6,
+            marker="o",
+            markersize=3.5,
+            zorder=4,
+            label=name,
+        )
+        ax.scatter(
+            group["horizon_min"],
+            group["auc_kru_to_gom"],
+            s=13,
+            facecolor="white",
+            edgecolor=color,
+            linewidth=0.8,
+            zorder=3,
+            marker="o",
+        )
+        ax.scatter(
+            group["horizon_min"],
+            group["auc_gom_to_kru"],
+            s=14,
+            facecolor="none",
+            edgecolor=color,
+            linewidth=0.8,
+            zorder=3,
+            marker="D",
+        )
     ax.axhline(0.5, color=AXIS, lw=0.7, ls=(0, (4, 3)), zorder=1)
     ax.set_xticks(HORIZONS_MIN)
     ax.set_xticklabels([f"{h:g}" for h in HORIZONS_MIN], fontsize=7)
@@ -814,7 +1006,18 @@ def draw_panel_e(ax: plt.Axes, table: pd.DataFrame) -> None:
     ax.set_ylim(0.0, 1.0)
     clean_axis(ax)
     handles, labels_ = ax.get_legend_handles_labels()
-    handles.append(Line2D([], [], marker="o", ls="none", markerfacecolor="white", markeredgecolor=AXIS, markersize=4, label="cross-cohort, each direction"))
+    handles.append(
+        Line2D(
+            [],
+            [],
+            marker="o",
+            ls="none",
+            markerfacecolor="white",
+            markeredgecolor=AXIS,
+            markersize=4,
+            label="cross-cohort, each direction",
+        )
+    )
     labels_.append("cross-cohort, each direction")
     ax.legend(
         handles=handles,
@@ -877,19 +1080,47 @@ def build_figure(
 
     ax_b = fig.add_subplot(gs[1, 0])
     draw_panel_b(ax_b, b_table)
-    ax_b.set_title("Which motif measure transfers?", fontsize=8, color=TEXT, fontweight="bold", loc="left", pad=6)
+    ax_b.set_title(
+        "Which motif measure transfers?",
+        fontsize=8,
+        color=TEXT,
+        fontweight="bold",
+        loc="left",
+        pad=6,
+    )
 
     ax_c = fig.add_subplot(gs[1, 1])
     draw_panel_c(ax_c, c_table)
-    ax_c.set_title("Freezing alone, or a combination?", fontsize=8, color=TEXT, fontweight="bold", loc="left", pad=6)
+    ax_c.set_title(
+        "Freezing alone, or a combination?",
+        fontsize=8,
+        color=TEXT,
+        fontweight="bold",
+        loc="left",
+        pad=6,
+    )
 
     ax_d = fig.add_subplot(gs[2, 0])
     draw_panel_d(ax_d, scatter_data, boundary)
-    ax_d.set_title("Freeze and Turn time share, all 41 animals", fontsize=8, color=TEXT, fontweight="bold", loc="left", pad=6)
+    ax_d.set_title(
+        "Freeze and Turn time share, all 41 animals",
+        fontsize=8,
+        color=TEXT,
+        fontweight="bold",
+        loc="left",
+        pad=6,
+    )
 
     ax_e = fig.add_subplot(gs[2, 1])
     draw_panel_e(ax_e, e_table)
-    ax_e.set_title("When does resilience become readable?", fontsize=8, color=TEXT, fontweight="bold", loc="left", pad=6)
+    ax_e.set_title(
+        "When does resilience become readable?",
+        fontsize=8,
+        color=TEXT,
+        fontweight="bold",
+        loc="left",
+        pad=6,
+    )
 
     for ax, letter, dx in [
         (ax_a1, "a", 0.075),
@@ -915,13 +1146,17 @@ def write_report(
     nested: list[dict[str, object]],
     e_table: pd.DataFrame,
 ) -> None:
-    motif = e_table[e_table["feature_set"] == "Cumulative motif repertoire"].sort_values("horizon_min")
+    motif = e_table[e_table["feature_set"] == "Cumulative motif repertoire"].sort_values(
+        "horizon_min"
+    )
     freeze = e_table[e_table["feature_set"] == "Cumulative Freeze only"].sort_values("horizon_min")
     above_null = motif[motif["cv_auc_mean"] > motif["null_auc_p97.5"]]
     first_above = above_null["horizon_min"].min() if len(above_null) else np.nan
 
     lines: list[str] = []
-    lines.append("\n## Direct supplementary figure (`supplementary_figure4_direct.png/.pdf/.svg`)\n")
+    lines.append(
+        "\n## Direct supplementary figure (`supplementary_figure4_direct.png/.pdf/.svg`)\n"
+    )
     lines.append(
         "Five panels built to answer four questions directly: (a) does the model transfer between "
         "cohorts, (b) which behavioural information transfers, (c) is freezing alone sufficient, "
@@ -977,7 +1212,9 @@ def write_report(
             f"(95% CI {row['worst_ci_low']:.3f}-{row['worst_ci_high']:.3f}); directions "
             f"{row['auc_kru_to_gom']:.3f} / {row['auc_gom_to_kru']:.3f}.\n"
         )
-    lines.append("\nNested selection outcome (combination chosen inside the training cohort only):\n")
+    lines.append(
+        "\nNested selection outcome (combination chosen inside the training cohort only):\n"
+    )
     for row in nested:
         lines.append(
             f"- train {COHORT_FULL[row['train_experiment']]}: selected `{row['selected']}` "
@@ -1076,25 +1313,39 @@ def main() -> None:
     print("Q1 cross-cohort transfer, pre-specified 7-motif model ...", flush=True)
     a_rows = panel_a_data(labels, frequency, freq_cols)
     for row in a_rows:
-        print(f"  {row['direction']}: AUC {row['roc_auc']:.3f} [{row['auc_ci_low']:.3f}, {row['auc_ci_high']:.3f}]")
+        print(
+            f"  {row['direction']}: AUC {row['roc_auc']:.3f} [{row['auc_ci_low']:.3f}, {row['auc_ci_high']:.3f}]"
+        )
 
     print("Q2 feature families ...", flush=True)
     b_table = panel_b_data(labels, families)
-    print(b_table[["family", "n_features", "worst_direction_auc", "internal_cv_auc_mean"]].to_string(index=False))
+    print(
+        b_table[["family", "n_features", "worst_direction_auc", "internal_cv_auc_mean"]].to_string(
+            index=False
+        )
+    )
 
     print("Q3 nested combination search ...", flush=True)
     nested, nested_trace = nested_combination_search(labels, frequency, freq_cols)
     for row in nested:
-        print(f"  train {COHORT_SHORT[row['train_experiment']]}: picked {row['selected']} -> held-out AUC {row['held_out_auc']:.3f}")
+        print(
+            f"  train {COHORT_SHORT[row['train_experiment']]}: picked {row['selected']} -> held-out AUC {row['held_out_auc']:.3f}"
+        )
 
     print("Q3 freeze versus combinations ...", flush=True)
     c_table = panel_c_data(labels, frequency, freq_cols, nested)
-    print(c_table[["model", "worst_direction_auc", "auc_kru_to_gom", "auc_gom_to_kru"]].to_string(index=False))
+    print(
+        c_table[["model", "worst_direction_auc", "auc_kru_to_gom", "auc_gom_to_kru"]].to_string(
+            index=False
+        )
+    )
 
     print("Q4 time to prediction ...", flush=True)
     e_table = panel_e_data(labels)
     print(
-        e_table[["horizon_min", "feature_set", "n_features", "cv_auc_mean", "null_auc_p97.5"]].to_string(index=False)
+        e_table[
+            ["horizon_min", "feature_set", "n_features", "cv_auc_mean", "null_auc_p97.5"]
+        ].to_string(index=False)
     )
 
     scatter_data = attach(labels, frequency)
@@ -1105,11 +1356,19 @@ def main() -> None:
 
     fig = build_figure(a_rows, b_table, c_table, scatter_data, (b0, b_freeze, b_turn), e_table)
     for ext in ("png", "pdf", "svg"):
-        fig.savefig(OUT / f"supplementary_figure4_direct.{ext}", dpi=300, bbox_inches="tight", facecolor="white")
+        fig.savefig(
+            OUT / f"supplementary_figure4_direct.{ext}",
+            dpi=300,
+            bbox_inches="tight",
+            facecolor="white",
+        )
     plt.close(fig)
 
     q1 = pd.DataFrame(
-        [{k: v for k, v in row.items() if k not in {"score", "y", "test_frame", "probability"}} for row in a_rows]
+        [
+            {k: v for k, v in row.items() if k not in {"score", "y", "test_frame", "probability"}}
+            for row in a_rows
+        ]
     )
     q1.to_csv(OUT / "direct_figure_q1_cross_cohort.csv", index=False)
     per_animal = []
@@ -1120,16 +1379,32 @@ def main() -> None:
         frame["p_resilient"] = row["probability"]
         frame["called"] = np.where(np.asarray(row["probability"]) >= 0.5, "resilient", "vulnerable")
         per_animal.append(frame)
-    pd.concat(per_animal, ignore_index=True).to_csv(OUT / "direct_figure_q1_per_animal_predictions.csv", index=False)
-    b_table.drop(columns=["color"]).to_csv(OUT / "direct_figure_q2_feature_families.csv", index=False)
-    c_table.drop(columns=["color"]).to_csv(OUT / "direct_figure_q3_freeze_vs_combinations.csv", index=False)
+    pd.concat(per_animal, ignore_index=True).to_csv(
+        OUT / "direct_figure_q1_per_animal_predictions.csv", index=False
+    )
+    b_table.drop(columns=["color"]).to_csv(
+        OUT / "direct_figure_q2_feature_families.csv", index=False
+    )
+    c_table.drop(columns=["color"]).to_csv(
+        OUT / "direct_figure_q3_freeze_vs_combinations.csv", index=False
+    )
     pd.DataFrame([{k: v for k, v in row.items() if k != "selected_cols"} for row in nested]).to_csv(
         OUT / "direct_figure_q3_nested_selection.csv", index=False
     )
     nested_trace.to_csv(OUT / "direct_figure_q3_nested_selection_trace.csv", index=False)
-    e_table.drop(columns=["color"]).to_csv(OUT / "direct_figure_q4_time_to_prediction.csv", index=False)
+    e_table.drop(columns=["color"]).to_csv(
+        OUT / "direct_figure_q4_time_to_prediction.csv", index=False
+    )
     scatter_data[
-        ["animal_id", "experiment", "profile", "target", "frequency__Freeze", "frequency__Turn", "frequency__Sniff"]
+        [
+            "animal_id",
+            "experiment",
+            "profile",
+            "target",
+            "frequency__Freeze",
+            "frequency__Turn",
+            "frequency__Sniff",
+        ]
     ].to_csv(OUT / "direct_figure_scatter_source_data.csv", index=False)
 
     write_report(a_rows, b_table, c_table, nested, e_table)

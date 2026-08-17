@@ -4,12 +4,13 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import gzip
 import pickle
 import sys
+from pathlib import Path
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.colors as mcolors
 import matplotlib.patches as mpatches
@@ -25,14 +26,13 @@ if str(REPO_ROOT) not in sys.path:
 
 from src.config import (
     BEHAVIORAL_FLEXIBILITY_SCORES_XLSX,
-    FIGURES_DIR,
     FIGURE_SOURCE_DATA_DIR,
+    FIGURES_DIR,
     PROCESSED_DATA_DIR,
     SYLLABLE_TIMEBIN_30S,
     UPDATED_MOSEQ_PICKLE,
 )
 from src.panel_letters import align_panel_letters
-from src.statistics import fit_mixed_models
 
 FIGURE_OUTPUT_DIR = FIGURES_DIR
 TABLE_OUTPUT_DIR = PROCESSED_DATA_DIR
@@ -94,10 +94,16 @@ def load_cluster_time() -> pd.DataFrame:
     base_cols = ["Animal", "group", "group_ext", "Experiment", "time_bin"]
     base = raw[base_cols].drop_duplicates()
     for cluster, syllables in CLUSTER_MAP.items():
-        grid = base.assign(_key=1).merge(pd.DataFrame({"Syllable": syllables, "_key": 1}), on="_key").drop(columns="_key")
+        grid = (
+            base.assign(_key=1)
+            .merge(pd.DataFrame({"Syllable": syllables, "_key": 1}), on="_key")
+            .drop(columns="_key")
+        )
         complete = grid.merge(raw, on=base_cols + ["Syllable"], how="left")
         complete["Percentage"] = complete["Percentage"].fillna(0.0)
-        frames.append(complete.groupby(base_cols, as_index=False)["Percentage"].sum().assign(cluster=cluster))
+        frames.append(
+            complete.groupby(base_cols, as_index=False)["Percentage"].sum().assign(cluster=cluster)
+        )
     out = pd.concat(frames, ignore_index=True)
     out["time_min"] = (out["time_bin"] + 30) / 60.0
     return out.rename(columns={"Animal": "animal", "Percentage": "percent"})
@@ -107,10 +113,18 @@ def load_behavioral_flexibility_scores() -> pd.DataFrame:
     if not BEHAVIORAL_FLEXIBILITY_SCORES_XLSX.exists():
         raise FileNotFoundError(f"Missing bundled raw data: {BEHAVIORAL_FLEXIBILITY_SCORES_XLSX}")
     scores = pd.read_excel(BEHAVIORAL_FLEXIBILITY_SCORES_XLSX)
-    scores = scores[["Animal", "Condition", "Score", "Experiment"]].dropna(subset=["Animal", "Condition", "Score"])
-    scores["animal"] = scores["Animal"].astype(float).map(lambda v: str(v).rstrip("0").rstrip(".") if "." in str(v) else str(v))
+    scores = scores[["Animal", "Condition", "Score", "Experiment"]].dropna(
+        subset=["Animal", "Condition", "Score"]
+    )
+    scores["animal"] = (
+        scores["Animal"]
+        .astype(float)
+        .map(lambda v: str(v).rstrip("0").rstrip(".") if "." in str(v) else str(v))
+    )
     scores["animal"] = scores["Animal"].map(lambda v: f"{float(v):.1f}")
-    scores = scores.rename(columns={"Condition": "group", "Score": "score", "Experiment": "experiment"})
+    scores = scores.rename(
+        columns={"Condition": "group", "Score": "score", "Experiment": "experiment"}
+    )
     scores["group_ext"] = scores.apply(lambda r: group_ext(r["animal"], r["group"]), axis=1)
     return scores
 
@@ -250,7 +264,9 @@ def mds_profiles_from_updated_results() -> tuple[pd.DataFrame, np.ndarray, float
         arr = seq.reshape(n_bins, bin_size)
         feature = []
         for chunk in arr:
-            feature.extend([np.sum(chunk == code) / float(bin_size) * 100.0 for code in valid_codes])
+            feature.extend(
+                [np.sum(chunk == code) / float(bin_size) * 100.0 for code in valid_codes]
+            )
         animal = str(data.get("Animal"))
         group = str(data.get("Condition"))
         profiles.append({"recording": str(rec), "animal": animal, "group": group})
@@ -289,7 +305,18 @@ def style_axis(ax: plt.Axes, labelsize: float = 6.0) -> None:
 
 
 def tag(ax: plt.Axes, letter: str, x: float = -0.12, y: float = 1.12) -> plt.Text:
-    return ax.text(x, y, letter, transform=ax.transAxes, ha="center", va="top", fontsize=7.5, fontweight="bold", color=AXIS, clip_on=False)
+    return ax.text(
+        x,
+        y,
+        letter,
+        transform=ax.transAxes,
+        ha="center",
+        va="top",
+        fontsize=7.5,
+        fontweight="bold",
+        color=AXIS,
+        clip_on=False,
+    )
 
 
 def add_epochs(ax: plt.Axes) -> None:
@@ -297,15 +324,29 @@ def add_epochs(ax: plt.Axes) -> None:
         ax.axvspan(start, end, color="#EDEDED", zorder=0)
 
 
-def sig_bracket(ax: plt.Axes, x1: float, x2: float, y: float, h: float | None = None, text: str = "*") -> None:
+def sig_bracket(
+    ax: plt.Axes, x1: float, x2: float, y: float, h: float | None = None, text: str = "*"
+) -> None:
     lo, hi = ax.get_ylim()
     h = h if h is not None else (hi - lo) * 0.035
     ax.plot([x1, x1, x2, x2], [y, y + h, y + h, y], color=AXIS, linewidth=0.55, clip_on=False)
-    ax.text((x1 + x2) / 2, y + h * 1.12, text, ha="center", va="bottom", fontsize=9, fontweight="bold", color=AXIS, clip_on=False)
+    ax.text(
+        (x1 + x2) / 2,
+        y + h * 1.12,
+        text,
+        ha="center",
+        va="bottom",
+        fontsize=9,
+        fontweight="bold",
+        color=AXIS,
+        clip_on=False,
+    )
 
 
 def legend_boxes(groups: list[str]) -> list[mpatches.Patch]:
-    return [mpatches.Patch(facecolor=PALETTE[group], edgecolor="none", label=group) for group in groups]
+    return [
+        mpatches.Patch(facecolor=PALETTE[group], edgecolor="none", label=group) for group in groups
+    ]
 
 
 def time_panel_legend(ax: plt.Axes, corner: str = "upper_right") -> None:
@@ -317,7 +358,9 @@ def time_panel_legend(ax: plt.Axes, corner: str = "upper_right") -> None:
     }
     x_center, y_top, y_bottom = anchors[corner]
     handles = [
-        plt.Line2D([0], [0], color=PALETTE[group], marker="o", markersize=2.2, linewidth=1.0, label=group)
+        plt.Line2D(
+            [0], [0], color=PALETTE[group], marker="o", markersize=2.2, linewidth=1.0, label=group
+        )
         for group in GROUP_ORDER
     ]
     top_leg = ax.legend(
@@ -355,7 +398,9 @@ def boxplot_dynamic_score(ax: plt.Axes, prof: pd.DataFrame) -> plt.Text:
 
     groups = ["Control", "ELS"]
     y_min, y_max = -1.05, 1.50
-    els_resilient_vals = prof.loc[(prof["group"] == "ELS") & (prof["dynamics_score"] < 0), "dynamics_score"].dropna()
+    els_resilient_vals = prof.loc[
+        (prof["group"] == "ELS") & (prof["dynamics_score"] < 0), "dynamics_score"
+    ].dropna()
     if not els_resilient_vals.empty:
         rect_pad = (y_max - y_min) * 0.018
         rect_y0 = max(y_min, float(els_resilient_vals.min()) - rect_pad)
@@ -382,7 +427,11 @@ def boxplot_dynamic_score(ax: plt.Axes, prof: pd.DataFrame) -> plt.Text:
             widths=0.42,
             patch_artist=True,
             showfliers=False,
-            boxprops={"facecolor": (*mcolors.to_rgb(color), 0.15), "edgecolor": color, "linewidth": 1.15},
+            boxprops={
+                "facecolor": (*mcolors.to_rgb(color), 0.15),
+                "edgecolor": color,
+                "linewidth": 1.15,
+            },
             whiskerprops={"color": color, "linewidth": 1.15},
             capprops={"color": color, "linewidth": 1.15},
             medianprops={"color": color, "linewidth": 1.35},
@@ -439,7 +488,9 @@ def plot_mds(ax: plt.Axes, prof: pd.DataFrame, loocv: float) -> plt.Text:
     y = prof["mds2"].to_numpy()
     score = prof["dynamics_score"].to_numpy()
     margin = 0.12 * max(np.ptp(x), np.ptp(y))
-    gx, gy = np.mgrid[x.min() - margin : x.max() + margin : 160j, y.min() - margin : y.max() + margin : 160j]
+    gx, gy = np.mgrid[
+        x.min() - margin : x.max() + margin : 160j, y.min() - margin : y.max() + margin : 160j
+    ]
     gz = griddata(np.column_stack([x, y]), score, (gx, gy), method="cubic")
     nn = griddata(np.column_stack([x, y]), score, (gx, gy), method="nearest")
     gz = np.where(np.isnan(gz), nn, gz)
@@ -447,12 +498,32 @@ def plot_mds(ax: plt.Axes, prof: pd.DataFrame, loocv: float) -> plt.Text:
     vabs = 1.2
     levels = np.arange(-vabs, vabs + 0.001, 0.15)
     gz_fill = np.clip(gz, -vabs + 1e-6, vabs - 1e-6)
-    cf = ax.contourf(gx, gy, gz_fill, levels=levels, cmap=cmap, vmin=-vabs, vmax=vabs, alpha=0.62, extend="neither")
+    cf = ax.contourf(
+        gx,
+        gy,
+        gz_fill,
+        levels=levels,
+        cmap=cmap,
+        vmin=-vabs,
+        vmax=vabs,
+        alpha=0.62,
+        extend="neither",
+    )
     cs = ax.contour(gx, gy, gz, levels=levels, colors=AXIS, linewidths=0.32, alpha=0.82)
     ax.clabel(cs, levels[::2], inline=True, fontsize=3.9, fmt="%.2f", colors=AXIS)
     for group in ["Control", "ELS"]:
         sub = prof[prof["group"] == group]
-        ax.scatter(sub["mds1"], sub["mds2"], s=24, color=PALETTE[group], edgecolor=AXIS, linewidth=0.35, alpha=0.88, label=group, zorder=3)
+        ax.scatter(
+            sub["mds1"],
+            sub["mds2"],
+            s=24,
+            color=PALETTE[group],
+            edgecolor=AXIS,
+            linewidth=0.35,
+            alpha=0.88,
+            label=group,
+            zorder=3,
+        )
     handles = [
         plt.Line2D(
             [0],
@@ -487,7 +558,18 @@ def plot_mds(ax: plt.Axes, prof: pd.DataFrame, loocv: float) -> plt.Text:
     cbar.set_ticks(np.arange(-1.2, 1.21, 0.3))
     cbar.ax.tick_params(labelsize=4.6, width=0.35, length=1.5, colors=AXIS)
     cbar.outline.set_linewidth(0.35)
-    ax.text(1.035, -0.085, f"LOOCV Acc:\n{loocv*100:.1f}%", transform=ax.transAxes, ha="left", va="top", fontsize=4.8, color=AXIS, clip_on=False, bbox=dict(facecolor="white", edgecolor="#BDBDBD", linewidth=0.35, pad=1.5))
+    ax.text(
+        1.035,
+        -0.085,
+        f"LOOCV Acc:\n{loocv * 100:.1f}%",
+        transform=ax.transAxes,
+        ha="left",
+        va="top",
+        fontsize=4.8,
+        color=AXIS,
+        clip_on=False,
+        bbox=dict(facecolor="white", edgecolor="#BDBDBD", linewidth=0.35, pad=1.5),
+    )
     ax.set_xlim(-0.45, 0.70)
     ax.set_ylim(-0.50, 0.55)
     ax.set_xlabel("MDS Dimension 1", fontsize=6.0)
@@ -504,18 +586,49 @@ def plot_frequency(ax: plt.Axes, freq: pd.DataFrame) -> plt.Text:
     offsets = [-width, 0, width]
     for off, group in zip(offsets, GROUP_ORDER):
         vals = summary[summary["group_ext"] == group].set_index("cluster").reindex(ORDER)
-        ax.bar(x + off, vals["mean"], width=width, color=PALETTE[group], edgecolor="white", linewidth=0.25, label=group, zorder=2)
-        ax.errorbar(x + off, vals["mean"], yerr=vals["sem"], fmt="none", ecolor=AXIS, elinewidth=0.55, capsize=1.8, zorder=3)
+        ax.bar(
+            x + off,
+            vals["mean"],
+            width=width,
+            color=PALETTE[group],
+            edgecolor="white",
+            linewidth=0.25,
+            label=group,
+            zorder=2,
+        )
+        ax.errorbar(
+            x + off,
+            vals["mean"],
+            yerr=vals["sem"],
+            fmt="none",
+            ecolor=AXIS,
+            elinewidth=0.55,
+            capsize=1.8,
+            zorder=3,
+        )
     ax.set_xticks(x)
     ax.set_xticklabels(ORDER, fontsize=6.0)
     ax.set_ylabel("Frequency (s)", fontsize=6.2)
     ax.set_ylim(0, 300)
     ax.set_yticks(np.arange(0, 301, 50))
-    ax.legend(handles=legend_boxes(GROUP_ORDER), loc="upper right", ncol=3, frameon=False, fontsize=5.5, handlelength=1.0, handletextpad=0.35, columnspacing=0.75)
+    ax.legend(
+        handles=legend_boxes(GROUP_ORDER),
+        loc="upper right",
+        ncol=3,
+        frameon=False,
+        fontsize=5.5,
+        handlelength=1.0,
+        handletextpad=0.35,
+        columnspacing=0.75,
+    )
     style_axis(ax)
     bracket_gap = 0.045
     for idx in [0, 1, 3]:
-        y = float(summary[summary["cluster"] == ORDER[idx]]["mean"].max() + summary[summary["cluster"] == ORDER[idx]]["sem"].max() + 8)
+        y = float(
+            summary[summary["cluster"] == ORDER[idx]]["mean"].max()
+            + summary[summary["cluster"] == ORDER[idx]]["sem"].max()
+            + 8
+        )
         right_edge = idx - bracket_gap if idx in [0, 3] else idx
         sig_bracket(ax, idx - width, right_edge, y, h=5)
         if idx in [0, 3]:
@@ -523,17 +636,53 @@ def plot_frequency(ax: plt.Axes, freq: pd.DataFrame) -> plt.Text:
     return tag(ax, "C", x=-0.08, y=1.10)
 
 
-def plot_time(ax: plt.Axes, summary: pd.DataFrame, cluster: str, letter: str, ylim: tuple[float, float], yticks: list[float], star_x: float | None = None, legend_corner: str = "upper_right") -> plt.Text:
+def plot_time(
+    ax: plt.Axes,
+    summary: pd.DataFrame,
+    cluster: str,
+    letter: str,
+    ylim: tuple[float, float],
+    yticks: list[float],
+    star_x: float | None = None,
+    legend_corner: str = "upper_right",
+) -> plt.Text:
     add_epochs(ax)
     data = summary[summary["cluster"] == cluster]
     for group in GROUP_ORDER:
         sub = data[data["group_ext"] == group].sort_values("time_min")
         if sub.empty:
             continue
-        ax.plot(sub["time_min"], sub["mean"], color=PALETTE[group], linewidth=0.85, marker="o", markersize=2.0, label=group, zorder=3)
-        ax.fill_between(sub["time_min"].to_numpy(), (sub["mean"] - sub["sem"]).to_numpy(), (sub["mean"] + sub["sem"]).to_numpy(), color=PALETTE[group], alpha=0.18, linewidth=0, zorder=2)
+        ax.plot(
+            sub["time_min"],
+            sub["mean"],
+            color=PALETTE[group],
+            linewidth=0.85,
+            marker="o",
+            markersize=2.0,
+            label=group,
+            zorder=3,
+        )
+        ax.fill_between(
+            sub["time_min"].to_numpy(),
+            (sub["mean"] - sub["sem"]).to_numpy(),
+            (sub["mean"] + sub["sem"]).to_numpy(),
+            color=PALETTE[group],
+            alpha=0.18,
+            linewidth=0,
+            zorder=2,
+        )
     if star_x is not None:
-        ax.text(star_x, 0.992, "*", transform=ax.get_xaxis_transform(), ha="center", va="bottom", fontsize=11, color=AXIS, fontweight="bold")
+        ax.text(
+            star_x,
+            0.992,
+            "*",
+            transform=ax.get_xaxis_transform(),
+            ha="center",
+            va="bottom",
+            fontsize=11,
+            color=AXIS,
+            fontweight="bold",
+        )
     # Data runs 0.5-7.5 min; start at zero and pad past 7.5 so the first and
     # last markers are drawn whole.
     ax.set_xlim(0.0, 7.65)
@@ -561,14 +710,16 @@ def export_source_data(prof: pd.DataFrame, freq: pd.DataFrame, output_dir: Path)
         for group in prof["group"].unique():
             group_data = prof[prof["group"] == group]["dynamics_score"]
             if len(group_data) > 0:
-                rows.append({
-                    "metric": "Behavioral dynamics score",
-                    "group": group,
-                    "mean": group_data.mean(),
-                    "std": group_data.std(),
-                    "sem": group_data.sem(),
-                    "n": len(group_data),
-                })
+                rows.append(
+                    {
+                        "metric": "Behavioral dynamics score",
+                        "group": group,
+                        "mean": group_data.mean(),
+                        "std": group_data.std(),
+                        "sem": group_data.sem(),
+                        "n": len(group_data),
+                    }
+                )
 
     # Add behavior frequency summary (from freq dataframe)
     # freq has columns: Animal, group_ext, cluster, seconds
@@ -579,14 +730,16 @@ def export_source_data(prof: pd.DataFrame, freq: pd.DataFrame, output_dir: Path)
                 if not group_freq.empty and "seconds" in group_freq.columns:
                     freq_vals = group_freq["seconds"]
                     if len(freq_vals) > 0:
-                        rows.append({
-                            "metric": f"{cluster} frequency",
-                            "group": group,
-                            "mean_seconds": freq_vals.mean(),
-                            "std_seconds": freq_vals.std() if len(freq_vals) > 1 else 0,
-                            "sem_seconds": freq_vals.sem() if len(freq_vals) > 1 else 0,
-                            "n": len(freq_vals),
-                        })
+                        rows.append(
+                            {
+                                "metric": f"{cluster} frequency",
+                                "group": group,
+                                "mean_seconds": freq_vals.mean(),
+                                "std_seconds": freq_vals.std() if len(freq_vals) > 1 else 0,
+                                "sem_seconds": freq_vals.sem() if len(freq_vals) > 1 else 0,
+                                "n": len(freq_vals),
+                            }
+                        )
 
     df = pd.DataFrame(rows)
     if not df.empty:
@@ -608,7 +761,9 @@ def main() -> None:
     prof.assign(resilient_by_zero=(prof["group"] == "ELS") & (prof["dynamics_score"] < 0)).to_csv(
         TABLE_OUTPUT_DIR / "figure5_dynamics_scores.csv", index=False
     )
-    threshold_audit(prof).to_csv(TABLE_OUTPUT_DIR / "figure5_resilience_threshold_audit.csv", index=False)
+    threshold_audit(prof).to_csv(
+        TABLE_OUTPUT_DIR / "figure5_resilience_threshold_audit.csv", index=False
+    )
 
     fig = plt.figure(figsize=(8.27, 11.69), dpi=300, facecolor="white")
     gs = fig.add_gridspec(
@@ -637,10 +792,34 @@ def main() -> None:
         (axA, plot_mds(axA, prof, loocv)),
         (axB, boxplot_dynamic_score(axB, prof)),
         (axC, plot_frequency(axC, freq)),
-        (axD, plot_time(axD, time_summary, "Freeze", "D", (0, 70), list(range(0, 71, 10)), star_x=4.0, legend_corner="lower_right")),
+        (
+            axD,
+            plot_time(
+                axD,
+                time_summary,
+                "Freeze",
+                "D",
+                (0, 70),
+                list(range(0, 71, 10)),
+                star_x=4.0,
+                legend_corner="lower_right",
+            ),
+        ),
         (axE, plot_time(axE, time_summary, "Sniff", "E", (0, 25), list(range(0, 26, 5)))),
         (axF, plot_time(axF, time_summary, "Groom", "F", (0, 0.5), [0, 0.1, 0.2, 0.3, 0.4, 0.5])),
-        (axG, plot_time(axG, time_summary, "Turn", "G", (0, 70), list(range(0, 71, 10)), star_x=4.0, legend_corner="lower_right")),
+        (
+            axG,
+            plot_time(
+                axG,
+                time_summary,
+                "Turn",
+                "G",
+                (0, 70),
+                list(range(0, 71, 10)),
+                star_x=4.0,
+                legend_corner="lower_right",
+            ),
+        ),
         (axH, plot_time(axH, time_summary, "Locomotion", "H", (0, 14), list(range(0, 15, 2)))),
         (axI, plot_time(axI, time_summary, "Climb", "I", (0, 14), list(range(0, 15, 2)))),
         (axJ, plot_time(axJ, time_summary, "Jump", "J", (0, 4), [0, 1, 2, 3, 4])),

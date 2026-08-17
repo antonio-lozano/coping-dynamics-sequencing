@@ -7,7 +7,6 @@ from pathlib import Path
 
 from src.config import CLASSIFIER_DIR, MOSEQ_DF
 
-
 DEFAULT_MODEL = CLASSIFIER_DIR / "figure7_behavior_classifier.joblib"
 DEFAULT_METRICS = CLASSIFIER_DIR / "figure7_behavior_classifier_cv_metrics.csv"
 DEFAULT_CONFUSION = CLASSIFIER_DIR / "figure7_behavior_classifier_confusion_matrix.csv"

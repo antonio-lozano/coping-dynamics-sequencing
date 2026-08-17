@@ -12,13 +12,15 @@ products:
 - figures: manuscript figure exports
 - report: manuscript workbooks
 """
-from pathlib import Path
+
 import os
+from pathlib import Path
 
 
 def _env_path(name: str, default: Path) -> Path:
     value = os.getenv(name)
     return Path(value) if value else default
+
 
 # Project root defaults to this repository root.
 PROJECT_ROOT = _env_path("COPING_DYNAMICS_ROOT", Path(__file__).resolve().parents[1])
@@ -35,9 +37,13 @@ PROCESSED_DIR = PROCESSED_DATA_DIR
 METADATA_DIR = _env_path("COPING_DYNAMICS_METADATA_DIR", DATA_DIR / "metadata")
 
 # Optional processed objects used by legacy validation entry points.
-MOSEQ_CLUSTER_PICKLE = _env_path("COPING_DYNAMICS_CLUSTER_PICKLE", PROCESSED_DIR / "new_results_clusters.pkl")
+MOSEQ_CLUSTER_PICKLE = _env_path(
+    "COPING_DYNAMICS_CLUSTER_PICKLE", PROCESSED_DIR / "new_results_clusters.pkl"
+)
 MOSEQ_RAW_PICKLE = _env_path("COPING_DYNAMICS_RAW_PICKLE", PROCESSED_DIR / "new_results.pkl")
-POSE_FEATURES_PARQUET = _env_path("COPING_DYNAMICS_POSE_FEATURES_PARQUET", PROCESSED_DIR / "pose_features_with_clusters.parquet")
+POSE_FEATURES_PARQUET = _env_path(
+    "COPING_DYNAMICS_POSE_FEATURES_PARQUET", PROCESSED_DIR / "pose_features_with_clusters.parquet"
+)
 
 # Metadata
 INDEX_CSV = _env_path("COPING_DYNAMICS_INDEX_CSV", DATA_DIR / "index.csv")
@@ -80,7 +86,9 @@ TRACKING_EXCLUSIONS_CSV = PROCESSED_DATA_DIR / "tracking_exclusions_per_animal.c
 SUPPLEMENTARY_TRACKING_CSV = PROCESSED_DATA_DIR / "supplementary_figure1_tracking_clusters.csv"
 
 # Optional hand-curated syllable-to-cluster JSON; scripts fall back to built-in maps.
-CLUSTER_JSON = _env_path("COPING_DYNAMICS_CLUSTER_JSON", SOURCE_DATA_DIR / "Behavioral_clusters.json")
+CLUSTER_JSON = _env_path(
+    "COPING_DYNAMICS_CLUSTER_JSON", SOURCE_DATA_DIR / "Behavioral_clusters.json"
+)
 
 FIGURE_DATA_DIR = FIGURE_SOURCE_DATA_DIR
 
@@ -100,10 +108,10 @@ CODES = list(BEHAVIOR_MAPPING.keys())
 
 # Color palette for consistent visualization across all figures
 PALETTE = {
-    "Control": "#F8C650",      # Gold/amber
-    "ELS": "#C37B9F",          # Mauve/pink
-    "ELS resilient": "#6B9F78", # Sage green
-    "ELS vulnerable": "#C37B9F", # Same as ELS (mauve/pink)
+    "Control": "#F8C650",  # Gold/amber
+    "ELS": "#C37B9F",  # Mauve/pink
+    "ELS resilient": "#6B9F78",  # Sage green
+    "ELS vulnerable": "#C37B9F",  # Same as ELS (mauve/pink)
 }
 # Ordered list for plotting
 GROUP_ORDER = ["Control", "ELS"]

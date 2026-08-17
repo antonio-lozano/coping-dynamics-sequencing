@@ -62,7 +62,6 @@ import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 
 REPO = Path(__file__).resolve().parents[2]
@@ -72,10 +71,9 @@ if str(REPO) not in sys.path:
 
 from scripts.analysis import figure_7_feature_families as efa  # noqa: E402
 from scripts.analysis import figure_7_modeling as direct  # noqa: E402
-
 from src.statistics import (  # noqa: E402
-    compute_diversity_metrics,
     compute_bout_duration,
+    compute_diversity_metrics,
     transition_sequence_metrics,
 )
 
@@ -180,6 +178,7 @@ def predictor_color(name: str) -> str:
             return FAMILY_COLORS[family]
     raise KeyError(f"Unknown Figure 7 predictor: {name}")
 
+
 # efa.SYLLABLE_TO_CLUSTER maps to these short names, so the panel C
 # recomputation uses them throughout. (The repo's stored bout table uses the
 # long forms - "Freezing", "Sniffing", "Grooming", "Climbing" - but that table
@@ -206,8 +205,18 @@ def style_axis(ax: plt.Axes, labelsize: float = 5.2) -> None:
 
 
 def tag(ax: plt.Axes, letter: str, x: float, y: float = 1.10) -> plt.Text:
-    return ax.text(x, y, letter, transform=ax.transAxes, ha="center", va="top",
-            fontsize=7.5, fontweight="bold", color=AXIS, clip_on=False)
+    return ax.text(
+        x,
+        y,
+        letter,
+        transform=ax.transAxes,
+        ha="center",
+        va="top",
+        fontsize=7.5,
+        fontweight="bold",
+        color=AXIS,
+        clip_on=False,
+    )
 
 
 def cached(name: str, builder, *, fresh: bool):
@@ -264,15 +273,16 @@ def build_predictors():
     predictors: dict[str, tuple] = {}
     for i, (name, col, family) in enumerate(SINGLE_PARAMETERS):
         predictors[name] = (pooled, [col], FAMILY_COLORS[family], "single")
-        is_last_of_family = (
-            i + 1 == len(SINGLE_PARAMETERS) or SINGLE_PARAMETERS[i + 1][2] != family
-        )
+        is_last_of_family = i + 1 == len(SINGLE_PARAMETERS) or SINGLE_PARAMETERS[i + 1][2] != family
         if is_last_of_family and family in blocks_after:
             bname, bframe, bcols, bfamily = blocks_after[family]
             predictors[bname] = (bframe, bcols, FAMILY_COLORS[bfamily], "block")
 
     predictors["All parameters"] = (
-        all_metrics, cols_of(all_metrics), FAMILY_COLORS["combined"], "block",
+        all_metrics,
+        cols_of(all_metrics),
+        FAMILY_COLORS["combined"],
+        "block",
     )
     return labels, predictors
 
@@ -307,9 +317,11 @@ def panel_ab_data(labels: pd.DataFrame, predictors: dict) -> pd.DataFrame:
                 "color": color,
                 "n_features": len(cols),
                 "auc_kru_to_gom": kru["roc_auc"],
-                "ci_kru_lo": kru["auc_ci_low"], "ci_kru_hi": kru["auc_ci_high"],
+                "ci_kru_lo": kru["auc_ci_low"],
+                "ci_kru_hi": kru["auc_ci_high"],
                 "auc_gom_to_kru": gom["roc_auc"],
-                "ci_gom_lo": gom["auc_ci_low"], "ci_gom_hi": gom["auc_ci_high"],
+                "ci_gom_lo": gom["auc_ci_low"],
+                "ci_gom_hi": gom["auc_ci_high"],
                 "worst_direction_auc": min(r["roc_auc"] for r in cc),
                 "cv_auc": point,
                 "cv_ci_low": ci_lo,
@@ -353,8 +365,9 @@ def cumulative_frequency(sub: pd.DataFrame) -> pd.DataFrame:
     """
     sub = sub.loc[sub["cluster"].isin(BEHAVIORS)].copy()
     sub["seconds"] = sub["Percentage"] / 100.0 * 0.25
-    wide = sub.pivot_table(index="Animal", columns="cluster", values="seconds",
-                           aggfunc="sum", fill_value=0)
+    wide = sub.pivot_table(
+        index="Animal", columns="cluster", values="seconds", aggfunc="sum", fill_value=0
+    )
     totals = wide.sum(axis=1).replace(0, np.nan)
     wide = wide.div(totals, axis=0).mul(100.0)
     wide = wide.reindex(columns=BEHAVIORS, fill_value=0.0).sort_index(axis=1).reset_index()
@@ -395,20 +408,24 @@ def horizon_features(raw: pd.DataFrame, horizon_min: float) -> dict[str, pd.Data
 
         div = compute_diversity_metrics(seq)
         div_rows.append(
-            {"animal_id": animal_id,
-             "diversity__simpson": div["simpson_index"],
-             "diversity__shannon": div["shannon_entropy_index"],
-             "diversity__evenness": div["evenness_index"],
-             "diversity__cui": div["cumulative_usage_index"]}
+            {
+                "animal_id": animal_id,
+                "diversity__simpson": div["simpson_index"],
+                "diversity__shannon": div["shannon_entropy_index"],
+                "diversity__evenness": div["evenness_index"],
+                "diversity__cui": div["cumulative_usage_index"],
+            }
         )
 
         tm = transition_sequence_metrics(seq)
         trans_rows.append(
-            {"animal_id": animal_id,
-             "transition__lz": tm["lempel_ziv_complexity"],
-             "transition__recurrence": tm["recurrence_rate"],
-             "transition__determinism": tm["determinism"],
-             "transition__markov": tm["markov_entropy"]}
+            {
+                "animal_id": animal_id,
+                "transition__lz": tm["lempel_ziv_complexity"],
+                "transition__recurrence": tm["recurrence_rate"],
+                "transition__determinism": tm["determinism"],
+                "transition__markov": tm["markov_entropy"],
+            }
         )
 
         # compute_bout_duration returns one row PER BOUT (column
@@ -418,11 +435,14 @@ def horizon_features(raw: pd.DataFrame, horizon_min: float) -> dict[str, pd.Data
             bouts = bouts[bouts["cluster"].isin(BEHAVIORS)]
         per_cluster = (
             bouts.groupby("cluster")["bout_duration_seconds"].mean()
-            if len(bouts) else pd.Series(dtype=float)
+            if len(bouts)
+            else pd.Series(dtype=float)
         )
         row = {
             "animal_id": animal_id,
-            "bout__overall_mean": float(bouts["bout_duration_seconds"].mean()) if len(bouts) else 0.0,
+            "bout__overall_mean": float(bouts["bout_duration_seconds"].mean())
+            if len(bouts)
+            else 0.0,
         }
         for b in BEHAVIORS:
             row[f"bout__{b}"] = float(per_cluster.get(b, 0.0))
@@ -464,8 +484,10 @@ def validate_final_horizon(frames: dict[str, pd.DataFrame]) -> None:
             a = merged[f"{family}__{metric}_pub"].to_numpy(dtype=float)
             b = merged[f"{family}__{metric}_new"].to_numpy(dtype=float)
             r = float(np.corrcoef(a, b)[0, 1])
-            print(f"    {family}/{metric:<12} r = {r:.4f}   max|diff| = {np.max(np.abs(a - b)):.4f}",
-                  flush=True)
+            print(
+                f"    {family}/{metric:<12} r = {r:.4f}   max|diff| = {np.max(np.abs(a - b)):.4f}",
+                flush=True,
+            )
 
 
 def all_horizon_features() -> dict[float, dict[str, pd.DataFrame]]:
@@ -487,6 +509,7 @@ def all_horizon_features() -> dict[float, dict[str, pd.DataFrame]]:
 
 def horizon_family_sets(frames: dict[str, pd.DataFrame]) -> dict[str, tuple]:
     """Family name -> (frame, columns) for one horizon."""
+
     def cols_of(frame: pd.DataFrame) -> list[str]:
         return [c for c in frame.columns if "__" in c]
 
@@ -556,10 +579,26 @@ def draw_panel_a(ax: plt.Axes, table: pd.DataFrame) -> None:
     """Both transfer directions, one pair of bars per predictor."""
     x = np.arange(len(table))
     width = 0.38
-    ax.bar(x - width / 2, table["auc_kru_to_gom"], width=width, color=table["color"],
-           edgecolor="none", alpha=0.95, zorder=2)
-    ax.bar(x + width / 2, table["auc_gom_to_kru"], width=width, color=table["color"],
-           edgecolor="white", linewidth=0.3, alpha=0.45, zorder=2, hatch="////")
+    ax.bar(
+        x - width / 2,
+        table["auc_kru_to_gom"],
+        width=width,
+        color=table["color"],
+        edgecolor="none",
+        alpha=0.95,
+        zorder=2,
+    )
+    ax.bar(
+        x + width / 2,
+        table["auc_gom_to_kru"],
+        width=width,
+        color=table["color"],
+        edgecolor="white",
+        linewidth=0.3,
+        alpha=0.45,
+        zorder=2,
+        hatch="////",
+    )
     ax.axhline(0.5, color=CHANCE_GREY, lw=0.5, ls=(0, (2.5, 2)), zorder=1)
     _x_labels(ax, table)
     ax.set_ylim(0.0, 1.0)
@@ -568,14 +607,33 @@ def draw_panel_a(ax: plt.Axes, table: pd.DataFrame) -> None:
     ax.set_title("Held-out cohort", fontsize=6.4, color=AXIS, pad=3)
     style_axis(ax, labelsize=5.0)
     handles = [
-        Patch(facecolor="#BFBFBF", edgecolor="none",
-              label="Sanguino Gómez & Krugers $\\rightarrow$ Sanguino Gómez et al."),
-        Patch(facecolor="#BFBFBF", edgecolor="white", lw=0.3, alpha=0.45, hatch="////",
-              label="Sanguino Gómez et al. $\\rightarrow$ Sanguino Gómez & Krugers"),
+        Patch(
+            facecolor="#BFBFBF",
+            edgecolor="none",
+            label="Sanguino Gómez & Krugers $\\rightarrow$ Sanguino Gómez et al.",
+        ),
+        Patch(
+            facecolor="#BFBFBF",
+            edgecolor="white",
+            lw=0.3,
+            alpha=0.45,
+            hatch="////",
+            label="Sanguino Gómez et al. $\\rightarrow$ Sanguino Gómez & Krugers",
+        ),
     ]
-    leg = ax.legend(handles=handles, frameon=False, fontsize=4.5, loc="upper right",
-                    handlelength=1.0, handleheight=0.75, handletextpad=0.4,
-                    labelspacing=0.28, borderaxespad=0.1, ncol=2, columnspacing=1.0)
+    leg = ax.legend(
+        handles=handles,
+        frameon=False,
+        fontsize=4.5,
+        loc="upper right",
+        handlelength=1.0,
+        handleheight=0.75,
+        handletextpad=0.4,
+        labelspacing=0.28,
+        borderaxespad=0.1,
+        ncol=2,
+        columnspacing=1.0,
+    )
     for text in leg.get_texts():
         text.set_color(AXIS)
 
@@ -586,8 +644,9 @@ def draw_panel_b(ax: plt.Axes, table: pd.DataFrame) -> None:
     Same x order as panel A so the two rows can be read against each other.
     """
     x = np.arange(len(table))
-    ax.bar(x, table["cv_auc"], width=0.7, color=table["color"], edgecolor="none",
-           alpha=0.95, zorder=2)
+    ax.bar(
+        x, table["cv_auc"], width=0.7, color=table["color"], edgecolor="none", alpha=0.95, zorder=2
+    )
     # Percentile bootstrap intervals are not guaranteed to bracket the point
     # estimate exactly, so guard the tiny numerical case rather than letting
     # matplotlib reject a marginally negative arm.
@@ -597,8 +656,15 @@ def draw_panel_b(ax: plt.Axes, table: pd.DataFrame) -> None:
     # bar colour; errorbar's ecolor is scalar and cannot vary per point.
     for xi, value, lo, hi, color in zip(x, table["cv_auc"], lo_arm, hi_arm, table["color"]):
         ax.errorbar(
-            xi, value, yerr=[[lo], [hi]], fmt="none", ecolor=darken(color),
-            elinewidth=0.55, capsize=1.0, capthick=0.55, zorder=3,
+            xi,
+            value,
+            yerr=[[lo], [hi]],
+            fmt="none",
+            ecolor=darken(color),
+            elinewidth=0.55,
+            capsize=1.0,
+            capthick=0.55,
+            zorder=3,
         )
     ax.axhline(0.5, color=CHANCE_GREY, lw=0.5, ls=(0, (2.5, 2)), zorder=1)
     _x_labels(ax, table)
@@ -624,9 +690,18 @@ def draw_panel_c(ax: plt.Axes, table: pd.DataFrame) -> None:
     """AUC against how much of the session is used."""
     for name, sub in table.groupby("predictor", sort=False):
         sub = sub.sort_values("horizon_min")
-        ax.plot(sub["horizon_min"], sub["cv_auc"], color=sub["color"].iloc[0],
-                lw=0.9, marker="o", ms=2.4, mec="white", mew=0.3,
-                label=PANEL_C_RENAME.get(name, name), zorder=2)
+        ax.plot(
+            sub["horizon_min"],
+            sub["cv_auc"],
+            color=sub["color"].iloc[0],
+            lw=0.9,
+            marker="o",
+            ms=2.4,
+            mec="white",
+            mew=0.3,
+            label=PANEL_C_RENAME.get(name, name),
+            zorder=2,
+        )
     ax.axhline(0.5, color=CHANCE_GREY, lw=0.5, ls=(0, (2.5, 2)), zorder=1)
     ax.set_xlim(0.0, 8.0)
     ax.set_xticks([0, 2, 4, 6, 8])
@@ -637,8 +712,15 @@ def draw_panel_c(ax: plt.Axes, table: pd.DataFrame) -> None:
     ax.set_title("Early prediction", fontsize=6.4, color=AXIS, pad=3)
     style_axis(ax, labelsize=5.0)
     leg = ax.legend(
-        frameon=False, fontsize=4.5, loc="lower right", ncol=2, columnspacing=1.0,
-        handlelength=1.3, handletextpad=0.4, labelspacing=0.3, borderaxespad=0.2,
+        frameon=False,
+        fontsize=4.5,
+        loc="lower right",
+        ncol=2,
+        columnspacing=1.0,
+        handlelength=1.3,
+        handletextpad=0.4,
+        labelspacing=0.3,
+        borderaxespad=0.2,
     )
     for text in leg.get_texts():
         text.set_color(AXIS)
@@ -648,8 +730,14 @@ def build_figure(ab_table: pd.DataFrame, c_table: pd.DataFrame) -> plt.Figure:
     """One panel per row, full width, so every parameter name stays legible."""
     fig = plt.figure(figsize=(7.09, 7.4))  # 180 mm wide, three stacked rows
     gs = fig.add_gridspec(
-        3, 1, height_ratios=[1.0, 1.0, 0.92],
-        left=0.085, right=0.985, top=0.965, bottom=0.055, hspace=0.95,
+        3,
+        1,
+        height_ratios=[1.0, 1.0, 0.92],
+        left=0.085,
+        right=0.985,
+        top=0.965,
+        bottom=0.055,
+        hspace=0.95,
     )
     ax_a = fig.add_subplot(gs[0, 0])
     ax_b = fig.add_subplot(gs[1, 0])
@@ -675,8 +763,14 @@ def build_figure_compact(ab_table: pd.DataFrame, c_table: pd.DataFrame) -> plt.F
     """
     fig = plt.figure(figsize=(7.09, 6.9))
     gs = fig.add_gridspec(
-        3, 1, height_ratios=[1.0, 1.0, 0.85],
-        left=0.085, right=0.985, top=0.965, bottom=0.055, hspace=0.95,
+        3,
+        1,
+        height_ratios=[1.0, 1.0, 0.85],
+        left=0.085,
+        right=0.985,
+        top=0.965,
+        bottom=0.055,
+        hspace=0.95,
     )
     ax_a = fig.add_subplot(gs[0, 0])
     ax_b = fig.add_subplot(gs[1, 0])
@@ -695,9 +789,16 @@ def build_figure_compact(ab_table: pd.DataFrame, c_table: pd.DataFrame) -> plt.F
         ax_c.get_legend().remove()
     handles, labels = ax_c.get_legend_handles_labels()
     leg = ax_legend.legend(
-        handles, labels, frameon=False, fontsize=5.0, loc="center left",
-        bbox_to_anchor=(0.02, 0.5), handlelength=1.4, handletextpad=0.5,
-        labelspacing=0.42, borderaxespad=0.0,
+        handles,
+        labels,
+        frameon=False,
+        fontsize=5.0,
+        loc="center left",
+        bbox_to_anchor=(0.02, 0.5),
+        handlelength=1.4,
+        handletextpad=0.5,
+        labelspacing=0.42,
+        borderaxespad=0.0,
     )
     for text in leg.get_texts():
         text.set_color(AXIS)
@@ -710,8 +811,11 @@ def build_figure_compact(ab_table: pd.DataFrame, c_table: pd.DataFrame) -> plt.F
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Supplementary Figure 4 recapitulation")
-    parser.add_argument("--fresh", action="store_true",
-                        help="recompute every statistic instead of reading the cache")
+    parser.add_argument(
+        "--fresh",
+        action="store_true",
+        help="recompute every statistic instead of reading the cache",
+    )
     args = parser.parse_args()
     started = time.time()
 
@@ -738,16 +842,24 @@ def main() -> None:
     plt.close(fig_compact)
     print(f"wrote {stem_compact}.png/.pdf/.svg", flush=True)
 
-    ab_table.drop(columns=["color"]).to_csv(OUT / "supp4_recap_panelAB_cross_cohort_and_cv.csv", index=False)
-    c_table.drop(columns=["color"]).to_csv(OUT / "supp4_recap_panelC_time_to_prediction.csv", index=False)
+    ab_table.drop(columns=["color"]).to_csv(
+        OUT / "supp4_recap_panelAB_cross_cohort_and_cv.csv", index=False
+    )
+    c_table.drop(columns=["color"]).to_csv(
+        OUT / "supp4_recap_panelC_time_to_prediction.csv", index=False
+    )
 
     print("\nHeld-out cohort (panel A):")
     for _, r in ab_table.iterrows():
-        print(f"  {r['predictor']:<28} {r['auc_kru_to_gom']:.3f} / {r['auc_gom_to_kru']:.3f}"
-              f"   worse = {r['worst_direction_auc']:.3f}")
+        print(
+            f"  {r['predictor']:<28} {r['auc_kru_to_gom']:.3f} / {r['auc_gom_to_kru']:.3f}"
+            f"   worse = {r['worst_direction_auc']:.3f}"
+        )
     print("\nFull-session CV (panel B):")
     for _, r in ab_table.sort_values("cv_auc", ascending=False).iterrows():
-        print(f"  {r['predictor']:<28} {r['cv_auc']:.3f}  [{r['cv_ci_low']:.3f}-{r['cv_ci_high']:.3f}]")
+        print(
+            f"  {r['predictor']:<28} {r['cv_auc']:.3f}  [{r['cv_ci_low']:.3f}-{r['cv_ci_high']:.3f}]"
+        )
     print(f"\nwrote {stem}.png/.pdf/.svg   ({time.time() - started:.1f}s)")
 
 

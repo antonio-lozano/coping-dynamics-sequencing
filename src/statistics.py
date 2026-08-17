@@ -13,12 +13,11 @@ No random seed is set here; seeding (if needed) is caller's responsibility.
 from __future__ import annotations
 
 import math
-from typing import Tuple
 
 import numpy as np
 import pandas as pd
-from scipy import stats
 import statsmodels.formula.api as smf
+from scipy import stats
 
 
 def cohens_d(a: pd.Series, b: pd.Series) -> float:
@@ -43,7 +42,9 @@ def cohens_d(a: pd.Series, b: pd.Series) -> float:
     b = pd.to_numeric(b, errors="coerce").dropna()
     if len(a) < 2 or len(b) < 2:
         return np.nan
-    pooled = math.sqrt(((len(a) - 1) * a.var(ddof=1) + (len(b) - 1) * b.var(ddof=1)) / (len(a) + len(b) - 2))
+    pooled = math.sqrt(
+        ((len(a) - 1) * a.var(ddof=1) + (len(b) - 1) * b.var(ddof=1)) / (len(a) + len(b) - 2)
+    )
     return (a.mean() - b.mean()) / pooled if pooled else np.nan
 
 
@@ -86,7 +87,9 @@ def summarize_by_group(
                     "n": int(values.count()),
                     "mean": float(values.mean()) if len(values) else np.nan,
                     "sd": float(values.std(ddof=1)) if len(values) > 1 else np.nan,
-                    "sem": float(values.std(ddof=1) / math.sqrt(len(values))) if len(values) > 1 else np.nan,
+                    "sem": float(values.std(ddof=1) / math.sqrt(len(values)))
+                    if len(values) > 1
+                    else np.nan,
                 }
             )
     return pd.DataFrame(rows)
@@ -217,12 +220,18 @@ def compute_diversity_metrics(sequence: list[str]) -> dict[str, float]:
     simpson = 1 - np.sum(probabilities**2)
 
     # Cumulative Usage Index (CUI)
-    named = np.array([counts_map.get(cluster, 0) for cluster in order if str(cluster).strip() != ""], dtype=float)
+    named = np.array(
+        [counts_map.get(cluster, 0) for cluster in order if str(cluster).strip() != ""], dtype=float
+    )
     named = named / counts.sum() if len(named) > 0 else named
     sorted_named = np.sort(named)[::-1] if len(named) > 0 else np.array([])
     cumulative = np.cumsum(sorted_named) if len(sorted_named) > 0 else np.array([])
     baseline = (len(cumulative) + 1) / (2 * len(cumulative)) if len(cumulative) > 0 else np.nan
-    cui = (cumulative.mean() - baseline) / (1 - baseline) if len(cumulative) > 0 and baseline < 1 else np.nan
+    cui = (
+        (cumulative.mean() - baseline) / (1 - baseline)
+        if len(cumulative) > 0 and baseline < 1
+        else np.nan
+    )
 
     return {
         "shannon_entropy_index": shannon,
@@ -363,7 +372,11 @@ def determinism(sequence: list[str], min_length: int = 2) -> float:
     diag_sum = 0
 
     for offset in range(-n + 1, n):
-        diag = arr[: n - abs(offset)] == arr[abs(offset) :] if offset >= 0 else arr[-offset:] == arr[: n + offset]
+        diag = (
+            arr[: n - abs(offset)] == arr[abs(offset) :]
+            if offset >= 0
+            else arr[-offset:] == arr[: n + offset]
+        )
         if offset == 0:
             total += int(diag.sum()) - n
         else:
@@ -416,7 +429,9 @@ def markov_entropy(sequence: list[str], smoothing_factor: float = 0.01) -> float
     probs = counts / counts.sum(axis=1, keepdims=True)
 
     value_counts = pd.Series(sequence).value_counts()
-    stationary = np.array([value_counts.get(state, 0) for state in unique_states], dtype=float) / len(sequence)
+    stationary = np.array(
+        [value_counts.get(state, 0) for state in unique_states], dtype=float
+    ) / len(sequence)
 
     inner = np.array([-np.sum(row[row > 0] * np.log2(row[row > 0])) for row in probs])
 
@@ -500,7 +515,9 @@ def metric_summary_and_tests(
                     "n": int(vals.count()),
                     "mean": float(vals.mean()) if len(vals) else np.nan,
                     "sd": float(vals.std(ddof=1)) if len(vals) > 1 else np.nan,
-                    "sem": float(vals.std(ddof=1) / math.sqrt(len(vals))) if len(vals) > 1 else np.nan,
+                    "sem": float(vals.std(ddof=1) / math.sqrt(len(vals)))
+                    if len(vals) > 1
+                    else np.nan,
                     "welch_t": np.nan,
                     "p_value": np.nan,
                     "cohens_d_left_minus_right": np.nan,
@@ -510,11 +527,17 @@ def metric_summary_and_tests(
         # Pairwise comparisons
         for left_i, left in enumerate(group_order):
             for right in group_order[left_i + 1 :]:
-                left_vals = pd.to_numeric(sub[sub[group_col] == left][value_col], errors="coerce").dropna()
-                right_vals = pd.to_numeric(sub[sub[group_col] == right][value_col], errors="coerce").dropna()
+                left_vals = pd.to_numeric(
+                    sub[sub[group_col] == left][value_col], errors="coerce"
+                ).dropna()
+                right_vals = pd.to_numeric(
+                    sub[sub[group_col] == right][value_col], errors="coerce"
+                ).dropna()
 
                 if len(left_vals) > 0 and len(right_vals) > 0:
-                    t_stat, p_value = stats.ttest_ind(left_vals, right_vals, equal_var=False, nan_policy="omit")
+                    t_stat, p_value = stats.ttest_ind(
+                        left_vals, right_vals, equal_var=False, nan_policy="omit"
+                    )
                     d = cohens_d(left_vals, right_vals)
 
                     rows.append(

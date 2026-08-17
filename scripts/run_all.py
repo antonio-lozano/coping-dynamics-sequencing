@@ -5,6 +5,7 @@ the repository artifacts from `data/raw`.
 
 Run: python scripts/run_all.py
 """
+
 from __future__ import annotations
 
 import argparse
@@ -14,11 +15,13 @@ import sys
 import time
 from pathlib import Path
 
-
 REPO = Path(__file__).resolve().parents[1]
 
 TASKS = [
-    ("build compact freezing prediction inputs", ["scripts/derive_tables/freezing_predictions_light.py"]),
+    (
+        "build compact freezing prediction inputs",
+        ["scripts/derive_tables/freezing_predictions_light.py"],
+    ),
     ("derive processed cluster tables", ["scripts/derive_tables/cluster_tables.py"]),
     ("derive processed tracking-control tables", ["scripts/derive_tables/tracking_exclusions.py"]),
     ("derive Figure 6 resilience statistics", ["scripts/derive_tables/fig6_resilience_stats.py"]),

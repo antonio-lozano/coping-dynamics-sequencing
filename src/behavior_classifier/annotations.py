@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-
 BEHAVIOR_CLUSTER_MAP: dict[str, list[int]] = {
     "Freeze": [0, 28],
     "Sniff": [18, 20],

@@ -1,4 +1,5 @@
 """Compare workbook data exactly, including formulas and Python value types."""
+
 from __future__ import annotations
 
 import argparse
@@ -47,7 +48,9 @@ def main() -> int:
     failures = 0
 
     if expected.sheetnames != actual.sheetnames:
-        print(f"Sheet order mismatch:\n  expected={expected.sheetnames}\n  actual={actual.sheetnames}")
+        print(
+            f"Sheet order mismatch:\n  expected={expected.sheetnames}\n  actual={actual.sheetnames}"
+        )
         failures += 1
 
     for title in expected.sheetnames:
@@ -65,7 +68,9 @@ def main() -> int:
                 continue
             expected_type, expected_value = expected_cell
             actual_type, actual_value = actual_cell
-            if expected_type != actual_type or not same_value(expected_value, actual_value, args.atol):
+            if expected_type != actual_type or not same_value(
+                expected_value, actual_value, args.atol
+            ):
                 differences.append((coordinate, expected_cell, actual_cell))
         failures += len(differences)
         print(f"{title}: {len(differences)} differences across {len(coordinates)} populated cells")

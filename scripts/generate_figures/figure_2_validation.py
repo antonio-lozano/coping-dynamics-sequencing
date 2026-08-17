@@ -9,40 +9,42 @@ original selected
 syllables for the animal overlap panel, cumulative 95% usage cutoff for panel
 D, and per-animal precision/recall aggregation before plotting panels E/F.
 """
+
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 import pickle
 import re
 import sys
 import warnings
+from pathlib import Path
 
 repo_root = Path(__file__).resolve().parents[2]
 if str(repo_root) not in sys.path:
     sys.path.insert(0, str(repo_root))
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from matplotlib.patches import Rectangle
 
 from src.config import (
     BIN_SECONDS,
     CLUSTER_FREQUENCY_CSV,
-    FIGURES_DIR,
     FIGURE_SOURCE_DATA_DIR,
-    FREEZING_DIR,
+    FIGURES_DIR,
     FPS,
+    FREEZING_DIR,
     INDEX_CSV,
     MOSEQ_RAW_PICKLE,
     PALETTE,
     SOURCE_DATA_DIR,
 )
-from src.statistics import fit_mixed_models, cohens_d
+from src.statistics import cohens_d, fit_mixed_models
 
 FIGURE_OUTPUT_DIR = FIGURES_DIR
 SOURCE_OUTPUT_DIR = FIGURE_SOURCE_DATA_DIR
@@ -87,11 +89,7 @@ def _build_freezing_long_format(
     df["bin"] = (df["frame"] // bin_size).astype(int)
 
     # Aggregate to per-animal, per-bin mean freezing
-    agg = (
-        df.groupby(["animal", "bin"])["freezing"]
-        .mean()
-        .reset_index(name="freezing_percent")
-    )
+    agg = df.groupby(["animal", "bin"])["freezing"].mean().reset_index(name="freezing_percent")
 
     # Add group mapping
     agg["group"] = agg["animal"].map(lambda a: group_map.get(str(a), "Unknown"))
@@ -157,18 +155,20 @@ def _compute_figure2_source_data(
             .set_index("animal_id")["experiment"]
             .to_dict()
         )
+
         def _to_exp(a):
             sid = _short_id(str(a))
             try:
                 return _exp_map.get(float(sid), 3)
             except (ValueError, TypeError):
                 return 3
+
         freezing_long["experiment"] = freezing_long["animal"].map(_to_exp)
     elif panel_g_reference_labels:
         exp1_labels = set(panel_g_reference_labels)
         freezing_long["label"] = freezing_long["animal"].map(_short_id)
         freezing_long["experiment"] = freezing_long["label"].map(
-            lambda l: 1 if l in exp1_labels else 3
+            lambda lab: 1 if lab in exp1_labels else 3
         )
     else:
         raise RuntimeError(
@@ -180,8 +180,16 @@ def _compute_figure2_source_data(
     all_freezing = freezing_long.copy()
     all_freezing["freezing_pct"] = all_freezing["freezing_percent"] * 100.0
     try:
-        subset_time = all_freezing[["animal", "group", "experiment", "time_bin", "freezing_pct"]].copy()
-        subset_time.columns = ["animal_id", "group", "experiment", "time_bin_numeric", "freezing_pct"]
+        subset_time = all_freezing[
+            ["animal", "group", "experiment", "time_bin", "freezing_pct"]
+        ].copy()
+        subset_time.columns = [
+            "animal_id",
+            "group",
+            "experiment",
+            "time_bin_numeric",
+            "freezing_pct",
+        ]
         models_result = fit_mixed_models(subset_time, "freezing_pct")
 
         # Pre-compute per-animal session-mean freezing for Cohen's d
@@ -190,9 +198,10 @@ def _compute_figure2_source_data(
             .mean()
             .reset_index()
         )
+
         def _cohens_d_for(sub_df: pd.DataFrame) -> float:
             ctrl = sub_df.loc[sub_df["group"] == "Control", "freezing_pct"]
-            els  = sub_df.loc[sub_df["group"] == "ELS",     "freezing_pct"]
+            els = sub_df.loc[sub_df["group"] == "ELS", "freezing_pct"]
             if len(ctrl) < 2 or len(els) < 2:
                 return np.nan
             return cohens_d(ctrl, els)
@@ -213,43 +222,49 @@ def _compute_figure2_source_data(
 
             for _, row in exp_results.iterrows():
                 if row["parameter"] == "time_bin_numeric":
-                    rows.append({
-                        "metric": f"{exp_name} Freezing Time Effect",
-                        "effect": "time",
-                        "experiment": exp_name,
-                        "beta": row["coef"],
-                        "se": row["std_err"],
-                        "z": row["z"],
-                        "p_value": row["p_value"],
-                        "cohens_d": np.nan,
-                    })
+                    rows.append(
+                        {
+                            "metric": f"{exp_name} Freezing Time Effect",
+                            "effect": "time",
+                            "experiment": exp_name,
+                            "beta": row["coef"],
+                            "se": row["std_err"],
+                            "z": row["z"],
+                            "p_value": row["p_value"],
+                            "cohens_d": np.nan,
+                        }
+                    )
                 elif row["parameter"] == "group[T.ELS]:time_bin_numeric":
-                    rows.append({
-                        "metric": f"{exp_name} Freezing ELS×Time",
-                        "effect": "group:time",
-                        "experiment": exp_name,
-                        "beta": row["coef"],
-                        "se": row["std_err"],
-                        "z": row["z"],
-                        "p_value": row["p_value"],
-                        "cohens_d": _d,
-                    })
+                    rows.append(
+                        {
+                            "metric": f"{exp_name} Freezing ELS×Time",
+                            "effect": "group:time",
+                            "experiment": exp_name,
+                            "beta": row["coef"],
+                            "se": row["std_err"],
+                            "z": row["z"],
+                            "p_value": row["p_value"],
+                            "cohens_d": _d,
+                        }
+                    )
     except Exception as e:
         print(f"Warning: Failed to fit freezing MixedLM: {e}")
 
     # Add overlap statistics
     for key, val in overlap_stats.items():
         if "pct" in key:
-            rows.append({
-                "metric": key,
-                "effect": "overlap",
-                "experiment": "All",
-                "beta": val,
-                "se": np.nan,
-                "z": np.nan,
-                "p_value": np.nan,
-                "cohens_d": np.nan,
-            })
+            rows.append(
+                {
+                    "metric": key,
+                    "effect": "overlap",
+                    "experiment": "All",
+                    "beta": val,
+                    "se": np.nan,
+                    "z": np.nan,
+                    "p_value": np.nan,
+                    "cohens_d": np.nan,
+                }
+            )
 
     # Add syllable timecourse (S0+S28) models
     # REVIEW: Extracting from time_summary computed earlier
@@ -257,16 +272,18 @@ def _compute_figure2_source_data(
         for group in ["Control", "ELS"]:
             gdata = time_summary[time_summary["group"] == group]
             if not gdata.empty:
-                rows.append({
-                    "metric": f"S0+S28 {group} Mean Freezing",
-                    "effect": "timecourse",
-                    "experiment": "All",
-                    "beta": gdata["mean"].mean() * 100.0,  # Convert to %
-                    "se": gdata["sem"].mean() * 100.0,
-                    "z": np.nan,
-                    "p_value": np.nan,
-                    "cohens_d": np.nan,
-                })
+                rows.append(
+                    {
+                        "metric": f"S0+S28 {group} Mean Freezing",
+                        "effect": "timecourse",
+                        "experiment": "All",
+                        "beta": gdata["mean"].mean() * 100.0,  # Convert to %
+                        "se": gdata["sem"].mean() * 100.0,
+                        "z": np.nan,
+                        "p_value": np.nan,
+                        "cohens_d": np.nan,
+                    }
+                )
 
     df = pd.DataFrame(rows)
     return df
@@ -274,15 +291,21 @@ def _compute_figure2_source_data(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--source-mode", choices=["auto", "moseq_df", "results_pkl"], default="auto")
+    parser.add_argument(
+        "--source-mode", choices=["auto", "moseq_df", "results_pkl"], default="auto"
+    )
     parser.add_argument("--moseq-df", type=Path, default=None, help="Path to legacy moseq_df.csv.")
     parser.add_argument("--results-pkl", type=Path, default=MOSEQ_RAW_PICKLE)
     parser.add_argument("--freezing-dir", type=Path, default=_FREEZING_DIR_DEFAULT)
     parser.add_argument("--index-csv", type=Path, default=_INDEX_CSV_DEFAULT)
     parser.add_argument("--exclude-animals", type=str, default="Animal_48_6,48_6")
     parser.add_argument("--fail-on-fallback", action="store_true", default=False)
-    parser.add_argument("--panel-g-reference-svg", type=Path, default=PANEL_G_REFERENCE_SVG,
-                        help="Original overlap_freezing_per_mouse_by_group_cleaned_sorted.svg for panel G animal order/filter.")
+    parser.add_argument(
+        "--panel-g-reference-svg",
+        type=Path,
+        default=PANEL_G_REFERENCE_SVG,
+        help="Original overlap_freezing_per_mouse_by_group_cleaned_sorted.svg for panel G animal order/filter.",
+    )
     return parser.parse_args()
 
 
@@ -317,7 +340,16 @@ def _style_axes(ax) -> None:
 
 
 def _panel_tag(ax, tag: str, x: float = -0.17, y: float = 1.08) -> None:
-    ax.text(x, y, tag, transform=ax.transAxes, fontsize=9, fontweight="bold", color="#4b4b4b", ha="center")
+    ax.text(
+        x,
+        y,
+        tag,
+        transform=ax.transAxes,
+        fontsize=9,
+        fontweight="bold",
+        color="#4b4b4b",
+        ha="center",
+    )
 
 
 def _load_group_map(index_csv: Path) -> dict[str, str]:
@@ -347,7 +379,12 @@ def _load_freezing_frame_table(freezing_dir: Path, group_map: dict[str, str]) ->
             continue
         norm_base = _normalize(base)
         prefix_base = _parse_moseq_name(norm_base)
-        grp = group_map.get(base) or group_map.get(norm_base) or group_map.get(prefix_base) or "Unknown"
+        grp = (
+            group_map.get(base)
+            or group_map.get(norm_base)
+            or group_map.get(prefix_base)
+            or "Unknown"
+        )
         frame = df["Unnamed: 0"] if "Unnamed: 0" in df.columns else np.arange(len(df))
         records.append(
             pd.DataFrame(
@@ -372,11 +409,7 @@ def _freezing_summaries(
     bin_size = int(FPS * BIN_SECONDS)
     df = freezing_df.copy()
     df["bin"] = (df["frame"] // bin_size).astype(int)
-    agg = (
-        df.groupby(["group", "bin", "animal"])["freezing"]
-        .mean()
-        .reset_index(name="freeze_frac")
-    )
+    agg = df.groupby(["group", "bin", "animal"])["freezing"].mean().reset_index(name="freeze_frac")
     agg = agg[~agg["animal"].map(lambda a: _is_excluded(str(a), excluded))].copy()
     if include_labels:
         agg = agg[agg["animal"].map(lambda a: _short_id(str(a)) in include_labels)].copy()
@@ -424,7 +457,9 @@ def _load_freezing_vectors(freezing_dir: Path) -> dict[str, np.ndarray]:
     return out
 
 
-def _resolve_moseq_df_path(explicit: Path | None, results_pkl: Path, index_csv: Path | None = None) -> Path | None:
+def _resolve_moseq_df_path(
+    explicit: Path | None, results_pkl: Path, index_csv: Path | None = None
+) -> Path | None:
     candidates = []
     if explicit is not None:
         candidates.append(Path(explicit))
@@ -463,10 +498,14 @@ def _choose_sequence_source(args: argparse.Namespace) -> tuple[str, Path, bool]:
     if moseq_df_found is not None:
         return "moseq_df", moseq_df_found, False
     if not args.results_pkl.exists():
-        raise FileNotFoundError("auto mode: no moseq_df source found and results_pkl does not exist.")
+        raise FileNotFoundError(
+            "auto mode: no moseq_df source found and results_pkl does not exist."
+        )
     if args.fail_on_fallback:
         raise RuntimeError(f"auto mode fallback denied: would use {args.results_pkl}")
-    warnings.warn(f"Figure 2 fallback: moseq_df missing; using results_pkl={args.results_pkl}", RuntimeWarning)
+    warnings.warn(
+        f"Figure 2 fallback: moseq_df missing; using results_pkl={args.results_pkl}", RuntimeWarning
+    )
     return "results_pkl", args.results_pkl, True
 
 
@@ -487,7 +526,12 @@ def _load_sequences_from_results_pkl(
             continue
         if include_labels and _short_id(rec_raw) not in include_labels:
             continue
-        grp = group_map.get(rec_raw) or group_map.get(_normalize(rec_raw)) or group_map.get(_parse_moseq_name(rec_raw)) or "Unknown"
+        grp = (
+            group_map.get(rec_raw)
+            or group_map.get(_normalize(rec_raw))
+            or group_map.get(_parse_moseq_name(rec_raw))
+            or "Unknown"
+        )
         out[rec_raw] = {"seq": np.array(data["syllable"], dtype=int), "group": grp}
     return out
 
@@ -516,7 +560,9 @@ def _load_sequences_from_moseq_df(
             or group_map.get(_parse_moseq_name(rec_raw))
             or "Unknown"
         )
-        frames = pd.to_numeric(gdf["frame_index"], errors="coerce").fillna(-1).astype(int).to_numpy()
+        frames = (
+            pd.to_numeric(gdf["frame_index"], errors="coerce").fillna(-1).astype(int).to_numpy()
+        )
         sylls = pd.to_numeric(gdf["syllable"], errors="coerce").fillna(-1).astype(int).to_numpy()
         valid = frames >= 0
         if not valid.any():
@@ -614,12 +660,23 @@ def _compute_validation_tables(
 
     metrics_df = pd.DataFrame(metrics_rows)
     if metrics_df.empty:
-        raise RuntimeError("No matched recordings with freezing frames produced validation metrics.")
+        raise RuntimeError(
+            "No matched recordings with freezing frames produced validation metrics."
+        )
 
     # Per-syllable means across all animals (matching original script's groupby syllable .mean())
     agg = (
         metrics_df.groupby("syllable")[["precision", "recall", "frames", "tp", "fp", "fn"]]
-        .agg({"precision": "mean", "recall": "mean", "frames": "sum", "tp": "sum", "fp": "sum", "fn": "sum"})
+        .agg(
+            {
+                "precision": "mean",
+                "recall": "mean",
+                "frames": "sum",
+                "tp": "sum",
+                "fp": "sum",
+                "fn": "sum",
+            }
+        )
         .reset_index()
     )
     total_frames = agg["frames"].sum()
@@ -629,10 +686,23 @@ def _compute_validation_tables(
     # Per-syllable per-group means; fill missing group entries with 0 so both bars always show
     all_syllables = agg["syllable"].tolist()
     all_groups = ["Control", "ELS"]
-    full_index = pd.MultiIndex.from_product([all_syllables, all_groups], names=["syllable", "group"])
+    full_index = pd.MultiIndex.from_product(
+        [all_syllables, all_groups], names=["syllable", "group"]
+    )
     group_agg = (
-        metrics_df.groupby(["syllable", "group"])[["precision", "recall", "frames", "tp", "fp", "fn"]]
-        .agg({"precision": "mean", "recall": "mean", "frames": "sum", "tp": "sum", "fp": "sum", "fn": "sum"})
+        metrics_df.groupby(["syllable", "group"])[
+            ["precision", "recall", "frames", "tp", "fp", "fn"]
+        ]
+        .agg(
+            {
+                "precision": "mean",
+                "recall": "mean",
+                "frames": "sum",
+                "tp": "sum",
+                "fp": "sum",
+                "fn": "sum",
+            }
+        )
         .reindex(full_index, fill_value=0)
         .reset_index()
     )
@@ -645,7 +715,9 @@ def _compute_validation_tables(
     global_counts = pd.Series(all_sylls).value_counts().sort_values(ascending=False)
     global_total = global_counts.sum()
     global_pct = (global_counts / global_total * 100.0).rename("global_pct")
-    agg = agg.merge(global_pct.rename("global_pct"), left_on="syllable", right_index=True, how="left")
+    agg = agg.merge(
+        global_pct.rename("global_pct"), left_on="syllable", right_index=True, how="left"
+    )
     agg["global_pct"] = agg["global_pct"].fillna(0.0)
 
     time_df = _compute_syllable_timecourse(seq_by_recording, TIMECOURSE_SYLLABLES)
@@ -676,7 +748,14 @@ def _compute_syllable_timecourse(
     for rec, grp, seq in rows:
         arr = seq[: common_bins * bin_size].reshape(common_bins, bin_size)
         for b, block in enumerate(arr):
-            out_rows.append({"recording": rec, "group": grp, "bin": b, "pct": np.mean(np.isin(block, list(target_syll))) * 100.0})
+            out_rows.append(
+                {
+                    "recording": rec,
+                    "group": grp,
+                    "bin": b,
+                    "pct": np.mean(np.isin(block, list(target_syll))) * 100.0,
+                }
+            )
     summary = (
         pd.DataFrame(out_rows)
         .groupby(["group", "bin"])["pct"]
@@ -694,7 +773,15 @@ def _plot_freezing_panel(ax, data: pd.DataFrame, title: str, tag: str) -> None:
         if group not in ("Control", "ELS"):
             continue
         color = PALETTE.get(group, "#4d4d4d")
-        ax.plot(gdata["time_min"], gdata["mean"] * 100.0, label=group, color=color, linewidth=1.2, marker="o", markersize=2)
+        ax.plot(
+            gdata["time_min"],
+            gdata["mean"] * 100.0,
+            label=group,
+            color=color,
+            linewidth=1.2,
+            marker="o",
+            markersize=2,
+        )
         ax.fill_between(
             gdata["time_min"],
             (gdata["mean"] - gdata["sem"]) * 100.0,
@@ -746,7 +833,9 @@ def _load_panel_g_reference_labels(svg_path: Path | None) -> list[str]:
     return labels
 
 
-def _top_metric_from_agg(agg: pd.DataFrame, metric: str, coverage_pct: float = 95.0) -> pd.DataFrame:
+def _top_metric_from_agg(
+    agg: pd.DataFrame, metric: str, coverage_pct: float = 95.0
+) -> pd.DataFrame:
     """Mirror original plot_top_95: sort by mean_all and keep cumulative contribution."""
     series = (agg.set_index("syllable")[metric] * 100.0).sort_values(ascending=False)
     total = float(series.sum())
@@ -763,13 +852,19 @@ def _top_metric_from_agg(agg: pd.DataFrame, metric: str, coverage_pct: float = 9
     return out
 
 
-def _top_metric_from_original_metrics(metrics_df: pd.DataFrame, metric: str, coverage_pct: float = 95.0) -> pd.DataFrame:
+def _top_metric_from_original_metrics(
+    metrics_df: pd.DataFrame, metric: str, coverage_pct: float = 95.0
+) -> pd.DataFrame:
     """Mirror original plot_top_95 aggregation over freezing_overlap_per_syllable."""
     rows = []
     for syll in sorted(metrics_df["syllable"].unique().tolist()):
         vals = metrics_df.loc[metrics_df["syllable"] == syll, metric]
-        vals_els = metrics_df.loc[(metrics_df["syllable"] == syll) & (metrics_df["group"] == "ELS"), metric]
-        vals_ctrl = metrics_df.loc[(metrics_df["syllable"] == syll) & (metrics_df["group"] == "Control"), metric]
+        vals_els = metrics_df.loc[
+            (metrics_df["syllable"] == syll) & (metrics_df["group"] == "ELS"), metric
+        ]
+        vals_ctrl = metrics_df.loc[
+            (metrics_df["syllable"] == syll) & (metrics_df["group"] == "Control"), metric
+        ]
         rows.append(
             {
                 "syllable": int(syll),
@@ -787,13 +882,39 @@ def _top_metric_from_original_metrics(metrics_df: pd.DataFrame, metric: str, cov
     return out
 
 
-def _plot_metric_bars_original(ax, show_df: pd.DataFrame, tag: str, ylabel: str, tag_x: float = -0.17) -> None:
+def _plot_metric_bars_original(
+    ax, show_df: pd.DataFrame, tag: str, ylabel: str, tag_x: float = -0.17
+) -> None:
     syllables = show_df["syllable"].astype(int).tolist()
     x = np.arange(len(syllables))
     width = 0.25
-    ax.bar(x - width, show_df["mean_all"], width=width, color="#4B4B4B", edgecolor="#FFFFFF", linewidth=0.25, label="All Groups")
-    ax.bar(x, show_df["mean_control"], width=width, color=PALETTE["Control"], edgecolor="#FFFFFF", linewidth=0.25, label="Control")
-    ax.bar(x + width, show_df["mean_els"], width=width, color=PALETTE["ELS"], edgecolor="#FFFFFF", linewidth=0.25, label="ELS")
+    ax.bar(
+        x - width,
+        show_df["mean_all"],
+        width=width,
+        color="#4B4B4B",
+        edgecolor="#FFFFFF",
+        linewidth=0.25,
+        label="All Groups",
+    )
+    ax.bar(
+        x,
+        show_df["mean_control"],
+        width=width,
+        color=PALETTE["Control"],
+        edgecolor="#FFFFFF",
+        linewidth=0.25,
+        label="Control",
+    )
+    ax.bar(
+        x + width,
+        show_df["mean_els"],
+        width=width,
+        color=PALETTE["ELS"],
+        edgecolor="#FFFFFF",
+        linewidth=0.25,
+        label="ELS",
+    )
     ax.set_title(ylabel, fontsize=6.5, color="#4b4b4b", pad=4)
     ax.set_ylabel(ylabel, fontsize=6)
     ax.set_xlabel("Syllable", fontsize=6, loc="right")
@@ -809,9 +930,26 @@ def _plot_metric_bars_original(ax, show_df: pd.DataFrame, tag: str, ylabel: str,
 def _draw_section_label(fig, y0: float, y1: float, label: str) -> None:
     x0 = 0.006
     width = 0.026
-    rect = Rectangle((x0, y0), width, y1 - y0, transform=fig.transFigure, facecolor="#E5E5E5", edgecolor="none", zorder=-1)
+    rect = Rectangle(
+        (x0, y0),
+        width,
+        y1 - y0,
+        transform=fig.transFigure,
+        facecolor="#E5E5E5",
+        edgecolor="none",
+        zorder=-1,
+    )
     fig.patches.append(rect)
-    fig.text(x0 + width / 2, (y0 + y1) / 2, label, rotation=90, ha="center", va="center", fontsize=9, color="#777777")
+    fig.text(
+        x0 + width / 2,
+        (y0 + y1) / 2,
+        label,
+        rotation=90,
+        ha="center",
+        va="center",
+        fontsize=9,
+        color="#777777",
+    )
 
 
 def plot_figure(
@@ -857,18 +995,32 @@ def plot_figure(
         d_source = usage_df.copy().reset_index(drop=True)
     else:
         d_source = agg.sort_values("global_pct", ascending=False).reset_index(drop=True)
-    axD.bar(np.arange(len(d_source)), d_source["global_pct"], color="#C77BA5", edgecolor="#FFFFFF", linewidth=0.25)
+    axD.bar(
+        np.arange(len(d_source)),
+        d_source["global_pct"],
+        color="#C77BA5",
+        edgecolor="#FFFFFF",
+        linewidth=0.25,
+    )
     cumulative = d_source["global_pct"].cumsum()
     cut_idx = int(np.argmax(cumulative.to_numpy() >= 95.0))
     axD.axvline(cut_idx + 0.5, color="#b0b0b0", linestyle="--", linewidth=0.9)
     axD.legend(
-        handles=[plt.Line2D([0], [0], color="#b0b0b0", linestyle="--", linewidth=0.9, label="Threshold = 0.05")],
-        frameon=True, fontsize=5, loc="lower right",
+        handles=[
+            plt.Line2D(
+                [0], [0], color="#b0b0b0", linestyle="--", linewidth=0.9, label="Threshold = 0.05"
+            )
+        ],
+        frameon=True,
+        fontsize=5,
+        loc="lower right",
     )
     axD.set_ylabel("Total frames covered by syllable (%)", fontsize=6)
     axD.set_xlabel("Syllable", fontsize=6)
     axD.set_xticks(np.arange(len(d_source)))
-    axD.set_xticklabels([str(s) for s in d_source["syllable"].astype(int)], rotation=90, fontsize=4.2)
+    axD.set_xticklabels(
+        [str(s) for s in d_source["syllable"].astype(int)], rotation=90, fontsize=4.2
+    )
     axD.set_xlim(-0.8, len(d_source) - 0.35)
     axD.set_ylim(0, 20.0)
     axD.set_yticks(np.arange(0, 20.1, 2.5))
@@ -897,11 +1049,23 @@ def plot_figure(
             overlap_records = plot_overlap_df.to_dict("records")
             for row in overlap_records:
                 row["label_number"] = _animal_sort_number(str(row["recording"]))
-            ctrl = sorted([row for row in overlap_records if row["group"] == "Control"], key=lambda row: row["label_number"])
-            els = sorted([row for row in overlap_records if row["group"] == "ELS"], key=lambda row: row["label_number"])
+            ctrl = sorted(
+                [row for row in overlap_records if row["group"] == "Control"],
+                key=lambda row: row["label_number"],
+            )
+            els = sorted(
+                [row for row in overlap_records if row["group"] == "ELS"],
+                key=lambda row: row["label_number"],
+            )
             overlap_plot = pd.DataFrame(ctrl + els)
         colors = [PALETTE.get(g, "#cccccc") for g in overlap_plot["group"]]
-        axG.bar(np.arange(len(overlap_plot)), overlap_plot["overlap"], color=colors, edgecolor="#FFFFFF", linewidth=0.2)
+        axG.bar(
+            np.arange(len(overlap_plot)),
+            overlap_plot["overlap"],
+            color=colors,
+            edgecolor="#FFFFFF",
+            linewidth=0.2,
+        )
         axG.set_xticks(np.arange(len(overlap_plot)))
         g_tick_labels = overlap_plot["label"].tolist()
         axG.set_xticklabels(g_tick_labels, rotation=90)
@@ -936,8 +1100,23 @@ def plot_figure(
         if group not in ("Control", "ELS"):
             continue
         color = PALETTE.get(group, "#4d4d4d")
-        axH.plot(data["time_min"], data["mean"], label=group, color=color, linewidth=1.2, marker="o", markersize=2)
-        axH.fill_between(data["time_min"], data["mean"] - data["sem"], data["mean"] + data["sem"], color=color, alpha=0.22, linewidth=0)
+        axH.plot(
+            data["time_min"],
+            data["mean"],
+            label=group,
+            color=color,
+            linewidth=1.2,
+            marker="o",
+            markersize=2,
+        )
+        axH.fill_between(
+            data["time_min"],
+            data["mean"] - data["sem"],
+            data["mean"] + data["sem"],
+            color=color,
+            alpha=0.22,
+            linewidth=0,
+        )
     axH.set_title("Syllables 0, 28", fontsize=6.5, color="#4b4b4b", pad=4)
     axH.set_xlabel("Time (minutes)", fontsize=6)
     axH.set_ylabel("Freezing (% of time)", fontsize=6)
@@ -969,7 +1148,9 @@ def main() -> None:
             f"from {args.panel_g_reference_svg}"
         )
     else:
-        print("No manuscript cohort SVG found; using all available animals after explicit exclusions.")
+        print(
+            "No manuscript cohort SVG found; using all available animals after explicit exclusions."
+        )
 
     print("Loading supervised freezing traces...")
     freezing_df = _load_freezing_frame_table(args.freezing_dir, group_map)
@@ -979,15 +1160,21 @@ def main() -> None:
     source_used, source_path, fallback_used = _choose_sequence_source(args)
     print(f"Sequence source: {source_used} ({source_path})")
     if source_used == "moseq_df":
-        seq_by_recording = _load_sequences_from_moseq_df(source_path, group_map, excluded, include_labels=include_labels)
+        seq_by_recording = _load_sequences_from_moseq_df(
+            source_path, group_map, excluded, include_labels=include_labels
+        )
         usage_df = _load_syllable_usage_from_moseq_df(source_path, include_labels=include_labels)
     else:
-        seq_by_recording = _load_sequences_from_results_pkl(source_path, group_map, excluded, include_labels=include_labels)
+        seq_by_recording = _load_sequences_from_results_pkl(
+            source_path, group_map, excluded, include_labels=include_labels
+        )
         usage_df = None
     freezing_vectors = _load_freezing_vectors(args.freezing_dir)
-    metrics_df, agg, group_agg, overlap_df, matched_rec, missing_rec, time_summary = _compute_validation_tables(
-        seq_by_recording,
-        freezing_vectors,
+    metrics_df, agg, group_agg, overlap_df, matched_rec, missing_rec, time_summary = (
+        _compute_validation_tables(
+            seq_by_recording,
+            freezing_vectors,
+        )
     )
     print(f"Matched recordings: {matched_rec}; missing freezing records: {missing_rec}")
 
@@ -995,7 +1182,9 @@ def main() -> None:
         print(f"Loading precomputed overlap from {PRECOMPUTED_OVERLAP_CSV}")
         overlap_df = _load_precomputed_overlap(PRECOMPUTED_OVERLAP_CSV)
     else:
-        print("Warning: precomputed overlap CSV not found; overlap panel may be inaccurate if using results_pkl source.")
+        print(
+            "Warning: precomputed overlap CSV not found; overlap panel may be inaccurate if using results_pkl source."
+        )
 
     print("Rendering final Figure 2 layout...")
     fig = plot_figure(
@@ -1023,7 +1212,11 @@ def main() -> None:
     # Compute and export source data
     print("Computing Figure 2 source statistics...")
     freezing_long = _build_freezing_long_format(freezing_df, group_map, include_labels)
-    overlap_stats = _compute_overlap_stats(overlap_df.rename(columns={"overlap": "overlap_pct"}) if "overlap" in overlap_df.columns else overlap_df)
+    overlap_stats = _compute_overlap_stats(
+        overlap_df.rename(columns={"overlap": "overlap_pct"})
+        if "overlap" in overlap_df.columns
+        else overlap_df
+    )
     source_data_df = _compute_figure2_source_data(
         freezing_long,
         time_summary,

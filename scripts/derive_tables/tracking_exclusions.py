@@ -1,10 +1,10 @@
 """Derive tracking-exclusion tables from the raw 30 s syllable table."""
+
 from __future__ import annotations
 
 from pathlib import Path
 
 import pandas as pd
-
 
 REPO = Path(__file__).resolve().parents[2]
 RAW = REPO / "data" / "raw" / "syllable_usage_per_timebin_30s.csv"
@@ -37,17 +37,16 @@ def load_raw() -> pd.DataFrame:
 def subset_seconds(df: pd.DataFrame, syllables: set[int], column: str) -> pd.DataFrame:
     sub = df[df["Syllable"].isin(syllables)].copy()
     sub[column] = sub["Percentage"] * BIN_SECONDS / 100.0
-    return (
-        sub.groupby(["animal_id", "group", "experiment"], as_index=False)[column]
-        .sum()
-    )
+    return sub.groupby(["animal_id", "group", "experiment"], as_index=False)[column].sum()
 
 
 def derive_per_animal(df: pd.DataFrame) -> pd.DataFrame:
     inaccurate = subset_seconds(df, INACCURATE_TRACKING, "inaccurate_tracking_seconds")
     mixed = subset_seconds(df, MIX_BEHAVIORS, "mix_behaviors_seconds")
     out = inaccurate.merge(mixed, on=["animal_id", "group", "experiment"], how="outer").fillna(0.0)
-    out["total_excluded_seconds"] = out["inaccurate_tracking_seconds"] + out["mix_behaviors_seconds"]
+    out["total_excluded_seconds"] = (
+        out["inaccurate_tracking_seconds"] + out["mix_behaviors_seconds"]
+    )
     return out[
         [
             "animal_id",
@@ -69,12 +68,9 @@ def derive_supplementary_time(df: pd.DataFrame) -> pd.DataFrame:
     base = df[["animal_id", "group", "experiment", "time_start_s"]].drop_duplicates()
     for cluster, syllables in specs:
         sub = df[df["Syllable"].isin(syllables)].copy()
-        collapsed = (
-            sub.groupby(["animal_id", "group", "experiment", "time_start_s"], as_index=False)[
-                "Percentage"
-            ]
-            .sum()
-        )
+        collapsed = sub.groupby(
+            ["animal_id", "group", "experiment", "time_start_s"], as_index=False
+        )["Percentage"].sum()
         merged = base.merge(
             collapsed,
             on=["animal_id", "group", "experiment", "time_start_s"],

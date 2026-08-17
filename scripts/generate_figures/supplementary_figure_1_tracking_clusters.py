@@ -15,11 +15,11 @@ import sys
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
@@ -27,7 +27,6 @@ if str(REPO_ROOT) not in sys.path:
 
 from src.config import FIGURES_DIR, PROCESSED_DATA_DIR, SUPPLEMENTARY_TRACKING_CSV
 from src.panel_letters import align_panel_letters
-
 
 SOURCE_CSV = SUPPLEMENTARY_TRACKING_CSV
 
@@ -70,7 +69,17 @@ def load_supplementary_time_data() -> pd.DataFrame:
         raise FileNotFoundError(f"Missing source table: {SOURCE_CSV}")
 
     long = pd.read_csv(SOURCE_CSV)
-    required = {"animal_id", "group", "project", "experiment", "cluster", "time_bin", "percentage", "seconds", "time_min"}
+    required = {
+        "animal_id",
+        "group",
+        "project",
+        "experiment",
+        "cluster",
+        "time_bin",
+        "percentage",
+        "seconds",
+        "time_min",
+    }
     missing = required.difference(long.columns)
     if missing:
         raise ValueError(f"Missing columns in {SOURCE_CSV.name}: {sorted(missing)}")
@@ -314,7 +323,9 @@ def main() -> None:
     print(f"Saved {pdf_path}")
     print(f"Saved {svg_path}")
     print(f"Saved {png_path}")
-    print(f"Animals used: {long['animal_id'].nunique()} ({long.groupby('group')['animal_id'].nunique().to_dict()})")
+    print(
+        f"Animals used: {long['animal_id'].nunique()} ({long.groupby('group')['animal_id'].nunique().to_dict()})"
+    )
 
 
 if __name__ == "__main__":

@@ -23,6 +23,7 @@ from ``shap_values.pkl``.
 Run:
     python scripts/import_legacy_shap_summary.py --source DIR
 """
+
 from __future__ import annotations
 
 import argparse
@@ -32,7 +33,6 @@ from pathlib import Path
 import joblib
 import numpy as np
 import pandas as pd
-
 
 REPO = Path(__file__).resolve().parents[1]
 OUT = REPO / "figure_source_data" / "supplementary_figure4_shap_summary.csv"
@@ -232,10 +232,9 @@ def build_summary(source: Path | None) -> pd.DataFrame:
         raise AssertionError("Some parameters have no legacy rank")
 
     # Cross-check the recomputed magnitudes against the legacy table.
-    reference = (
-        legacy.rename(columns={"feature": "parameter", "mean_abs_shap": "legacy_mean_abs"})
-        [["behavior", "parameter", "legacy_mean_abs"]]
-    )
+    reference = legacy.rename(columns={"feature": "parameter", "mean_abs_shap": "legacy_mean_abs"})[
+        ["behavior", "parameter", "legacy_mean_abs"]
+    ]
     check = summary.merge(reference, on=["behavior", "parameter"])
     drift = (check["mean_absolute_shap"] - check["legacy_mean_abs"]).abs().max()
     if drift > 1e-9:
@@ -278,7 +277,9 @@ def main() -> None:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     summary.to_csv(args.output, index=False)
     print(f"Wrote {args.output.relative_to(REPO)} ({len(summary)} rows)")
-    print(f"  {summary['behavior'].nunique()} behaviors x {summary['parameter'].nunique()} parameters")
+    print(
+        f"  {summary['behavior'].nunique()} behaviors x {summary['parameter'].nunique()} parameters"
+    )
 
 
 if __name__ == "__main__":

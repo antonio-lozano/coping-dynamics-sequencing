@@ -8,6 +8,7 @@ the next manuscript edit silently stops matching; re-derive the strings from
 the audit CSV before trusting the output against a newer draft. Not part of
 the reproducibility rebuild.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -16,7 +17,6 @@ import html
 import zipfile
 from pathlib import Path
 from xml.etree import ElementTree
-
 
 ROOT = Path(__file__).resolve().parents[1]
 AUDIT = ROOT / "statistics" / "manuscript_consistency_audit.csv"
@@ -120,7 +120,7 @@ def html_difference(row: dict[str, str]) -> str:
     css_class = " major" if row["status"] == "major_mismatch" else ""
     return (
         f'<li class="difference{css_class}"><b>{html.escape(row["section"])}, '
-        f'{html.escape(row["claim"])}</b> ({html.escape(STATUS_LABELS[row["status"]])}): '
+        f"{html.escape(row['claim'])}</b> ({html.escape(STATUS_LABELS[row['status']])}): "
         f"{changes}.{note}</li>"
     )
 
@@ -157,16 +157,21 @@ def render_markdown(paragraphs: list[str], differences: list[dict[str, str]]) ->
             lines.extend([text, ""])
         rows = paragraph_rows(text, differences)
         if rows:
-            lines.extend(["> **AUDIT DIFFERENCES FOR THIS PARAGRAPH**", ">", *[markdown_difference(row) for row in rows], ""])
+            lines.extend(
+                [
+                    "> **AUDIT DIFFERENCES FOR THIS PARAGRAPH**",
+                    ">",
+                    *[markdown_difference(row) for row in rows],
+                    "",
+                ]
+            )
             mapped.update(row["claim"] for row in rows)
 
     lines.extend(["## Complete Difference Register", ""])
     lines.append("| Figure | Result | Marked differences | Interpretation |")
     lines.append("|---|---|---|---|")
     for row in differences:
-        changes = "; ".join(
-            f"{label}: {old} -> {new}" for label, old, new in changed_fields(row)
-        )
+        changes = "; ".join(f"{label}: {old} -> {new}" for label, old, new in changed_fields(row))
         lines.append(
             f"| {row['section']} | {row['claim']} | {changes} | {STATUS_LABELS[row['status']]} |"
         )
@@ -192,13 +197,15 @@ def render_html(paragraphs: list[str], differences: list[dict[str, str]]) -> str
             body.append(f"<p>{html.escape(text)}</p>")
         rows = paragraph_rows(text, differences)
         if rows:
-            body.append('<aside><b>AUDIT DIFFERENCES FOR THIS PARAGRAPH</b><ul>')
+            body.append("<aside><b>AUDIT DIFFERENCES FOR THIS PARAGRAPH</b><ul>")
             body.extend(html_difference(row) for row in rows)
             body.append("</ul></aside>")
             mapped.update(row["claim"] for row in rows)
 
     body.append("<h2>Complete Difference Register</h2>")
-    body.append("<table><thead><tr><th>Figure</th><th>Result</th><th>Marked differences</th><th>Interpretation</th></tr></thead><tbody>")
+    body.append(
+        "<table><thead><tr><th>Figure</th><th>Result</th><th>Marked differences</th><th>Interpretation</th></tr></thead><tbody>"
+    )
     for row in differences:
         changes = "; ".join(
             f"{html.escape(label)}: <del>{html.escape(old)}</del> &rarr; <strong>{html.escape(new)}</strong>"
@@ -227,7 +234,13 @@ table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
 th, td { border: 1px solid #c8c8c8; padding: 8px; text-align: left; vertical-align: top; }
 th { background: #e8edf2; }
 """
-    return "<!doctype html><html><head><meta charset=utf-8><title>Results differences</title><style>" + css + "</style></head><body>" + "\n".join(body) + "</body></html>\n"
+    return (
+        "<!doctype html><html><head><meta charset=utf-8><title>Results differences</title><style>"
+        + css
+        + "</style></head><body>"
+        + "\n".join(body)
+        + "</body></html>\n"
+    )
 
 
 def parse_args() -> argparse.Namespace:

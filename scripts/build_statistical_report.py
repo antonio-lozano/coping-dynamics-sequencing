@@ -6,6 +6,7 @@ submission.
 
 Run: python scripts/build_statistical_report.py
 """
+
 from __future__ import annotations
 
 import argparse
@@ -27,7 +28,6 @@ from statsmodels.stats.multitest import multipletests
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from save_deterministic import save_workbook  # noqa: E402
-
 
 warnings.filterwarnings("ignore")
 
@@ -81,7 +81,12 @@ PARAM_LABELS = {
 # sheets. It is not the order the derived CSVs happen to carry, and the sheets
 # name the same clusters differently (Freeze/Freezing, Climb/Climbing, ...).
 CLUSTER_ORDER = ["Freeze", "Jump", "Locomotion", "Climb", "Turn", "Sniff", "Groom"]
-CLUSTER_ALIASES = {"Freezing": "Freeze", "Sniffing": "Sniff", "Grooming": "Groom", "Climbing": "Climb"}
+CLUSTER_ALIASES = {
+    "Freezing": "Freeze",
+    "Sniffing": "Sniff",
+    "Grooming": "Groom",
+    "Climbing": "Climb",
+}
 
 
 def order_clusters(labels: list) -> list:
@@ -91,10 +96,13 @@ def order_clusters(labels: list) -> list:
     clusters out differently - so callers opt in rather than getting it by
     default. Labels that are not clusters keep the order they arrived in.
     """
+
     def rank(item):
         index, label = item
         name = CLUSTER_ALIASES.get(str(label).strip(), str(label).strip())
-        return (CLUSTER_ORDER.index(name), 0) if name in CLUSTER_ORDER else (len(CLUSTER_ORDER), index)
+        return (
+            (CLUSTER_ORDER.index(name), 0) if name in CLUSTER_ORDER else (len(CLUSTER_ORDER), index)
+        )
 
     return [label for _, label in sorted(enumerate(labels), key=rank)]
 
@@ -115,10 +123,16 @@ def style_populated_widths(ws: openpyxl.worksheet.worksheet.Worksheet) -> None:
     The legacy Figure 5 time-course sheet intentionally preserves formulas in
     column XFD, so ``ws.max_column`` is not a useful iteration bound there.
     """
-    populated_columns = sorted({cell.column for cell in ws._cells.values() if cell.value is not None})
+    populated_columns = sorted(
+        {cell.column for cell in ws._cells.values() if cell.value is not None}
+    )
     for col_idx in populated_columns:
         letter = get_column_letter(col_idx)
-        values = [cell.value for cell in ws._cells.values() if cell.column == col_idx and cell.value is not None]
+        values = [
+            cell.value
+            for cell in ws._cells.values()
+            if cell.column == col_idx and cell.value is not None
+        ]
         max_len = max([8, *(min(len(str(value)), 34) for value in values)])
         ws.column_dimensions[letter].width = max_len + 2
 
@@ -171,7 +185,9 @@ def apply_bh_fdr(
                 label = str(row.get("Parameter", "")).strip()
                 p_value = pd.to_numeric(row.get("P>|z|"), errors="coerce")
                 if label in normalized_labels and pd.notna(p_value):
-                    families.setdefault((analysis, label), []).append((params, row_index, float(p_value)))
+                    families.setdefault((analysis, label), []).append(
+                        (params, row_index, float(p_value))
+                    )
 
     for references in families.values():
         adjusted = multipletests([item[2] for item in references], method="fdr_bh")[1]
@@ -213,7 +229,9 @@ def new_sheet(wb: openpyxl.Workbook, sheet_name: str) -> openpyxl.worksheet.work
     return ws
 
 
-def write_title(ws: openpyxl.worksheet.worksheet.Worksheet, row: int, col: int, title: str, width: int) -> None:
+def write_title(
+    ws: openpyxl.worksheet.worksheet.Worksheet, row: int, col: int, title: str, width: int
+) -> None:
     ws.cell(row, col, title)
     ws.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col + width - 1)
     for idx in range(col, col + width):
@@ -243,7 +261,8 @@ def write_table(
     p_cols = {
         idx
         for idx, column in enumerate(df.columns)
-        if str(column).lower() in {
+        if str(column).lower()
+        in {
             "p>|z|",
             "p",
             "p_value",
@@ -291,7 +310,9 @@ def csv_model_rows(
     return pd.DataFrame(rows, columns=HEADERS)
 
 
-def add_horizontal_blocks(wb: openpyxl.Workbook, sheet_name: str, blocks: list[tuple[str, pd.DataFrame]], *, gap: int = 3) -> None:
+def add_horizontal_blocks(
+    wb: openpyxl.Workbook, sheet_name: str, blocks: list[tuple[str, pd.DataFrame]], *, gap: int = 3
+) -> None:
     ws = new_sheet(wb, sheet_name)
     col = 1
     for title, df in blocks:
@@ -332,7 +353,17 @@ def model_param_table(res, label_map: dict[str, str] | None = None) -> pd.DataFr
     rows = []
     for param in res.params.index:
         if str(param).endswith("Var") or param == "Group Var":
-            rows.append({"Parameter": "Dataset Var", "Coef.": res.params[param], "Std. Err.": "", "z": "", "P>|z|": "", "[0.025": "", "0.975]": ""})
+            rows.append(
+                {
+                    "Parameter": "Dataset Var",
+                    "Coef.": res.params[param],
+                    "Std. Err.": "",
+                    "z": "",
+                    "P>|z|": "",
+                    "[0.025": "",
+                    "0.975]": "",
+                }
+            )
             continue
         rows.append(
             {
@@ -345,14 +376,36 @@ def model_param_table(res, label_map: dict[str, str] | None = None) -> pd.DataFr
                 "0.975]": ci.loc[param, 1],
             }
         )
-    rows.append({"Parameter": "", "Coef.": "", "Std. Err.": "", "z": "", "P>|z|": "", "[0.025": "", "0.975]": ""})
+    rows.append(
+        {
+            "Parameter": "",
+            "Coef.": "",
+            "Std. Err.": "",
+            "z": "",
+            "P>|z|": "",
+            "[0.025": "",
+            "0.975]": "",
+        }
+    )
     for stat, attr in [("AIC", "aic"), ("BIC", "bic")]:
         value = getattr(res, attr, None)
-        rows.append({"Parameter": stat, "Coef.": value if value is not None else "", "Std. Err.": "", "z": "", "P>|z|": "", "[0.025": "", "0.975]": ""})
+        rows.append(
+            {
+                "Parameter": stat,
+                "Coef.": value if value is not None else "",
+                "Std. Err.": "",
+                "z": "",
+                "P>|z|": "",
+                "[0.025": "",
+                "0.975]": "",
+            }
+        )
     return pd.DataFrame(rows, columns=HEADERS)
 
 
-def model_metadata(res, model_label: str, dep_var: str, data: pd.DataFrame, group_col: str | None) -> list[tuple[str, object]]:
+def model_metadata(
+    res, model_label: str, dep_var: str, data: pd.DataFrame, group_col: str | None
+) -> list[tuple[str, object]]:
     """The Metric/Value metadata column that mirrors the statsmodels summary."""
     meta: list[tuple[str, object]] = [
         ("Model", model_label),
@@ -387,7 +440,9 @@ def descriptive_rows(data: pd.DataFrame, metric: str) -> pd.DataFrame:
         sd = float(values.std(ddof=1)) if n > 1 else float("nan")
         sem = sd / np.sqrt(n) if n else float("nan")
         stats_by_group[grp] = (n, mean, sd)
-        rows.append({"Stress": grp, "N": n, "Mean": mean, "SD": sd, "SEM": sem, "": "", "Cohen's d": ""})
+        rows.append(
+            {"Stress": grp, "N": n, "Mean": mean, "SD": sd, "SEM": sem, "": "", "Cohen's d": ""}
+        )
     (n1, m1, s1), (n2, m2, s2) = stats_by_group["Control"], stats_by_group["ELS"]
     if n1 > 1 and n2 > 1:
         pooled = np.sqrt(((n1 - 1) * s1**2 + (n2 - 1) * s2**2) / (n1 + n2 - 2))
@@ -395,14 +450,18 @@ def descriptive_rows(data: pd.DataFrame, metric: str) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=["Stress", "N", "Mean", "SD", "SEM", "", "Cohen's d"])
 
 
-def write_metadata_column(ws, header_row: int, col: int, metadata: list[tuple[str, object]]) -> None:
+def write_metadata_column(
+    ws, header_row: int, col: int, metadata: list[tuple[str, object]]
+) -> None:
     ws.cell(header_row, col, "Metric").fill = HEADER_FILL
     ws.cell(header_row, col).font = HEADER_FONT
     ws.cell(header_row, col + 1, "Value").fill = HEADER_FILL
     ws.cell(header_row, col + 1).font = HEADER_FONT
     for offset, (label, value) in enumerate(metadata, header_row + 1):
         ws.cell(offset, col, label).font = BODY_FONT
-        ws.cell(offset, col + 1, numeric(value) if isinstance(value, float) else value).font = BODY_FONT
+        ws.cell(
+            offset, col + 1, numeric(value) if isinstance(value, float) else value
+        ).font = BODY_FONT
 
 
 POSTHOC_COLS = ["Time (min)", "t stat", "P value", "P value corrected"]
@@ -439,7 +498,11 @@ def write_section(
         if posthoc is not None:
             for row_idx, (_, values) in enumerate(posthoc.iterrows(), header_row + 2):
                 for offset, value in enumerate(values):
-                    cell = ws.cell(row_idx, left + 8 + offset, numeric(value) if isinstance(value, float) else value)
+                    cell = ws.cell(
+                        row_idx,
+                        left + 8 + offset,
+                        numeric(value) if isinstance(value, float) else value,
+                    )
                     cell.font = BODY_FONT
                     if offset in {2, 3}:
                         style_p_value(cell, value)
@@ -469,7 +532,9 @@ def write_plain_table(ws, top: int, left: int, df: pd.DataFrame) -> None:
         cell.alignment = CENTER
     for row_idx, values in enumerate(df.itertuples(index=False), top + 1):
         for offset, value in enumerate(values):
-            ws.cell(row_idx, left + offset, numeric(value) if isinstance(value, float) else value).font = BODY_FONT
+            ws.cell(
+                row_idx, left + offset, numeric(value) if isinstance(value, float) else value
+            ).font = BODY_FONT
 
 
 def add_metric_blocks_sheet(
@@ -524,7 +589,9 @@ TIMECOURSE_PARAM_LABELS = {
 }
 
 
-def timecourse_block(sub: pd.DataFrame, dep_var: str) -> tuple[pd.DataFrame, list[tuple[str, object]]]:
+def timecourse_block(
+    sub: pd.DataFrame, dep_var: str
+) -> tuple[pd.DataFrame, list[tuple[str, object]]]:
     labels = {**PARAM_LABELS, **TIMECOURSE_PARAM_LABELS}
     first = sub.iloc[0]
 
@@ -551,7 +618,17 @@ def timecourse_block(sub: pd.DataFrame, dep_var: str) -> tuple[pd.DataFrame, lis
         )
     rows.append({column: "" for column in HEADERS})
     for stat, col in [("AIC", "aic"), ("BIC", "bic")]:
-        rows.append({"Parameter": stat, "Coef.": pick(first, col), "Std. Err.": "", "z": "", "P>|z|": "", "[0.025": "", "0.975]": ""})
+        rows.append(
+            {
+                "Parameter": stat,
+                "Coef.": pick(first, col),
+                "Std. Err.": "",
+                "z": "",
+                "P>|z|": "",
+                "[0.025": "",
+                "0.975]": "",
+            }
+        )
     params = pd.DataFrame(rows, columns=HEADERS)
 
     def as_int(value):
@@ -568,7 +645,9 @@ def timecourse_block(sub: pd.DataFrame, dep_var: str) -> tuple[pd.DataFrame, lis
     return params, metadata
 
 
-def timecourse_descriptive(tc: pd.DataFrame, cluster: str, value_col: str, time_col: str) -> pd.DataFrame | None:
+def timecourse_descriptive(
+    tc: pd.DataFrame, cluster: str, value_col: str, time_col: str
+) -> pd.DataFrame | None:
     sub = tc[tc["cluster"] == cluster]
     if sub.empty:
         return None
@@ -582,18 +661,45 @@ def timecourse_descriptive(tc: pd.DataFrame, cluster: str, value_col: str, time_
             mean = float(values.mean()) if n else float("nan")
             sd = float(values.std(ddof=1)) if n > 1 else float("nan")
             sem = sd / np.sqrt(n) if n else float("nan")
-            rows.append({"Stress": grp, "Time (min)": time_value / 60.0, "N": n, "Mean": mean, "SD": sd, "SEM": sem, "": "", "Cohen's d": ""})
+            rows.append(
+                {
+                    "Stress": grp,
+                    "Time (min)": time_value / 60.0,
+                    "N": n,
+                    "Mean": mean,
+                    "SD": sd,
+                    "SEM": sem,
+                    "": "",
+                    "Cohen's d": "",
+                }
+            )
         group_values[grp] = grp_rows[value_col].dropna()
-    frame = pd.DataFrame(rows, columns=["Stress", "Time (min)", "N", "Mean", "SD", "SEM", "", "Cohen's d"])
+    frame = pd.DataFrame(
+        rows, columns=["Stress", "Time (min)", "N", "Mean", "SD", "SEM", "", "Cohen's d"]
+    )
     control, els = group_values["Control"], group_values["ELS"]
     if len(control) > 1 and len(els) > 1:
-        pooled = np.sqrt(((len(control) - 1) * control.std(ddof=1) ** 2 + (len(els) - 1) * els.std(ddof=1) ** 2) / (len(control) + len(els) - 2))
+        pooled = np.sqrt(
+            ((len(control) - 1) * control.std(ddof=1) ** 2 + (len(els) - 1) * els.std(ddof=1) ** 2)
+            / (len(control) + len(els) - 2)
+        )
         if pooled:
-            frame.loc[len(frame)] = ["Global Cohen's d", round((els.mean() - control.mean()) / pooled, 3), "", "", "", "", "", ""]
+            frame.loc[len(frame)] = [
+                "Global Cohen's d",
+                round((els.mean() - control.mean()) / pooled, 3),
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+            ]
     return frame
 
 
-def timecourse_posthoc(tc: pd.DataFrame, cluster: str, value_col: str, time_col: str, *, family_size: int | None = None) -> pd.DataFrame | None:
+def timecourse_posthoc(
+    tc: pd.DataFrame, cluster: str, value_col: str, time_col: str, *, family_size: int | None = None
+) -> pd.DataFrame | None:
     """Per-time-bin Control vs ELS contrast (Welch t-test) with Bonferroni
     correction - the manuscript's posthoc table. ``family_size`` is the number
     of comparisons the correction spans (all clusters x time bins when given)."""
@@ -604,14 +710,23 @@ def timecourse_posthoc(tc: pd.DataFrame, cluster: str, value_col: str, time_col:
     n_comparisons = family_size or len(times)
     rows = []
     for time_value in times:
-        control = sub[(sub["group"] == "Control") & (sub[time_col] == time_value)][value_col].dropna()
+        control = sub[(sub["group"] == "Control") & (sub[time_col] == time_value)][
+            value_col
+        ].dropna()
         els = sub[(sub["group"] == "ELS") & (sub[time_col] == time_value)][value_col].dropna()
         if len(control) > 1 and len(els) > 1:
             t_stat, p_value = stats.ttest_ind(control, els, equal_var=False)
             corrected = min(float(p_value) * n_comparisons, 1.0)
         else:
             t_stat, p_value, corrected = float("nan"), float("nan"), float("nan")
-        rows.append({"Time (min)": time_value / 60.0, "t stat": float(t_stat), "P value": float(p_value), "P value corrected": corrected})
+        rows.append(
+            {
+                "Time (min)": time_value / 60.0,
+                "t stat": float(t_stat),
+                "P value": float(p_value),
+                "P value corrected": corrected,
+            }
+        )
     return pd.DataFrame(rows, columns=POSTHOC_COLS)
 
 
@@ -678,8 +793,12 @@ def add_timecourse_sheet(
                 tc_sub = tc if experiment is None else tc[tc["experiment"] == experiment]
                 n_bins = tc_sub[tc_sub["cluster"] == cluster][time_col].nunique()
                 section_family_size = len(clusters) * n_bins if n_bins else family_size
-                section["descriptive"] = timecourse_descriptive(tc_sub, cluster, value_col, time_col)
-                section["posthoc"] = timecourse_posthoc(tc_sub, cluster, value_col, time_col, family_size=section_family_size)
+                section["descriptive"] = timecourse_descriptive(
+                    tc_sub, cluster, value_col, time_col
+                )
+                section["posthoc"] = timecourse_posthoc(
+                    tc_sub, cluster, value_col, time_col, family_size=section_family_size
+                )
             else:
                 # Resilient-group time-bin contrasts are not tracked in the repository.
                 section["posthoc_flag"] = True
@@ -737,10 +856,15 @@ def freezing_time_bins() -> pd.DataFrame:
     and the bin index is 0-based, which is what reproduces the coefficients,
     log-likelihood and scale of the submitted report.
     """
-    freezing = pd.read_csv(RAW_DIR / "freezing_predictions_light.csv.gz", usecols=["animal_id", "group", "frame", "freezing"])
+    freezing = pd.read_csv(
+        RAW_DIR / "freezing_predictions_light.csv.gz",
+        usecols=["animal_id", "group", "frame", "freezing"],
+    )
     freezing["animal_id"] = freezing["animal_id"].map(lambda value: f"{float(value):.1f}")
     freezing["time_bin_numeric"] = (freezing["frame"] // int(FPS * BIN_SECONDS)).astype(int)
-    binned = freezing.groupby(["animal_id", "group", "time_bin_numeric"], as_index=False)["freezing"].mean()
+    binned = freezing.groupby(["animal_id", "group", "time_bin_numeric"], as_index=False)[
+        "freezing"
+    ].mean()
     binned["freezing_pct"] = binned["freezing"] * 100.0
     binned["time_s"] = (binned["time_bin_numeric"] + 1) * BIN_SECONDS
 
@@ -777,6 +901,7 @@ def ground_truth_params(result) -> pd.DataFrame:
     table = result.summary().tables[1]
     rows = []
     for name, row in table.iterrows():
+
         def value(column):
             text = str(row[column]).strip()
             if text in {"", "nan"}:
@@ -799,7 +924,17 @@ def ground_truth_params(result) -> pd.DataFrame:
         )
     rows.append({column: "" for column in HEADERS})
     for label, value in [("AIC", result.aic), ("BIC", result.bic)]:
-        rows.append({"Parameter": label, "Coef.": float(value), "Std. Err.": "", "z": "", "P>|z|": "", "[0.025": "", "0.975]": ""})
+        rows.append(
+            {
+                "Parameter": label,
+                "Coef.": float(value),
+                "Std. Err.": "",
+                "z": "",
+                "P>|z|": "",
+                "[0.025": "",
+                "0.975]": "",
+            }
+        )
     return pd.DataFrame(rows, columns=HEADERS)
 
 
@@ -815,7 +950,12 @@ def ground_truth_metadata(result, data: pd.DataFrame) -> list[tuple[str, object]
         ("Log-Likelihood", round(float(result.llf), 4)),
         ("Min. group size", int(sizes.min())),
         ("Max. group size", int(sizes.max())),
-        ("Mean group size", int(sizes.mean()) if sizes.mean() == int(sizes.mean()) else round(float(sizes.mean()), 1)),
+        (
+            "Mean group size",
+            int(sizes.mean())
+            if sizes.mean() == int(sizes.mean())
+            else round(float(sizes.mean()), 1),
+        ),
         ("Converged", "Yes" if result.converged else "No"),
     ]
 
@@ -859,7 +999,9 @@ def ground_truth_descriptive(data: pd.DataFrame, value_col: str = "freezing_pct"
     rows = []
     for group in ["Control", "ELS"]:
         for time_value in times:
-            values = data[(data["group"] == group) & (data["time_s"] == time_value)][value_col].dropna()
+            values = data[(data["group"] == group) & (data["time_s"] == time_value)][
+                value_col
+            ].dropna()
             n = int(values.shape[0])
             sd = float(values.std(ddof=1)) if n > 1 else float("nan")
             rows.append(
@@ -881,7 +1023,10 @@ def ground_truth_descriptive(data: pd.DataFrame, value_col: str = "freezing_pct"
         """Control minus ELS, pooled SD - the direction the submitted report uses."""
         if len(control) < 2 or len(els) < 2:
             return ""
-        pooled = np.sqrt(((len(control) - 1) * control.std(ddof=1) ** 2 + (len(els) - 1) * els.std(ddof=1) ** 2) / (len(control) + len(els) - 2))
+        pooled = np.sqrt(
+            ((len(control) - 1) * control.std(ddof=1) ** 2 + (len(els) - 1) * els.std(ddof=1) ** 2)
+            / (len(control) + len(els) - 2)
+        )
         return round(float((control.mean() - els.mean()) / pooled), 5) if pooled else ""
 
     for index, time_value in enumerate(times):
@@ -903,7 +1048,17 @@ def ground_truth_descriptive(data: pd.DataFrame, value_col: str = "freezing_pct"
     frame.loc[len(frame)] = {**blank, "Time (min) ": global_d}
     # The effect-size pair repeats the "Time" header; the trailing space above
     # only keeps the two columns addressable while the frame is being built.
-    frame.columns = ["Stress", "Time (min)", "N", "Mean", "SD", "SEM ", "", "Time (min)", "Cohen's d"]
+    frame.columns = [
+        "Stress",
+        "Time (min)",
+        "N",
+        "Mean",
+        "SD",
+        "SEM ",
+        "",
+        "Time (min)",
+        "Cohen's d",
+    ]
     return frame
 
 
@@ -965,19 +1120,31 @@ def figure2_syllable_usage(experiment: int | None = None) -> pd.DataFrame:
     frames = pd.read_csv(RAW_DIR / "manuscript_tables" / "raw_data" / "Syllable_frames.csv")
     if experiment is not None:
         frames = frames[frames["experiment"] == experiment]
-    total_frames = frames[["animal_id", "total_video_frames"]].drop_duplicates()["total_video_frames"].sum()
-    n_videos = frames["animal_id"].nunique()
-    counts = frames.groupby("syllable", as_index=False)["frames_in_video"].sum().rename(
-        columns={"syllable": "Syllable", "frames_in_video": "Total_frames_all_videos"}
+    total_frames = (
+        frames[["animal_id", "total_video_frames"]].drop_duplicates()["total_video_frames"].sum()
     )
-    videos = frames.loc[frames["frames_in_video"] > 0].groupby("syllable", as_index=False)["animal_id"].nunique()
+    n_videos = frames["animal_id"].nunique()
+    counts = (
+        frames.groupby("syllable", as_index=False)["frames_in_video"]
+        .sum()
+        .rename(columns={"syllable": "Syllable", "frames_in_video": "Total_frames_all_videos"})
+    )
+    videos = (
+        frames.loc[frames["frames_in_video"] > 0]
+        .groupby("syllable", as_index=False)["animal_id"]
+        .nunique()
+    )
     videos = videos.rename(columns={"syllable": "Syllable", "animal_id": "Videos_with_syllable"})
     out = counts.merge(videos, on="Syllable", how="left")
     out["Percentage_all_frames"] = out["Total_frames_all_videos"] / total_frames * 100
-    out["Videos_with_syllable"] = out["Videos_with_syllable"].fillna(0).astype(int).astype(str) + f"/{n_videos}"
+    out["Videos_with_syllable"] = (
+        out["Videos_with_syllable"].fillna(0).astype(int).astype(str) + f"/{n_videos}"
+    )
     # Most-used syllable first, as the submitted sheet lists them.
     out = out.sort_values("Total_frames_all_videos", ascending=False, kind="stable")
-    return out[["Syllable", "Total_frames_all_videos", "Percentage_all_frames", "Videos_with_syllable"]].reset_index(drop=True)
+    return out[
+        ["Syllable", "Total_frames_all_videos", "Percentage_all_frames", "Videos_with_syllable"]
+    ].reset_index(drop=True)
 
 
 def figure2_syllable_usage_summary(experiment: int | None = None) -> pd.DataFrame:
@@ -1004,9 +1171,13 @@ def figure2_overlap_summary() -> pd.DataFrame:
     """Summarize the animal-level 0+28+40 overlap values plotted in Figure 2G."""
     plotted = pd.read_csv(RAW_DIR / "freezing_overlap_by_group.csv")
     plotted["animal_id"] = (
-        plotted["recording"].str.extract(r"Animal[_ ](\d+_\d+)")[0].str.replace("_", ".", regex=False)
+        plotted["recording"]
+        .str.extract(r"Animal[_ ](\d+_\d+)")[0]
+        .str.replace("_", ".", regex=False)
     )
-    experiments = pd.read_csv(PROCESSED_DIR / "cluster_frequency_per_animal.csv")[["animal_id", "experiment"]].drop_duplicates()
+    experiments = pd.read_csv(PROCESSED_DIR / "cluster_frequency_per_animal.csv")[
+        ["animal_id", "experiment"]
+    ].drop_duplicates()
     experiments["animal_id"] = experiments["animal_id"].map(lambda value: f"{float(value):.1f}")
     plotted = plotted.merge(experiments, on="animal_id", how="left", validate="many_to_one")
     rows = []
@@ -1054,7 +1225,9 @@ def figure2_precision_recall_summary(experiment: int | None = None) -> pd.DataFr
                     ((len(control) - 1) * control.var(ddof=1) + (len(els) - 1) * els.var(ddof=1))
                     / (len(control) + len(els) - 2)
                 )
-                effect_sizes[metric] = float((els.mean() - control.mean()) / pooled) if pooled else float("nan")
+                effect_sizes[metric] = (
+                    float((els.mean() - control.mean()) / pooled) if pooled else float("nan")
+                )
             else:
                 effect_sizes[metric] = float("nan")
 
@@ -1066,13 +1239,20 @@ def figure2_precision_recall_summary(experiment: int | None = None) -> pd.DataFr
                 sd = float(values.std(ddof=1)) if len(values) > 1 else float("nan")
                 row[f"{metric}__Mean"] = float(values.mean()) if len(values) else float("nan")
                 row[f"{metric}__SD"] = sd
-                row[f"{metric}__SEM"] = sd / np.sqrt(len(values)) if len(values) > 1 else float("nan")
+                row[f"{metric}__SEM"] = (
+                    sd / np.sqrt(len(values)) if len(values) > 1 else float("nan")
+                )
                 row[f"{metric}__Cohen's d"] = effect_sizes[metric] if group == "Control" else ""
             rows.append(row)
     return pd.DataFrame(rows)
 
 
-PRECISION_RECALL_METRICS = ["precision_percent", "recall_percent", "overlap_frames", "syllable_frames"]
+PRECISION_RECALL_METRICS = [
+    "precision_percent",
+    "recall_percent",
+    "overlap_frames",
+    "syllable_frames",
+]
 PRECISION_RECALL_LABELS = {
     "precision_percent": "Precision_Percentage",
     "recall_percent": "Recall_Percentage",
@@ -1097,7 +1277,9 @@ def add_precision_recall_sheet(wb: openpyxl.Workbook) -> None:
         top_header = row + 2
         lower_header = top_header + 1
         for col, label in enumerate(["Syllable", "Group", "N"], 1):
-            ws.merge_cells(start_row=top_header, start_column=col, end_row=lower_header, end_column=col)
+            ws.merge_cells(
+                start_row=top_header, start_column=col, end_row=lower_header, end_column=col
+            )
             cell = ws.cell(top_header, col, label)
             cell.fill = HEADER_FILL
             cell.font = HEADER_FONT
@@ -1106,7 +1288,9 @@ def add_precision_recall_sheet(wb: openpyxl.Workbook) -> None:
 
         col = 4
         for metric in PRECISION_RECALL_METRICS:
-            ws.merge_cells(start_row=top_header, start_column=col, end_row=top_header, end_column=col + 3)
+            ws.merge_cells(
+                start_row=top_header, start_column=col, end_row=top_header, end_column=col + 3
+            )
             for metric_col in range(col, col + 4):
                 ws.cell(top_header, metric_col).fill = HEADER_FILL
             metric_cell = ws.cell(top_header, col, PRECISION_RECALL_LABELS[metric])
@@ -1139,11 +1323,18 @@ def syllable_timecourse(syllables: list[int]) -> pd.DataFrame:
     Binned exactly as the Fig.2A-C ground truth is (25 fps, 0-based index), so
     the two sheets share a time axis.
     """
-    frames = pd.read_csv(RAW_DIR / "moseq_syllables_per_frame.csv.gz", usecols=["name", "frame_index", "syllable", "group"])
-    frames["animal_id"] = frames["name"].str.extract(r"Animal[_ ](\d+_\d+)")[0].str.replace("_", ".", regex=False)
+    frames = pd.read_csv(
+        RAW_DIR / "moseq_syllables_per_frame.csv.gz",
+        usecols=["name", "frame_index", "syllable", "group"],
+    )
+    frames["animal_id"] = (
+        frames["name"].str.extract(r"Animal[_ ](\d+_\d+)")[0].str.replace("_", ".", regex=False)
+    )
     frames["time_bin_numeric"] = (frames["frame_index"] // int(FPS * BIN_SECONDS)).astype(int)
     frames["hit"] = frames["syllable"].isin(syllables).astype(float)
-    binned = frames.groupby(["animal_id", "group", "time_bin_numeric"], as_index=False)["hit"].mean()
+    binned = frames.groupby(["animal_id", "group", "time_bin_numeric"], as_index=False)[
+        "hit"
+    ].mean()
     binned["pct"] = binned["hit"] * 100.0
     binned["time_s"] = (binned["time_bin_numeric"] + 1) * BIN_SECONDS
 
@@ -1187,7 +1378,9 @@ def figure2h_sections() -> list[dict]:
                 ]
             )
             params = ground_truth_params(result)
-            params["Parameter"] = params["Parameter"].map(lambda value: value.strip() if isinstance(value, str) else value)
+            params["Parameter"] = params["Parameter"].map(
+                lambda value: value.strip() if isinstance(value, str) else value
+            )
             params = scale_parameter_rows(
                 params,
                 {
@@ -1212,12 +1405,21 @@ def figure2h_sections() -> list[dict]:
 def figure2_freezing_syllables() -> pd.DataFrame:
     df = pd.read_csv(REPO / "figure_source_data" / "figure2.csv")
     return df[df["effect"].eq("overlap")].rename(
-        columns={"metric": "Metric", "experiment": "Experiment", "beta": "Value", "se": "SE", "z": "z", "p_value": "p_value"}
+        columns={
+            "metric": "Metric",
+            "experiment": "Experiment",
+            "beta": "Value",
+            "se": "SE",
+            "z": "z",
+            "p_value": "p_value",
+        }
     )[["Metric", "Experiment", "Value", "SE", "z", "p_value"]]
 
 
 def add_figure2_sheets(wb: openpyxl.Workbook) -> None:
-    add_metric_blocks_sheet(wb, "Fig.2A-C_Ground_truth ", figure2_ground_truth_sections(), header_gap=1, pitch=18)
+    add_metric_blocks_sheet(
+        wb, "Fig.2A-C_Ground_truth ", figure2_ground_truth_sections(), header_gap=1, pitch=18
+    )
     add_vertical_tables(
         wb,
         "Fig.2D_Syllable_usage",
@@ -1238,7 +1440,9 @@ def add_figure2_sheets(wb: openpyxl.Workbook) -> None:
         [("Freezing overlap (%)", figure2_overlap_summary())],
         header_gap=2,
     )
-    add_metric_blocks_sheet(wb, "Fig.2H_Freezing_syllables", figure2h_sections(), header_gap=1, pitch=18)
+    add_metric_blocks_sheet(
+        wb, "Fig.2H_Freezing_syllables", figure2h_sections(), header_gap=1, pitch=18
+    )
 
 
 def add_grouped_csv_blocks(
@@ -1267,10 +1471,25 @@ def add_grouped_csv_blocks(
     for label in labels:
         sub = groups[label]
         title = title_map.get(str(label), str(label)) if title_map else str(label)
-        params = csv_model_rows(sub, parameter_col=parameter_col, coef_col=coef_col, se_col=se_col, p_col=p_col)
-        blocks.append({"title": title, "params": params, "metadata": [("Model", model_label)], "posthoc_flag": posthoc_flag})
+        params = csv_model_rows(
+            sub, parameter_col=parameter_col, coef_col=coef_col, se_col=se_col, p_col=p_col
+        )
+        blocks.append(
+            {
+                "title": title,
+                "params": params,
+                "metadata": [("Model", model_label)],
+                "posthoc_flag": posthoc_flag,
+            }
+        )
     add_metric_blocks_sheet(
-        wb, sheet_name, blocks, header_gap=header_gap, pitch=pitch, first_col=first_col, band_label=band_label
+        wb,
+        sheet_name,
+        blocks,
+        header_gap=header_gap,
+        pitch=pitch,
+        first_col=first_col,
+        band_label=band_label,
     )
 
 
@@ -1316,7 +1535,9 @@ def add_figure3a_frequency_sheet(wb: openpyxl.Workbook) -> None:
     labels = order_clusters(source["cluster"].drop_duplicates().tolist())
     blocks = []
     for cluster in labels:
-        cluster_data = source[source["cluster"] == cluster].dropna(subset=["frequency_seconds"]).copy()
+        cluster_data = (
+            source[source["cluster"] == cluster].dropna(subset=["frequency_seconds"]).copy()
+        )
         sections = []
         for title, subset, with_experiment in [
             (section_title(cluster, None), cluster_data, True),
@@ -1372,7 +1593,9 @@ def load_fig6_module():
     return module
 
 
-def fit_condition_model(df: pd.DataFrame, metric: str, *, with_experiment: bool) -> tuple[object, str, pd.DataFrame]:
+def fit_condition_model(
+    df: pd.DataFrame, metric: str, *, with_experiment: bool
+) -> tuple[object, str, pd.DataFrame]:
     d = df.dropna(subset=[metric]).copy()
     d["Condition"] = pd.Categorical(d["group"], categories=["Control", "ELS"])
     formula = f"{metric} ~ Condition + Experiment" if with_experiment else f"{metric} ~ Condition"
@@ -1383,7 +1606,9 @@ def fit_condition_model(df: pd.DataFrame, metric: str, *, with_experiment: bool)
         return smf.ols(formula, d).fit(), "OLS fallback", d
 
 
-def metric_section(title: str, source: pd.DataFrame, metric: str, dep_var: str, *, with_experiment: bool) -> dict:
+def metric_section(
+    title: str, source: pd.DataFrame, metric: str, dep_var: str, *, with_experiment: bool
+) -> dict:
     res, label, data = fit_condition_model(source, metric, with_experiment=with_experiment)
     return {
         "title": title,
@@ -1397,9 +1622,23 @@ def fig4_block(title: str, source: pd.DataFrame, metric: str, dep_var: str) -> d
     """A metric column with the full dataset and both source datasets."""
     return {
         "sections": [
-            metric_section(section_title(title, None), source, metric, dep_var, with_experiment=True),
-            metric_section(section_title(title, 1), source[source["Experiment"] == 1], metric, dep_var, with_experiment=False),
-            metric_section(section_title(title, 3), source[source["Experiment"] == 3], metric, dep_var, with_experiment=False),
+            metric_section(
+                section_title(title, None), source, metric, dep_var, with_experiment=True
+            ),
+            metric_section(
+                section_title(title, 1),
+                source[source["Experiment"] == 1],
+                metric,
+                dep_var,
+                with_experiment=False,
+            ),
+            metric_section(
+                section_title(title, 3),
+                source[source["Experiment"] == 3],
+                metric,
+                dep_var,
+                with_experiment=False,
+            ),
         ]
     }
 
@@ -1410,7 +1649,9 @@ def add_fig4_sheets(wb: openpyxl.Workbook) -> None:
     metrics, _usage = fig4.compute_frequency_metrics(full_seq, meta)
     bouts = fig4.bout_table(full_seq, meta)
     transitions = fig4.transition_metrics(full_seq, meta)
-    mean_bouts = bouts.groupby(["Animal", "group", "Experiment", "cluster"], as_index=False)["bout_duration"].mean()
+    mean_bouts = bouts.groupby(["Animal", "group", "Experiment", "cluster"], as_index=False)[
+        "bout_duration"
+    ].mean()
 
     add_metric_blocks_sheet(
         wb,
@@ -1424,10 +1665,14 @@ def add_fig4_sheets(wb: openpyxl.Workbook) -> None:
         header_gap=2,
     )
 
-    overall_bouts = bouts.groupby(["Animal", "group", "Experiment"], as_index=False)["bout_duration"].mean()
+    overall_bouts = bouts.groupby(["Animal", "group", "Experiment"], as_index=False)[
+        "bout_duration"
+    ].mean()
     bout_blocks = [fig4_block("Overall", overall_bouts, "bout_duration", "MeanBoutDuration")]
     for cluster in ["Freezing", "Sniffing", "Grooming", "Turn", "Locomotion", "Climbing", "Jump"]:
-        sub = mean_bouts[mean_bouts["cluster"] == cluster].rename(columns={"bout_duration": cluster})
+        sub = mean_bouts[mean_bouts["cluster"] == cluster].rename(
+            columns={"bout_duration": cluster}
+        )
         bout_blocks.append(fig4_block(cluster, sub, cluster, "MeanBoutDuration"))
     # The manuscript's Figure 4 bout family contains the seven behaviors; the
     # separate overall-duration summary is descriptive and is not in that FDR family.
@@ -1449,18 +1694,24 @@ def add_fig4_sheets(wb: openpyxl.Workbook) -> None:
 
 def attach_experiment(df: pd.DataFrame, animal_col: str) -> pd.DataFrame:
     """Attach experiment identity using the canonical per-animal cluster table."""
-    lookup = pd.read_csv(PROCESSED_DIR / "cluster_frequency_per_animal.csv")[["animal_id", "experiment"]].drop_duplicates()
+    lookup = pd.read_csv(PROCESSED_DIR / "cluster_frequency_per_animal.csv")[
+        ["animal_id", "experiment"]
+    ].drop_duplicates()
     lookup["animal_key"] = lookup["animal_id"].map(lambda value: f"{float(value):.1f}")
     out = df.copy()
     out["animal_key"] = out[animal_col].map(lambda value: f"{float(value):.1f}")
-    out = out.merge(lookup[["animal_key", "experiment"]], on="animal_key", how="left", validate="many_to_one")
+    out = out.merge(
+        lookup[["animal_key", "experiment"]], on="animal_key", how="left", validate="many_to_one"
+    )
     if out["experiment"].isna().any():
         missing = out.loc[out["experiment"].isna(), animal_col].drop_duplicates().tolist()
         raise ValueError(f"Missing experiment mapping for animals: {missing}")
     return out
 
 
-def score_block(title: str, df: pd.DataFrame, value_col: str, dep_var: str, *, with_experiment: bool) -> dict:
+def score_block(
+    title: str, df: pd.DataFrame, value_col: str, dep_var: str, *, with_experiment: bool
+) -> dict:
     """One per-animal distance-score MixedLM block using the documented model."""
     formula = f"{value_col} ~ C(group, Treatment('Control'))"
     if with_experiment:
@@ -1479,15 +1730,32 @@ def score_block(title: str, df: pd.DataFrame, value_col: str, dep_var: str, *, w
     )
     metadata = model_metadata(res, "MixedLM", dep_var, df, "animal_key")
     metadata.append(("Random intercept", "Animal"))
-    return {"title": title, "params": params, "metadata": metadata, "descriptive": descriptive_rows(df, value_col)}
+    return {
+        "title": title,
+        "params": params,
+        "metadata": metadata,
+        "descriptive": descriptive_rows(df, value_col),
+    }
 
 
 def score_metric_block(title: str, df: pd.DataFrame, value_col: str, dep_var: str) -> dict:
     return {
         "sections": [
             score_block(section_title(title, None), df, value_col, dep_var, with_experiment=True),
-            score_block(section_title(title, 1), df[df["experiment"] == 1], value_col, dep_var, with_experiment=False),
-            score_block(section_title(title, 3), df[df["experiment"] == 3], value_col, dep_var, with_experiment=False),
+            score_block(
+                section_title(title, 1),
+                df[df["experiment"] == 1],
+                value_col,
+                dep_var,
+                with_experiment=False,
+            ),
+            score_block(
+                section_title(title, 3),
+                df[df["experiment"] == 3],
+                value_col,
+                dep_var,
+                with_experiment=False,
+            ),
         ]
     }
 
@@ -1528,7 +1796,12 @@ COHEN_PAIRS = [
 FIG6_COLUMNS_4 = [1, 14, 27, 41]
 FIG6_COLUMNS_8 = [1, 14, 27, 41, 54, 67, 80, 94]
 # Bout-duration blocks are titled with the short cluster name.
-FIG6_BOUT_TITLES = {"Freezing": "Freeze", "Sniffing": "Sniff", "Grooming": "Groom", "Climbing": "Climb"}
+FIG6_BOUT_TITLES = {
+    "Freezing": "Freeze",
+    "Sniffing": "Sniff",
+    "Grooming": "Groom",
+    "Climbing": "Climb",
+}
 
 
 def resilience_groups() -> pd.DataFrame:
@@ -1607,7 +1880,7 @@ def resilience_section(
                 "0.975]": float(high),
             }
         )
-    for name in (["Experiment"] if with_experiment else []):
+    for name in ["Experiment"] if with_experiment else []:
         rows.append(
             {
                 "Parameter": "Dataset covariate (coded 1/3)",
@@ -1621,10 +1894,30 @@ def resilience_section(
         )
     variance = [p for p in result.params.index if str(p).endswith("Var")]
     for name in variance:
-        rows.append({"Parameter": "Dataset Var", "Coef.": float(result.params[name]), "Std. Err.": "", "z": "", "P>|z|": "", "[0.025": "", "0.975]": ""})
+        rows.append(
+            {
+                "Parameter": "Dataset Var",
+                "Coef.": float(result.params[name]),
+                "Std. Err.": "",
+                "z": "",
+                "P>|z|": "",
+                "[0.025": "",
+                "0.975]": "",
+            }
+        )
     rows.append({column: "" for column in HEADERS})
     for label, value in [("AIC", result.aic), ("BIC", result.bic)]:
-        rows.append({"Parameter": label, "Coef.": float(value), "Std. Err.": "", "z": "", "P>|z|": "", "[0.025": "", "0.975]": ""})
+        rows.append(
+            {
+                "Parameter": label,
+                "Coef.": float(value),
+                "Std. Err.": "",
+                "z": "",
+                "P>|z|": "",
+                "[0.025": "",
+                "0.975]": "",
+            }
+        )
 
     sizes = data.groupby("Animal").size()
     metadata = [
@@ -1637,7 +1930,12 @@ def resilience_section(
         ("Log-Likelihood", round(float(result.llf), 4)),
         ("Min. group size", int(sizes.min())),
         ("Max. group size", int(sizes.max())),
-        ("Mean group size", int(sizes.mean()) if sizes.mean() == int(sizes.mean()) else round(float(sizes.mean()), 1)),
+        (
+            "Mean group size",
+            int(sizes.mean())
+            if sizes.mean() == int(sizes.mean())
+            else round(float(sizes.mean()), 1),
+        ),
         ("Converged", bool(getattr(result, "converged", True))),
         ("Data level", "one row per animal"),
         ("Contrast fitting", "Control- and ELS-reference parameterizations"),
@@ -1653,7 +1951,9 @@ def resilience_section(
 def resilience_block(title: str, source: pd.DataFrame, metric: str, dep_var: str) -> dict:
     return {
         "sections": [
-            resilience_section(section_title(title, None), source, metric, dep_var, with_experiment=True),
+            resilience_section(
+                section_title(title, None), source, metric, dep_var, with_experiment=True
+            ),
             resilience_section(
                 section_title(title, 1),
                 source[source["Experiment"] == 1],
@@ -1700,8 +2000,13 @@ def resilience_descriptive(data: pd.DataFrame, metric: str) -> pd.DataFrame:
         a, b = summary[first], summary[second]
         frame.loc[index, "Cohen's d"] = label
         if len(a) > 1 and len(b) > 1:
-            pooled = np.sqrt(((len(a) - 1) * a.std(ddof=1) ** 2 + (len(b) - 1) * b.std(ddof=1) ** 2) / (len(a) + len(b) - 2))
-            frame.loc[index, " "] = round(float((b.mean() - a.mean()) / pooled), 5) if pooled else ""
+            pooled = np.sqrt(
+                ((len(a) - 1) * a.std(ddof=1) ** 2 + (len(b) - 1) * b.std(ddof=1) ** 2)
+                / (len(a) + len(b) - 2)
+            )
+            frame.loc[index, " "] = (
+                round(float((b.mean() - a.mean()) / pooled), 5) if pooled else ""
+            )
     return frame
 
 
@@ -1769,11 +2074,15 @@ def figure5_frequency_section(title: str, data: pd.DataFrame, *, with_experiment
         cov_struct=sm.cov_struct.Exchangeable(),
     ).fit()
     rows = [linear_contrast_row(result, "Intercept", [1.0, 0.0, 0.0])]
-    rows.extend(linear_contrast_row(result, label, weights) for label, weights in RESILIENCE_CONTRASTS)
+    rows.extend(
+        linear_contrast_row(result, label, weights) for label, weights in RESILIENCE_CONTRASTS
+    )
     if with_experiment:
         experiment_weights = [0.0] * len(result.params)
         experiment_weights[-1] = 1.0
-        rows.append(linear_contrast_row(result, "Dataset covariate (coded 1/3)", experiment_weights))
+        rows.append(
+            linear_contrast_row(result, "Dataset covariate (coded 1/3)", experiment_weights)
+        )
     params = pd.DataFrame(rows, columns=HEADERS)
     metadata = [
         ("Model", "GEE Negative Binomial"),
@@ -1781,7 +2090,9 @@ def figure5_frequency_section(title: str, data: pd.DataFrame, *, with_experiment
         ("No. Observations", int(result.nobs)),
         ("No. Groups", int(subset["animal_key"].nunique())),
     ]
-    descriptive = resilience_descriptive(subset.rename(columns={"animal_key": "Animal"}), "frequency_seconds")
+    descriptive = resilience_descriptive(
+        subset.rename(columns={"animal_key": "Animal"}), "frequency_seconds"
+    )
     return {"title": title, "params": params, "metadata": metadata, "descriptive": descriptive}
 
 
@@ -1796,7 +2107,9 @@ def add_figure5_frequency_sheet(wb: openpyxl.Workbook) -> None:
         blocks.append(
             {
                 "sections": [
-                    figure5_frequency_section(section_title(cluster, None), cluster_data, with_experiment=True),
+                    figure5_frequency_section(
+                        section_title(cluster, None), cluster_data, with_experiment=True
+                    ),
                     figure5_frequency_section(
                         section_title(cluster, 1),
                         cluster_data[cluster_data["experiment"] == 1],
@@ -1878,7 +2191,9 @@ def figure5_timecourse_posthoc(data: pd.DataFrame) -> pd.DataFrame:
                             "Time (min)": float(time_s / 60.0),
                             "N_first": int(len(first)),
                             "N_second": int(len(second)),
-                            "Mean_difference": float(second.mean() - first.mean()) if len(first) and len(second) else float("nan"),
+                            "Mean_difference": float(second.mean() - first.mean())
+                            if len(first) and len(second)
+                            else float("nan"),
                             "t": float(t_value),
                             "p_value": float(p_value),
                         }
@@ -1975,7 +2290,9 @@ def add_figure5_timecourse_sheet(wb: openpyxl.Workbook) -> None:
         blocks.append(
             {
                 "sections": [
-                    figure5_timecourse_section(section_title(cluster, None), cluster_data, with_experiment=True),
+                    figure5_timecourse_section(
+                        section_title(cluster, None), cluster_data, with_experiment=True
+                    ),
                     figure5_timecourse_section(
                         section_title(cluster, 1),
                         cluster_data[cluster_data["experiment"] == 1],
@@ -2040,13 +2357,26 @@ def add_figure6_sheets(wb: openpyxl.Workbook) -> None:
     )
 
     bout_blocks = []
-    overall = bouts.groupby(["Animal", "Experiment", "group_ext"], as_index=False, observed=True)["bout_duration"].mean()
+    overall = bouts.groupby(["Animal", "Experiment", "group_ext"], as_index=False, observed=True)[
+        "bout_duration"
+    ].mean()
     bout_blocks.append(resilience_block("Overall", overall, "bout_duration", "MeanBoutDuration"))
     for cluster in ["Freezing", "Sniffing", "Grooming", "Turn", "Locomotion", "Climbing", "Jump"]:
         sub = bouts[bouts["cluster"] == cluster].rename(columns={"bout_duration": cluster})
-        bout_blocks.append(resilience_block(FIG6_BOUT_TITLES.get(cluster, cluster), sub, cluster, "MeanBoutDuration"))
+        bout_blocks.append(
+            resilience_block(
+                FIG6_BOUT_TITLES.get(cluster, cluster), sub, cluster, "MeanBoutDuration"
+            )
+        )
     apply_bh_fdr(bout_blocks[1:], [label for label, _ in RESILIENCE_CONTRASTS])
-    add_metric_blocks_sheet(wb, "Fig.6L-S_Bout_duration", bout_blocks, header_gap=1, meta_offset=9, columns=FIG6_COLUMNS_8)
+    add_metric_blocks_sheet(
+        wb,
+        "Fig.6L-S_Bout_duration",
+        bout_blocks,
+        header_gap=1,
+        meta_offset=9,
+        columns=FIG6_COLUMNS_8,
+    )
 
     transition_blocks = [
         resilience_block("Lempel-Ziv Complexity", transition, "lz", "LZ complexity"),
@@ -2070,7 +2400,9 @@ def resilience_overlap_summary() -> pd.DataFrame:
     euclidean = pd.read_csv(PROCESSED_DIR / "figure5_dynamics_scores.csv")
     euclidean["animal_key"] = euclidean["animal"].map(lambda value: f"{float(value):.1f}")
     euclidean_mask = euclidean["resilient_by_zero"].astype(str).str.lower().eq("true")
-    euclidean_animals = set(euclidean.loc[(euclidean["group"] == "ELS") & euclidean_mask, "animal_key"])
+    euclidean_animals = set(
+        euclidean.loc[(euclidean["group"] == "ELS") & euclidean_mask, "animal_key"]
+    )
 
     supplementary = pd.read_csv(PROCESSED_DIR / "supplementary_figure3_distance_scores.csv")
     supplementary["animal_key"] = supplementary["animal"].map(lambda value: f"{float(value):.1f}")
@@ -2096,8 +2428,13 @@ def resilience_overlap_summary() -> pd.DataFrame:
 
 
 def add_supplementary_sheets(wb: openpyxl.Workbook) -> None:
-    scores = attach_experiment(pd.read_csv(PROCESSED_DIR / "supplementary_figure3_distance_scores.csv"), "animal")
-    blocks = [score_metric_block(f"{metric}_score", sub, "dynamics_score", metric) for metric, sub in scores.groupby("metric", sort=False)]
+    scores = attach_experiment(
+        pd.read_csv(PROCESSED_DIR / "supplementary_figure3_distance_scores.csv"), "animal"
+    )
+    blocks = [
+        score_metric_block(f"{metric}_score", sub, "dynamics_score", metric)
+        for metric, sub in scores.groupby("metric", sort=False)
+    ]
     add_metric_blocks_sheet(wb, "Suppl.Fig.3A-K", blocks, header_gap=1, pitch=11)
 
     add_vertical_tables(
@@ -2128,7 +2465,10 @@ def add_figure7_sheets(wb: openpyxl.Workbook) -> None:
         "Fig.7D-E_Prediction",
         [
             ("Held-out-cohort ROC AUC", cross_cohort),
-            ("Full-session leave-one-out ROC AUC", pd.read_csv(STATISTICS_DIR / "figure7_full_session_auc.csv")),
+            (
+                "Full-session leave-one-out ROC AUC",
+                pd.read_csv(STATISTICS_DIR / "figure7_full_session_auc.csv"),
+            ),
             (
                 "Behaviour dynamics vs Freeze dynamics only: paired bootstrap test on "
                 "the AUC difference (same held-out animals scored by both models; "
@@ -2141,13 +2481,23 @@ def add_figure7_sheets(wb: openpyxl.Workbook) -> None:
     add_vertical_tables(
         wb,
         "Fig.7F_SHAP",
-        [("Exact linear-model Shapley contributions", pd.read_csv(REPO / "figure_source_data" / "figure7_shapley_contributions.csv"))],
+        [
+            (
+                "Exact linear-model Shapley contributions",
+                pd.read_csv(REPO / "figure_source_data" / "figure7_shapley_contributions.csv"),
+            )
+        ],
         header_gap=1,
     )
     add_vertical_tables(
         wb,
         "Fig.7I_Prediction_onset",
-        [("Within-cohort permutation reference across opening-session horizons", pd.read_csv(STATISTICS_DIR / "figure7_prediction_permutation.csv"))],
+        [
+            (
+                "Within-cohort permutation reference across opening-session horizons",
+                pd.read_csv(STATISTICS_DIR / "figure7_prediction_permutation.csv"),
+            )
+        ],
         header_gap=1,
     )
 
@@ -2228,14 +2578,22 @@ def validate_report_workbook(wb: openpyxl.Workbook) -> None:
     fig5_values = [cell.value for cell in wb["Fig.5D-J_Cluster_timecourse"]._cells.values()]
     direct_label = "ELS resilient - ELS vulnerable x time (per minute)"
     if fig5_values.count(direct_label) != len(CLUSTER_ORDER) * 3:
-        raise AssertionError("Figure 5 time-course report does not contain every full/source-dataset contrast")
+        raise AssertionError(
+            "Figure 5 time-course report does not contain every full/source-dataset contrast"
+        )
+
 
 def build_statistical_report(output: Path = REPORT_OUT) -> None:
     """Build the single canonical full and source-dataset statistical report."""
     output.parent.mkdir(parents=True, exist_ok=True)
     wb = openpyxl.Workbook()
     wb.remove(wb.active)
-    add_vertical_tables(wb, "Fig.1A_ SimBA_validation", [("SimBA validation correlation", simba_validation_summary())], header_gap=2)
+    add_vertical_tables(
+        wb,
+        "Fig.1A_ SimBA_validation",
+        [("SimBA validation correlation", simba_validation_summary())],
+        header_gap=2,
+    )
     add_figure2_sheets(wb)
     add_figure3a_frequency_sheet(wb)
     add_timecourse_sheet(

@@ -8,6 +8,7 @@ copying the supplied ``.xlsx`` file.
 Run:
     python scripts/import_legacy_statistical_report.py path/to/report.xlsx
 """
+
 from __future__ import annotations
 
 import argparse
@@ -15,7 +16,6 @@ import json
 from pathlib import Path
 
 import openpyxl
-
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_OUT = REPO / "data" / "raw" / "manuscript_tables" / "statistical_report"

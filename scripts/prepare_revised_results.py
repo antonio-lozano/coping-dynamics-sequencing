@@ -6,6 +6,7 @@ hard-coded before/after statistic strings, which target the manuscript
 revision current in August 2026. Re-check those strings after any manuscript
 edit. Not part of the reproducibility rebuild.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -15,7 +16,6 @@ from pathlib import Path
 from xml.etree import ElementTree
 
 from prepare_results_differences import extract_results
-
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "report" / "results_section_revised_statistics.docx"
@@ -52,7 +52,10 @@ PARAGRAPH_REPLACEMENTS: dict[str, list[tuple[str, str]]] = {
             "beta = 0.164, SE = 0.058, z = 2.824, p = 0.005, BH_FDR p = 0.016",
             "beta = 0.164, SE = 0.061, z = 2.693, p = 0.007, BH_FDR p = 0.034",
         ),
-        ("showed prolonged bout durations. showed prolonged bout durations.", "showed prolonged bout durations."),
+        (
+            "showed prolonged bout durations. showed prolonged bout durations.",
+            "showed prolonged bout durations.",
+        ),
     ],
     "To further explore individual differences": [
         (
@@ -63,7 +66,10 @@ PARAGRAPH_REPLACEMENTS: dict[str, list[tuple[str, str]]] = {
             "beta = 1.865, SE = 0.249, z = 7.484, p < 0.001, BH_FDR p < 0.001",
             "beta = 1.865, SE = 0.241, z = 7.747, p < 0.001, BH_FDR p < 0.001",
         ),
-        ("and were statistically comparable to controls. ). Likewise", "and were statistically comparable to controls. Likewise"),
+        (
+            "and were statistically comparable to controls. ). Likewise",
+            "and were statistically comparable to controls. Likewise",
+        ),
     ],
     "Representative ethograms and barcodes": [
         (
@@ -279,7 +285,11 @@ def create_results_docx(
         temporary = output.with_suffix(".tmp.docx")
         with zipfile.ZipFile(temporary, "w", zipfile.ZIP_DEFLATED) as target:
             for item in source.infolist():
-                content = document_xml if item.filename == "word/document.xml" else source.read(item.filename)
+                content = (
+                    document_xml
+                    if item.filename == "word/document.xml"
+                    else source.read(item.filename)
+                )
                 target.writestr(item, content)
         temporary.replace(output)
     return highlighted
@@ -297,7 +307,11 @@ def main() -> None:
     args = parse_args()
     manuscript = args.manuscript.resolve()
     output = args.output if args.output.is_absolute() else ROOT / args.output
-    highlight_output = args.highlight_output if args.highlight_output.is_absolute() else ROOT / args.highlight_output
+    highlight_output = (
+        args.highlight_output
+        if args.highlight_output.is_absolute()
+        else ROOT / args.highlight_output
+    )
     original = extract_results(manuscript)
     revised = revise_paragraphs(original)
     create_results_docx(manuscript, output.resolve(), revised)
