@@ -16,4 +16,6 @@ dependencies:
   - scikit-learn>=1.0
   - xgboost>=1.7
   - joblib>=1.1
+  # Supplementary Figure 4 draws the legacy class-specific SHAP beeswarms.
+  - shap>=0.41
   - pip

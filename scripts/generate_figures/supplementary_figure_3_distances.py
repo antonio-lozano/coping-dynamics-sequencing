@@ -13,6 +13,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 import numpy as np
 import pandas as pd
 from scipy.interpolate import griddata
@@ -29,6 +30,7 @@ from src.config import (
     PROCESSED_DATA_DIR,
     UPDATED_MOSEQ_PICKLE,
 )
+from src.panel_letters import align_panel_letters
 
 FIGURE_OUTPUT_DIR = FIGURES_DIR
 TABLE_OUTPUT_DIR = PROCESSED_DATA_DIR
@@ -323,8 +325,8 @@ def style_axis(ax: plt.Axes, labelsize: float = 5.2) -> None:
     ax.title.set_color(AXIS)
 
 
-def tag(ax: plt.Axes, letter: str, x: float = -0.16, y: float = 1.10) -> None:
-    ax.text(x, y, letter, transform=ax.transAxes, ha="center", va="top", fontsize=8, fontweight="bold", color=AXIS, clip_on=False)
+def tag(ax: plt.Axes, letter: str, x: float = -0.16, y: float = 1.10) -> plt.Text:
+    return ax.text(x, y, letter, transform=ax.transAxes, ha="center", va="top", fontsize=8, fontweight="bold", color=AXIS, clip_on=False)
 
 
 def match_fig5_mds_proportions(ax: plt.Axes) -> None:
@@ -340,7 +342,7 @@ def align_box_to_mds(mds_ax: plt.Axes, box_ax: plt.Axes) -> None:
     box_ax.set_position([new_x0, mds_pos.y0, new_width, mds_pos.height])
 
 
-def plot_mds(ax: plt.Axes, data: pd.DataFrame, metric_name: str, letter: str) -> None:
+def plot_mds(ax: plt.Axes, data: pd.DataFrame, metric_name: str, letter: str) -> plt.Text:
     match_fig5_mds_proportions(ax)
     x = data["mds1"].to_numpy()
     y = data["mds2"].to_numpy()
@@ -375,10 +377,10 @@ def plot_mds(ax: plt.Axes, data: pd.DataFrame, metric_name: str, letter: str) ->
     ax.set_xlabel("MDS Dimension 1", fontsize=5.7, labelpad=1)
     ax.set_ylabel("MDS Dimension 2", fontsize=5.7, labelpad=1)
     style_axis(ax)
-    tag(ax, letter)
+    return tag(ax, letter)
 
 
-def plot_box(ax: plt.Axes, data: pd.DataFrame, metric_name: str, letter: str) -> None:
+def plot_box(ax: plt.Axes, data: pd.DataFrame, metric_name: str, letter: str) -> plt.Text:
     groups = ["Control", "ELS"]
     y_max = np.nanmax(data["dynamics_score"])
     y_min = np.nanmin(data["dynamics_score"])
@@ -420,10 +422,9 @@ def plot_box(ax: plt.Axes, data: pd.DataFrame, metric_name: str, letter: str) ->
         jitter = rng.normal(i, 0.024, len(vals))
         ax.scatter(jitter, vals, s=6.5, color=color, alpha=0.78, linewidth=0, zorder=3)
     ax.set_ylim(y0, y1)
-    ticks = [tick for tick in ax.get_yticks() if y0 <= tick <= y1]
-    if y1 not in ticks:
-        ticks.append(y1)
-    ax.set_yticks(sorted(ticks))
+    # Even, human-readable steps. The previous version appended the raw axis
+    # limit as a tick, which produced odd labels like 0.744 next to round ones.
+    ax.yaxis.set_major_locator(MaxNLocator(nbins=6, steps=[1, 2, 2.5, 5, 10]))
     ax.set_xticks([0, 1])
     ax.set_xticklabels(groups, fontsize=5.8)
     ax.tick_params(axis="x", pad=4)
@@ -441,7 +442,7 @@ def plot_box(ax: plt.Axes, data: pd.DataFrame, metric_name: str, letter: str) ->
         h = pad * 0.18
         ax.plot([0, 0, 1, 1], [y, y + h, y + h, y], color=AXIS, linewidth=0.55, clip_on=False)
         ax.text(0.5, y + h * 1.1, "*", ha="center", va="bottom", fontsize=8.5, fontweight="bold", color=AXIS, clip_on=False)
-    tag(ax, letter, x=BOX_TAG_X)
+    return tag(ax, letter, x=BOX_TAG_X)
 
 
 def main() -> None:
@@ -480,12 +481,13 @@ def main() -> None:
         width_ratios=[2.02, 0.74, 2.02, 0.74],
     )
     positions = [(0, 0), (0, 2), (1, 0), (1, 2)]
+    letter_artists: list[tuple[plt.Axes, plt.Text]] = []
     for (metric_name, _, mds_letter, box_letter), (row, col) in zip(METRICS, positions):
         sub = profiles[profiles["metric"] == metric_name].copy()
         mds_ax = fig.add_subplot(gs[row, col])
         box_ax = fig.add_subplot(gs[row, col + 1])
-        plot_mds(mds_ax, sub, metric_name, mds_letter)
-        plot_box(box_ax, sub, metric_name, box_letter)
+        letter_artists.append((mds_ax, plot_mds(mds_ax, sub, metric_name, mds_letter)))
+        letter_artists.append((box_ax, plot_box(box_ax, sub, metric_name, box_letter)))
         align_box_to_mds(mds_ax, box_ax)
 
     # Transition-probability panels (J, K) on a new row below.
@@ -502,9 +504,14 @@ def main() -> None:
     trans_sub = profiles[profiles["metric"] == "Transition"].copy()
     trans_mds_ax = fig.add_subplot(gs_trans[0, 0])
     trans_box_ax = fig.add_subplot(gs_trans[0, 1])
-    plot_mds(trans_mds_ax, trans_sub, "Transition Prob., Euclidean", "J")
-    plot_box(trans_box_ax, trans_sub, "Transition", "K")
+    letter_artists.append(
+        (trans_mds_ax, plot_mds(trans_mds_ax, trans_sub, "Transition Prob., Euclidean", "J"))
+    )
+    letter_artists.append((trans_box_ax, plot_box(trans_box_ax, trans_sub, "Transition", "K")))
     align_box_to_mds(trans_mds_ax, trans_box_ax)
+
+    # After align_box_to_mds, so the letters follow the repositioned box axes.
+    align_panel_letters(fig, letter_artists)
 
     pdf = FIGURE_OUTPUT_DIR / "supplementary_figure3.pdf"
     svg = FIGURE_OUTPUT_DIR / "supplementary_figure3.svg"

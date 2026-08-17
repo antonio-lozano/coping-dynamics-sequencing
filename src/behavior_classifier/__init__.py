@@ -1,4 +1,4 @@
-"""Behavior-cluster classifier built from Fig. 7 annotations."""
+"""Behavior classifier used by Figure 7A-C and Supplementary Figure 4."""
 
 from .annotations import BEHAVIOR_CLUSTER_MAP, behavior_lookup
 

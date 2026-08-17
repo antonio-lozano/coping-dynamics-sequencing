@@ -1,4 +1,4 @@
-"""Convert filtered DeepLabCut tracks into Fig. 7 classifier features."""
+"""Convert DeepLabCut tracks into Figure 7A-C classifier features."""
 
 from __future__ import annotations
 

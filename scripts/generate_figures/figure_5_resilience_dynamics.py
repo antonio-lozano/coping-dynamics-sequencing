@@ -31,6 +31,7 @@ from src.config import (
     SYLLABLE_TIMEBIN_30S,
     UPDATED_MOSEQ_PICKLE,
 )
+from src.panel_letters import align_panel_letters
 from src.statistics import fit_mixed_models
 
 FIGURE_OUTPUT_DIR = FIGURES_DIR
@@ -287,8 +288,8 @@ def style_axis(ax: plt.Axes, labelsize: float = 6.0) -> None:
     ax.title.set_color(AXIS)
 
 
-def tag(ax: plt.Axes, letter: str, x: float = -0.12, y: float = 1.12) -> None:
-    ax.text(x, y, letter, transform=ax.transAxes, ha="center", va="top", fontsize=7.5, fontweight="bold", color=AXIS, clip_on=False)
+def tag(ax: plt.Axes, letter: str, x: float = -0.12, y: float = 1.12) -> plt.Text:
+    return ax.text(x, y, letter, transform=ax.transAxes, ha="center", va="top", fontsize=7.5, fontweight="bold", color=AXIS, clip_on=False)
 
 
 def add_epochs(ax: plt.Axes) -> None:
@@ -347,7 +348,7 @@ def time_panel_legend(ax: plt.Axes, corner: str = "upper_right") -> None:
     )
 
 
-def boxplot_dynamic_score(ax: plt.Axes, prof: pd.DataFrame) -> None:
+def boxplot_dynamic_score(ax: plt.Axes, prof: pd.DataFrame) -> plt.Text:
     pos = ax.get_position()
     width = pos.width * 0.74
     ax.set_position([pos.x0, pos.y0, width, pos.height])
@@ -397,7 +398,7 @@ def boxplot_dynamic_score(ax: plt.Axes, prof: pd.DataFrame) -> None:
     style_axis(ax, labelsize=5.8)
     ax.tick_params(axis="x", labelsize=7.5, pad=2)
     sig_bracket(ax, 0, 1, 1.27, h=0.05)
-    tag(ax, "B", x=-0.18, y=1.11)
+    return tag(ax, "B", x=-0.18, y=1.11)
 
 
 def threshold_audit(prof: pd.DataFrame) -> pd.DataFrame:
@@ -428,7 +429,7 @@ def threshold_audit(prof: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def plot_mds(ax: plt.Axes, prof: pd.DataFrame, loocv: float) -> None:
+def plot_mds(ax: plt.Axes, prof: pd.DataFrame, loocv: float) -> plt.Text:
     pos = ax.get_position()
     fig = ax.figure
     target_width = min(pos.width, pos.height * fig.get_figheight() / fig.get_figwidth() * 1.18)
@@ -493,10 +494,10 @@ def plot_mds(ax: plt.Axes, prof: pd.DataFrame, loocv: float) -> None:
     ax.set_ylabel("MDS Dimension 2", fontsize=6.0)
     ax.set_title("MDS Plot (Euclidean Distance)", fontsize=6.3, pad=4)
     style_axis(ax, labelsize=5.2)
-    tag(ax, "A", x=-0.14, y=1.10)
+    return tag(ax, "A", x=-0.14, y=1.10)
 
 
-def plot_frequency(ax: plt.Axes, freq: pd.DataFrame) -> None:
+def plot_frequency(ax: plt.Axes, freq: pd.DataFrame) -> plt.Text:
     summary = freq.groupby(["group_ext", "cluster"])["seconds"].agg(["mean", "sem"]).reset_index()
     x = np.arange(len(ORDER))
     width = 0.22
@@ -512,7 +513,6 @@ def plot_frequency(ax: plt.Axes, freq: pd.DataFrame) -> None:
     ax.set_yticks(np.arange(0, 301, 50))
     ax.legend(handles=legend_boxes(GROUP_ORDER), loc="upper right", ncol=3, frameon=False, fontsize=5.5, handlelength=1.0, handletextpad=0.35, columnspacing=0.75)
     style_axis(ax)
-    tag(ax, "C", x=-0.08, y=1.10)
     bracket_gap = 0.045
     for idx in [0, 1, 3]:
         y = float(summary[summary["cluster"] == ORDER[idx]]["mean"].max() + summary[summary["cluster"] == ORDER[idx]]["sem"].max() + 8)
@@ -520,9 +520,10 @@ def plot_frequency(ax: plt.Axes, freq: pd.DataFrame) -> None:
         sig_bracket(ax, idx - width, right_edge, y, h=5)
         if idx in [0, 3]:
             sig_bracket(ax, idx + bracket_gap, idx + width, y, h=5)
+    return tag(ax, "C", x=-0.08, y=1.10)
 
 
-def plot_time(ax: plt.Axes, summary: pd.DataFrame, cluster: str, letter: str, ylim: tuple[float, float], yticks: list[float], star_x: float | None = None, legend_corner: str = "upper_right") -> None:
+def plot_time(ax: plt.Axes, summary: pd.DataFrame, cluster: str, letter: str, ylim: tuple[float, float], yticks: list[float], star_x: float | None = None, legend_corner: str = "upper_right") -> plt.Text:
     add_epochs(ax)
     data = summary[summary["cluster"] == cluster]
     for group in GROUP_ORDER:
@@ -533,16 +534,22 @@ def plot_time(ax: plt.Axes, summary: pd.DataFrame, cluster: str, letter: str, yl
         ax.fill_between(sub["time_min"].to_numpy(), (sub["mean"] - sub["sem"]).to_numpy(), (sub["mean"] + sub["sem"]).to_numpy(), color=PALETTE[group], alpha=0.18, linewidth=0, zorder=2)
     if star_x is not None:
         ax.text(star_x, 0.992, "*", transform=ax.get_xaxis_transform(), ha="center", va="bottom", fontsize=11, color=AXIS, fontweight="bold")
-    ax.set_xlim(0.75, 7.25)
+    # Data runs 0.5-7.5 min; start at zero and pad past 7.5 so the first and
+    # last markers are drawn whole.
+    ax.set_xlim(0.0, 7.65)
     ax.set_ylim(*ylim)
     ax.set_yticks(yticks)
+    # Ticks on whole minutes 1-7 only.
     ax.set_xticks(np.arange(1, 8))
     ax.set_title(cluster, fontsize=7, pad=5, y=1.075)
     ax.set_xlabel("Time (minutes)", fontsize=5.8, labelpad=1)
     ax.set_ylabel("% of time in cluster", fontsize=5.8, labelpad=2)
     style_axis(ax, labelsize=5.4)
+    # After style_axis: the axis line runs on to 7.5 so the final data point
+    # sits over the spine rather than past its end.
+    ax.spines["bottom"].set_bounds(0.0, 7.5)
     time_panel_legend(ax, legend_corner)
-    tag(ax, letter, x=-0.14, y=1.10)
+    return tag(ax, letter, x=-0.14, y=1.10)
 
 
 def export_source_data(prof: pd.DataFrame, freq: pd.DataFrame, output_dir: Path) -> None:
@@ -626,16 +633,19 @@ def main() -> None:
     axI = fig.add_subplot(gs[3, 5:9])
     axJ = fig.add_subplot(gs[3, 10:14])
 
-    plot_mds(axA, prof, loocv)
-    boxplot_dynamic_score(axB, prof)
-    plot_frequency(axC, freq)
-    plot_time(axD, time_summary, "Freeze", "D", (0, 70), list(range(0, 71, 10)), star_x=4.0, legend_corner="lower_right")
-    plot_time(axE, time_summary, "Sniff", "E", (0, 25), list(range(0, 26, 5)))
-    plot_time(axF, time_summary, "Groom", "F", (0, 0.5), [0, 0.1, 0.2, 0.3, 0.4, 0.5])
-    plot_time(axG, time_summary, "Turn", "G", (0, 70), list(range(0, 71, 10)), star_x=4.0, legend_corner="lower_right")
-    plot_time(axH, time_summary, "Locomotion", "H", (0, 14), list(range(0, 15, 2)))
-    plot_time(axI, time_summary, "Climb", "I", (0, 14), list(range(0, 15, 2)))
-    plot_time(axJ, time_summary, "Jump", "J", (0, 4), [0, 1, 2, 3, 4])
+    letter_artists = [
+        (axA, plot_mds(axA, prof, loocv)),
+        (axB, boxplot_dynamic_score(axB, prof)),
+        (axC, plot_frequency(axC, freq)),
+        (axD, plot_time(axD, time_summary, "Freeze", "D", (0, 70), list(range(0, 71, 10)), star_x=4.0, legend_corner="lower_right")),
+        (axE, plot_time(axE, time_summary, "Sniff", "E", (0, 25), list(range(0, 26, 5)))),
+        (axF, plot_time(axF, time_summary, "Groom", "F", (0, 0.5), [0, 0.1, 0.2, 0.3, 0.4, 0.5])),
+        (axG, plot_time(axG, time_summary, "Turn", "G", (0, 70), list(range(0, 71, 10)), star_x=4.0, legend_corner="lower_right")),
+        (axH, plot_time(axH, time_summary, "Locomotion", "H", (0, 14), list(range(0, 15, 2)))),
+        (axI, plot_time(axI, time_summary, "Climb", "I", (0, 14), list(range(0, 15, 2)))),
+        (axJ, plot_time(axJ, time_summary, "Jump", "J", (0, 4), [0, 1, 2, 3, 4])),
+    ]
+    align_panel_letters(fig, letter_artists)
 
     pdf = FIGURE_OUTPUT_DIR / "figure5.pdf"
     png = FIGURE_OUTPUT_DIR / "figure5.png"

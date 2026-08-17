@@ -32,6 +32,9 @@ dist/
 .DS_Store
 Thumbs.db
 
+# Excel lock files, written while a workbook is open
+~$*.xlsx
+
 # Local overrides
 config/paths.py
 

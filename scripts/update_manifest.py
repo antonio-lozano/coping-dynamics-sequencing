@@ -51,7 +51,9 @@ def iter_artifacts() -> list[Path]:
         paths.extend(
             path
             for path in base.rglob("*")
-            if path.is_file() and not EXCLUDED_DIRS.intersection(path.relative_to(ROOT).parts)
+            if path.is_file()
+            and not path.name.startswith("~$")
+            and not EXCLUDED_DIRS.intersection(path.relative_to(ROOT).parts)
         )
     return sorted(paths, key=lambda p: p.as_posix().lower())
 

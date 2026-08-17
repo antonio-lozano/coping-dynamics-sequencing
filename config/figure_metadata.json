@@ -37,12 +37,46 @@
   },
 
   "figure_7": {
+    "panels": {
+      "A-C": "behavior-classifier validation",
+      "D-F": "cross-cohort and full-session resilience prediction with Shapley contributions",
+      "G-H": "predictor catalog",
+      "I": "prediction onset and permutation reference",
+      "J": "predictor-family time course",
+      "K-N": "individual metric time courses"
+    },
+    "outcome": "ELS resilient versus ELS vulnerable, defined by the Figure 5 dynamics score",
+    "primary_metric": "ROC AUC",
+    "ridge_alpha": 1.0,
+    "random_seed": 13,
+    "full_session_validation": "leave-one-out cross-validation",
+    "catalog_validation": {"folds": 5, "repeats": 25, "stratified_by": "outcome and cohort"},
+    "external_validation": "train one cohort and test the other, both directions",
+    "onset_permutations": 200,
+    "label_caveat": "The outcome is derived from full-session behavior dynamics; early-window analyses therefore test how early that full-session label becomes recoverable."
+  },
+
+  "behavior_classifier": {
+    "_scope": "Bundled reusable classifier used by Figure 7A-C only.",
     "classifier": "XGBoost",
     "cv": {"folds": 3, "stratified": true, "split_level": "frame", "random_state": 42,
            "WARNING": "frame-level split leaks temporal autocorrelation; animal-level split is the leakage-free option"},
     "class_balancing": "balanced sample weights",
     "n_classes": 8,
     "feature_note": "Only 5 bundled pose features available; full keypoint/pairwise-distance set is NOT in the repo"
+  },
+
+  "supplementary_figure_4": {
+    "panels": "Class-specific classifier SHAP, published as Figure 7 panels D-M",
+    "figure_source": "data/raw/legacy_figures/figure7_classifier_original.pdf",
+    "classifier": "Legacy XGBoost, archived at classifier/legacy_shap/xgb_model.pkl",
+    "features": 719,
+    "feature_space": "Pairwise DeepLabCut body-part distances and velocities over a 14-marker skeleton (nose, H1R/H2R/H1L/H2L, B1R/B2R/B3R/B1L/B2L/B3L, tail, S1/S2), with lags and 5-frame rolling mean/SD/sum.",
+    "cv": {"folds": 3, "stratified": true, "split_level": "frame", "random_state": 42,
+           "WARNING": "frame-level split leaks temporal autocorrelation; animal-level split is the leakage-free option"},
+    "shap": {"explainer": "shap.TreeExplainer", "sample": "10% of the balanced frame matrix, random_state=42", "n_frames": 2638, "plotted_per_class": 10},
+    "source_data": "figure_source_data/supplementary_figure4_shap_summary.csv (719 parameters x 8 classes)",
+    "IMPORTANT": "This is NOT the bundled classifier/figure7_behavior_classifier.joblib, which is a different model on a different 33-feature centroid-kinematic set and does not regenerate these panels. The 179 MB feature matrix and 58 MB SHAP pickles are not bundled; see scripts/import_legacy_shap_summary.py for their location and the import procedure."
   },
 
   "gold_reference": {

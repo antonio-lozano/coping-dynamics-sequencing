@@ -58,11 +58,11 @@ python scripts/check_reproducibility.py
 ```text
 data/raw/             Immutable bundled inputs used by the analyses
 data/processed/       Deterministic tables regenerated from data/raw
-figure_source_data/   Plotted values and summary values behind Figures 2-6
+figure_source_data/   Plotted values and summary values behind Figures 2-7
 statistics/           Machine-readable statistical model outputs
 figures/              Canonical manuscript figure exports
 report/               raw-data workbook and canonical statistical report
-classifier/           Figure 7 behavior-classifier artifact
+classifier/           Classifier artifact used in Figure 7A-C and Supplementary Figure 4
 scripts/              Rebuild, report, figure, and validation entry points
 src/                  Shared analysis, plotting, statistics, and classifier code
 docs/                 Data dictionary and focused provenance notes
@@ -114,14 +114,17 @@ Raw inputs include:
 | Figure 4 | `scripts/generate_figures/figure_4_diversity_dynamics.py` |
 | Figure 5 | `scripts/generate_figures/figure_5_resilience_dynamics.py` |
 | Figure 6 | `scripts/generate_figures/figure_6_resilience_diversity.py` |
-| Figure 7 | Canonical tracked export with associated classifier artifact |
+| Figure 7 | `scripts/generate_figures/figure_7_resilience_prediction.py` |
 | Supplementary Figure 1 | `scripts/generate_figures/supplementary_figure_1_tracking_clusters.py` |
 | Supplementary Figure 2 | Canonical tracked export (analysis workflow schematic) |
 | Supplementary Figure 3 | `scripts/generate_figures/supplementary_figure_3_distances.py` |
+| Supplementary Figure 4 | `scripts/generate_figures/supplementary_figure_4_classifier_shap.py --source DIR` |
 
-Figures 1 and 7 and Supplementary Figure 2 are tracked as canonical assembled
-manuscript figures. Figure 7 has an associated classifier artifact in
-`classifier/figure7_behavior_classifier.joblib`.
+Figures 1 and Supplementary Figure 2 are tracked as canonical assembled
+manuscript figures. Figure 7 is regenerated from tracked source tables and the
+prediction analysis. Supplementary Figure 4 is a legacy figure: its panels come from the archived
+classifier in `classifier/legacy_shap/`, not from
+`classifier/figure7_behavior_classifier.joblib`. See `docs/figure_structure.md`.
 
 ## Quality Controls
 
@@ -145,6 +148,8 @@ manuscript figures. Figure 7 has an associated classifier artifact in
 - `CODE_AVAILABILITY.md`: manuscript-facing code availability language.
 - `docs/data_dictionary.md`: file-level description of inputs and outputs.
 - `docs/figure4_coping_provenance.md`: Figure 4 analysis provenance.
-- `docs/behavior_classifier.md`: Figure 7 classifier usage.
+- `docs/figure_structure.md`: canonical main and supplementary panel mapping.
+- `docs/behavior_classifier.md`: classifier and Supplementary Figure 4 usage.
+- `docs/cleanup_todo.md`: known loose ends and pending cleanup decisions.
 
 Use `CITATION.cff` for software citation metadata and `LICENSE` for licensing.

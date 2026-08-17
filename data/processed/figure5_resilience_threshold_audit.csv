@@ -1,2 +1,2 @@
 metric,els_n,zero_threshold,zero_n,zero_matches_green,els_mean_score,mean_threshold_n,mean_added_vs_zero,mean_removed_vs_zero,els_median_score,median_threshold_n,median_added_vs_zero,median_removed_vs_zero
-Euclidean,41,0.0,12,True,0.1763500897225285,19,"128.4, 133.3, 154.4, 55.3, 56.3, 63.3, 69.2",,0.2305536681011749,20,"128.4, 133.3, 154.4, 55.3, 56.3, 63.3, 69.2, 75.1",
+Euclidean,41,0.0,12,True,0.17635008972252794,19,"128.4, 133.3, 154.4, 55.3, 56.3, 63.3, 69.2",,0.2305536681011756,20,"128.4, 133.3, 154.4, 55.3, 56.3, 63.3, 69.2, 75.1",

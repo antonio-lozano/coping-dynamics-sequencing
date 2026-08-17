@@ -1,4 +1,4 @@
-"""Hand-curated behavior annotations used for the Fig. 7 classifier."""
+"""Hand-curated annotations for Figure 7A-C and Supplementary Figure 4."""
 
 from __future__ import annotations
 

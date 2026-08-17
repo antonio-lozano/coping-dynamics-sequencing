@@ -1,4 +1,4 @@
-"""Command-line interface for the Fig. 7 behavior classifier."""
+"""CLI for the Figure 7A-C and Supplementary Figure 4 classifier."""
 
 from __future__ import annotations
 
@@ -124,7 +124,7 @@ def train_from_dlc_command(args: argparse.Namespace) -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Train or apply the Fig. 7 behavior-cluster classifier."
+        description="Train or apply the Figure 7A-C behavior-cluster classifier."
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -188,7 +188,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     raw = subparsers.add_parser(
         "run-from-raw",
-        help="Run DLC on a raw video, then predict Fig. 7 behaviors.",
+        help="Run DLC on a raw video, then predict Figure 7A-C behaviors.",
     )
     raw.add_argument("--video", type=Path, required=True)
     raw.add_argument("--dlc-config", type=Path, required=True)
@@ -205,7 +205,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     dlc = subparsers.add_parser(
         "run-from-dlc",
-        help="Predict Fig. 7 behaviors from an existing DLC filtered CSV/H5.",
+        help="Predict Figure 7A-C behaviors from an existing DLC filtered CSV/H5.",
     )
     dlc.add_argument("--dlc-file", type=Path, required=True)
     dlc.add_argument("--model", type=Path, default=DEFAULT_MODEL)

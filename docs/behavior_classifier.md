@@ -1,7 +1,7 @@
-# Figure 7 Behavior Classifier
+# Figure 7A-C And Supplementary Figure 4 Behavior Classifier
 
 The classifier maps per-frame pose/MoSeq features onto the seven hand-curated
-behavior clusters used for Figure 7:
+behavior clusters summarized in Supplementary Figure 4 and Figure 7A-C:
 
 ```text
 Freeze: 0, 28

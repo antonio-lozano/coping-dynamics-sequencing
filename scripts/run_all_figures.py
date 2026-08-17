@@ -28,6 +28,7 @@ FIGURE_SCRIPTS = [
     ("Figure 4 - Diversity dynamics", "figure_4_diversity_dynamics.py"),
     ("Figure 5 - Resilience dynamics", "figure_5_resilience_dynamics.py"),
     ("Figure 6 - Resilience diversity", "figure_6_resilience_diversity.py"),
+    ("Figure 7 - Resilience prediction", "figure_7_resilience_prediction.py"),
     ("Supplementary Figure 1 - Tracking clusters", "supplementary_figure_1_tracking_clusters.py"),
     ("Supplementary Figure 3 - Distance metrics", "supplementary_figure_3_distances.py"),
 ]

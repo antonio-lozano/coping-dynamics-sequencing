@@ -32,6 +32,7 @@ from src.config import (
     STATISTICS_DIR,
     SYLLABLE_TIMEBIN_30S,
 )
+from src.panel_letters import align_panel_letters
 from src.statistics import fit_mixed_models
 
 FIGURE_OUTPUT_DIR = FIGURES_DIR
@@ -158,20 +159,6 @@ def panel_letter(ax: plt.Axes, letter: str, x: float = -0.17, y: float = 1.16) -
     )
 
 
-def align_panel_letters_to_ylabels(fig: plt.Figure, letter_artists: list[tuple[plt.Axes, plt.Text]]) -> None:
-    """Align panel letters to each panel's y-axis title column."""
-    fig.canvas.draw()
-    renderer = fig.canvas.get_renderer()
-    fig_inv = fig.transFigure.inverted()
-    for ax, text in letter_artists:
-        ylabel_box = ax.yaxis.label.get_window_extent(renderer=renderer)
-        axes_box = ax.get_window_extent(renderer=renderer)
-        x_fig = fig_inv.transform((ylabel_box.x0, ylabel_box.y0))[0]
-        y_fig = fig_inv.transform((axes_box.x0, axes_box.y1))[1] + 0.012
-        text.set_transform(fig.transFigure)
-        text.set_position((x_fig, y_fig))
-
-
 def add_shock_shading(ax: plt.Axes) -> None:
     for start in [3.5, 5.0, 6.5]:
         ax.axvspan(start, start + 0.5, color=SHADE_COLOR, zorder=0)
@@ -230,8 +217,11 @@ def plot_time_panel(
         ax.fill_between(x, mean - err, mean + err, color=COLORS[group], alpha=0.22, linewidth=0)
     ymax = Y_LIMITS[cluster]
     ax.set_title(cluster, fontsize=7, pad=5, y=1.075)
-    ax.set_xlim(0.5, 7.5)
+    # Data runs 0.5-7.5 min; start at zero and pad past 7.5 so the first and
+    # last markers are drawn whole.
+    ax.set_xlim(0.0, 7.65)
     ax.set_ylim(0, ymax)
+    # Ticks on whole minutes 1-7 only.
     ax.set_xticks(np.arange(1, 8))
     ax.set_xlabel("Time (minutes)", fontsize=6.5, labelpad=2)
     ax.set_ylabel("% of time in cluster", fontsize=7, labelpad=7)
@@ -259,6 +249,9 @@ def plot_time_panel(
             fontweight="bold",
         )
     style_axis(ax)
+    # After style_axis: the axis line runs on to 7.5 so the final data point
+    # sits over the spine rather than past its end.
+    ax.spines["bottom"].set_bounds(0.0, 7.5)
     return panel_letter(ax, letter)
 
 
@@ -425,7 +418,7 @@ def main() -> None:
         )
         letter_artists.append((axes[cluster], letter_artist))
 
-    align_panel_letters_to_ylabels(fig, letter_artists)
+    align_panel_letters(fig, letter_artists)
 
     pdf_path = FIGURE_OUTPUT_DIR / "figure3.pdf"
     svg_path = FIGURE_OUTPUT_DIR / "figure3.svg"

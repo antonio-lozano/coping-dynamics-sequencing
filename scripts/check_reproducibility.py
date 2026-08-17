@@ -8,6 +8,8 @@ import re
 import sys
 from pathlib import Path
 
+import openpyxl
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -26,6 +28,7 @@ REQUIRED_FILES = [
     "CODE_AVAILABILITY.md",
     "docs/data_dictionary.md",
     "docs/figure4_coping_provenance.md",
+    "docs/figure_structure.md",
     "docs/behavior_classifier.md",
     "docs/workbook_match_audit.md",
     "data/raw/animal_groups.csv",
@@ -39,6 +42,7 @@ REQUIRED_FILES = [
     "data/raw/syllable_usage_per_timebin_30s.csv",
     "data/raw/syllable_usage_per_timebin_250ms.csv",
     "data/raw/updated_results.pkl.gz",
+    "data/raw/legacy_figures/figure7_classifier_original.pdf",
     "data/raw/manuscript_tables/statistical_report/provenance.md",
     "data/raw/manuscript_tables/statistical_report/reported_cells.jsonl",
     "data/raw/manuscript_tables/statistical_report/reported_layout.json",
@@ -59,6 +63,18 @@ REQUIRED_FILES = [
     "figure_source_data/figure4.csv",
     "figure_source_data/figure5.csv",
     "figure_source_data/figure6.csv",
+    "figure_source_data/figure7.csv",
+    "figure_source_data/figure7_classifier_accuracy.csv",
+    "figure_source_data/figure7_classifier_confusion_matrix.csv",
+    "figure_source_data/figure7_classifier_global_shap.csv",
+    "figure_source_data/figure7_full_session_auc.csv",
+    "figure_source_data/figure7_individual_timecourse_auc.csv",
+    "figure_source_data/figure7_prediction_onset.csv",
+    "figure_source_data/figure7_predictor_catalog.csv",
+    "figure_source_data/figure7_predictor_timecourse.csv",
+    "figure_source_data/figure7_shapley_contributions.csv",
+    "figure_source_data/figure7_shapley_per_animal.csv",
+    "figure_source_data/supplementary_figure4_shap_summary.csv",
     "statistics/stats_figure3A_GEE.csv",
     "statistics/stats_figure3_overtime.csv",
     "statistics/stats_figure4_bouts_MixedLM.csv",
@@ -77,6 +93,9 @@ REQUIRED_FILES = [
     "statistics/fig6_diversity_resilience_stats.csv",
     "statistics/fig6_transition_resilience_stats.csv",
     "statistics/manuscript_consistency_audit.csv",
+    "statistics/figure7_cross_cohort_auc.csv",
+    "statistics/figure7_full_session_auc.csv",
+    "statistics/figure7_prediction_permutation.csv",
     "classifier/figure7_behavior_classifier.joblib",
     "report/raw_data.xlsx",
     "report/statistical_report.xlsx",
@@ -92,6 +111,10 @@ REQUIRED_FILES = [
     "scripts/derive_tables/cluster_tables.py",
     "scripts/derive_tables/tracking_exclusions.py",
     "scripts/derive_tables/fig6_resilience_stats.py",
+    "scripts/generate_figures/figure_7_resilience_prediction.py",
+    "scripts/generate_figures/supplementary_figure_4_classifier_shap.py",
+    "scripts/import_legacy_shap_summary.py",
+    "scripts/import_legacy_shap_values.py",
 ]
 
 FIGURE_STEMS = [
@@ -105,6 +128,7 @@ FIGURE_STEMS = [
     "supplementary_figure1",
     "supplementary_figure2",
     "supplementary_figure3",
+    "supplementary_figure4",
 ]
 FIGURE_EXTS = (".pdf", ".svg", ".png")
 
@@ -190,7 +214,12 @@ def check_layout(errors: list[str]) -> None:
         lower = rel.lower()
         if path.name.lower().startswith("readme") and rel != "README.md":
             fail(f"subfolder README found: {rel}", errors)
-        if lower.startswith("data/raw/") and path.suffix.lower() in {".pdf", ".png", ".svg"}:
+        allowed_legacy_figure = "data/raw/legacy_figures/figure7_classifier_original.pdf"
+        if (
+            lower.startswith("data/raw/")
+            and path.suffix.lower() in {".pdf", ".png", ".svg"}
+            and lower != allowed_legacy_figure
+        ):
             fail(f"figure artifact found in raw data: {rel}", errors)
         if lower.endswith(("_test.xlsx", "_rebuilt.xlsx")) or "smoke" in lower:
             fail(f"scratch artifact found: {rel}", errors)
@@ -247,12 +276,84 @@ def check_manifest(errors: list[str]) -> None:
             fail(f"required artifact absent from manifest: {rel}", errors)
 
 
+def check_workbook_figure_structure(errors: list[str]) -> None:
+    """Verify that Figure 7 and supplementary sheets follow the panel map."""
+    expectations = {
+        "report/raw_data.xlsx": [
+            "Fig.7A_Classifier_accuracy",
+            "Fig.7B_Classifier_SHAP",
+            "Fig.7C_Confusion_matrix",
+            "Fig.7D-E_Prediction_AUC",
+            "Fig.7F_SHAP_contributions",
+            "Fig.7G-H_Predictor_catalog",
+            "Fig.7I_Prediction_onset",
+            "Fig.7J_Family_timecourse",
+            "Fig.7K-N_Metric_timecourse",
+            "Suppl.Fig.1A-D",
+            "Suppl.Fig.3A-K",
+            "Suppl.Fig.4A-H_SHAP",
+        ],
+        "report/statistical_report.xlsx": [
+            "Fig.7D-E_Prediction",
+            "Fig.7F_SHAP",
+            "Fig.7I_Prediction_onset",
+            "Suppl.Fig.3A-K",
+        ],
+    }
+    for rel, expected in expectations.items():
+        path = ROOT / rel
+        if not path.is_file():
+            continue
+        workbook = openpyxl.load_workbook(path, read_only=True, data_only=True)
+        missing = [name for name in expected if name not in workbook.sheetnames]
+        if missing:
+            fail(f"{rel} is missing canonical figure sheets: {missing}", errors)
+            continue
+        positions = [workbook.sheetnames.index(name) for name in expected]
+        if positions != sorted(positions):
+            fail(f"{rel} figure sheets are not in canonical panel order", errors)
+
+    raw = ROOT / "report/raw_data.xlsx"
+    if raw.is_file():
+        workbook = openpyxl.load_workbook(raw, read_only=True, data_only=True)
+        for sheet_name in [name for name in workbook.sheetnames if name.startswith("Fig.7")]:
+            sheet = workbook[sheet_name]
+            headers = [cell.value for cell in next(sheet.iter_rows(min_row=3, max_row=3))]
+            forbidden = {"Label", "Animal_Label", "Panel"}.intersection(headers)
+            if forbidden:
+                fail(f"{sheet_name} contains helper columns: {sorted(forbidden)}", errors)
+            stale = {
+                cell.value
+                for row in sheet.iter_rows()
+                for cell in row
+                if cell.value in {"Exp1", "Exp3"}
+            }
+            if stale:
+                fail(f"{sheet_name} contains abbreviated dataset names: {sorted(stale)}", errors)
+
+    stats = ROOT / "report/statistical_report.xlsx"
+    if stats.is_file():
+        workbook = openpyxl.load_workbook(stats, read_only=True, data_only=True)
+        raw_only = {
+            "Fig.7A_Classifier_accuracy",
+            "Fig.7B_Classifier_SHAP",
+            "Fig.7C_Confusion_matrix",
+            "Fig.7G-H_Predictors",
+            "Fig.7J_Family_timecourse",
+            "Fig.7K-N_Metric_timecourse",
+        }
+        duplicated = sorted(raw_only.intersection(workbook.sheetnames))
+        if duplicated:
+            fail(f"statistical report duplicates raw Figure 7 sheets: {duplicated}", errors)
+
+
 def main() -> int:
     errors: list[str] = []
     check_required(errors)
     check_layout(errors)
     check_text_clean(errors)
     check_manifest(errors)
+    check_workbook_figure_structure(errors)
 
     if errors:
         print("Reproducibility checks failed:")

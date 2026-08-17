@@ -2,14 +2,14 @@ metric,cluster,group,mean_seconds,sem_seconds,n_animals,mean_pct,sem_pct,n_timeb
 Freeze Control frequency,Freeze,Control,102.3980487804878,6.020960129450146,41.0,,,
 Freeze ELS frequency,Freeze,ELS,84.20097560975609,5.839267325875217,41.0,,,
 Sniff Control frequency,Sniff,Control,13.897560975609755,3.1104033300633613,41.0,,,
-Sniff ELS frequency,Sniff,ELS,26.66926829268293,4.825526034641753,41.0,,,
-Groom Control frequency,Groom,Control,0.19707317073170733,0.04616809676425949,41.0,,,
-Groom ELS frequency,Groom,ELS,0.22634146341463413,0.07194319922228025,41.0,,,
+Sniff ELS frequency,Sniff,ELS,26.66926829268293,4.8255260346417534,41.0,,,
+Groom Control frequency,Groom,Control,0.19707317073170733,0.04616809676425948,41.0,,,
+Groom ELS frequency,Groom,ELS,0.22634146341463413,0.07194319922228024,41.0,,,
 Turn Control frequency,Turn,Control,191.1190243902439,4.969400314766337,41.0,,,
 Turn ELS frequency,Turn,ELS,211.32487804878048,4.252409863714743,41.0,,,
 Locomotion Control frequency,Locomotion,Control,23.746341463414634,2.745461393452606,41.0,,,
-Locomotion ELS frequency,Locomotion,ELS,20.55219512195122,2.354793852304924,41.0,,,
-Climb Control frequency,Climb,Control,16.250731707317073,1.3321503060220428,41.0,,,
+Locomotion ELS frequency,Locomotion,ELS,20.55219512195122,2.3547938523049243,41.0,,,
+Climb Control frequency,Climb,Control,16.250731707317073,1.3321503060220425,41.0,,,
 Climb ELS frequency,Climb,ELS,16.388292682926828,1.9809700722440786,41.0,,,
 Jump Control frequency,Jump,Control,3.0126829268292683,0.23692929489469644,41.0,,,
 Jump ELS frequency,Jump,ELS,3.057560975609756,0.2566806833990827,41.0,,,
@@ -17,9 +17,9 @@ Freeze Control timecourse mean,Freeze,Control,,,,22.75512195121951,2.03318986704
 Freeze ELS timecourse mean,Freeze,ELS,,,,18.71132791327913,1.9242241547005556,15.0
 Sniff Control timecourse mean,Sniff,Control,,,,3.088346883468835,1.1657416630940667,15.0
 Sniff ELS timecourse mean,Sniff,ELS,,,,5.926504065040651,1.6360521738516587,15.0
-Groom Control timecourse mean,Groom,Control,,,,0.043794037940379414,0.02802287005949121,15.0
-Groom ELS timecourse mean,Groom,ELS,,,,0.05029810298102981,0.03356548117858638,15.0
-Turn Control timecourse mean,Turn,Control,,,,42.47089430894308,2.670490492016095,15.0
+Groom Control timecourse mean,Groom,Control,,,,0.043794037940379414,0.028022870059491212,15.0
+Groom ELS timecourse mean,Groom,ELS,,,,0.05029810298102981,0.0335654811785864,15.0
+Turn Control timecourse mean,Turn,Control,,,,42.47089430894308,2.6704904920160946,15.0
 Turn ELS timecourse mean,Turn,ELS,,,,46.9610840108401,2.504277366782563,15.0
 Locomotion Control timecourse mean,Locomotion,Control,,,,5.276964769647696,0.8263312236444088,15.0
 Locomotion ELS timecourse mean,Locomotion,ELS,,,,4.567154471544716,0.7350270475123052,15.0

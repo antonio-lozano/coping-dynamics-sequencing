@@ -16,7 +16,9 @@ networkx>=3.0.0,<4.0.0
 # Statistical analysis (manuscript data workbooks)
 statsmodels>=0.13.0,<1.0.0
 
-# Fig. 7 behavior classifier
+# Figure 7A-C and Supplementary Figure 4 behavior classifier
 scikit-learn>=1.0.0,<2.0.0
 xgboost>=1.7.0,<3.0.0
 joblib>=1.1.0,<2.0.0
+# Supplementary Figure 4 draws the legacy class-specific SHAP beeswarms.
+shap>=0.41.0,<1.0.0

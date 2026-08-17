@@ -1,4 +1,4 @@
-"""Train the reusable Fig. 7 behavior classifier."""
+"""Train the reusable Figure 7A-C/Supplementary Figure 4 classifier."""
 
 from __future__ import annotations
 
