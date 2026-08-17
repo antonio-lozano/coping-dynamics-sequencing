@@ -21,6 +21,7 @@ Writes statistics/fig6_diversity_resilience_stats.csv
        statistics/fig6_transition_resilience_stats.csv
 """
 
+import sys
 import warnings
 from pathlib import Path
 
@@ -32,6 +33,18 @@ from scipy.stats import entropy
 from statsmodels.stats.multitest import multipletests
 
 REPO = Path(__file__).resolve().parents[2]
+if str(REPO) not in sys.path:
+    sys.path.insert(0, str(REPO))
+
+from src.statistics import (
+    determinism,
+    markov_entropy,
+    recurrence_rate,
+)
+from src.statistics import (
+    lempel_ziv_complexity as lz_complexity,
+)
+
 CSV = REPO / "data" / "raw" / "syllable_usage_per_timebin_250ms.csv"
 OUT_DIR = REPO / "statistics"
 OUT_DIV = OUT_DIR / "fig6_diversity_resilience_stats.csv"
@@ -169,7 +182,10 @@ def diversity_table(df):
         .reset_index(name="CUI")
     )
     div = div.merge(cu, on=["Animal", "Experiment", "New_condition"], how="left")
-    # Markov entropy per animal (matches original)
+    # Markov entropy per animal (matches original). Deliberately NOT the shared
+    # src.statistics.markov_entropy: this one uses Laplace smoothing 0.002, the
+    # published value behind the MarkovEntropy column, while the transition
+    # table below uses the shared implementation at 0.01 (MarkovEntropyIdx).
     rows = []
     for a, grp in df.groupby("Animal"):
         sts = grp.sort_values("Time_bin")["Cluster"].tolist()
@@ -220,74 +236,8 @@ def bout_table(df):
     )
 
 
-def lz_complexity(seq):
-    token_map = {v: i for i, v in enumerate(pd.unique(pd.Series(seq)))}
-    tokens = [token_map[x] for x in seq]
-    n, i, c, k = len(tokens), 0, 1, 1
-    while True:
-        if i + k > n:
-            break
-        sub = tokens[i : i + k]
-        found = any(tokens[j : j + k] == sub for j in range(i))
-        if found:
-            k += 1
-            if i + k > n:
-                c += 1
-                break
-        else:
-            c += 1
-            i += k
-            k = 1
-        if i >= n:
-            break
-    return c
-
-
-def recurrence_rate(seq):
-    _, counts = np.unique(seq, return_counts=True)
-    n = len(seq)
-    return float(np.sum(counts * counts) / (n * n))
-
-
-def determinism(seq, min_length=2):
-    arr = np.asarray(seq)
-    n = len(arr)
-    total = 0
-    diag_sum = 0
-    for offset in range(-n + 1, n):
-        diag = (
-            arr[: n - abs(offset)] == arr[abs(offset) :]
-            if offset >= 0
-            else arr[-offset:] == arr[: n + offset]
-        )
-        total += (int(diag.sum()) - n) if offset == 0 else int(diag.sum())
-        run = 0
-        for v in diag:
-            if v:
-                run += 1
-            else:
-                if run >= min_length:
-                    diag_sum += run
-                run = 0
-        if run >= min_length:
-            diag_sum += run
-    return float(diag_sum / total) if total > 0 else 0.0
-
-
 def markov_entropy_seq(seq, smoothing=0.01):
-    uni = list(pd.unique(pd.Series(seq)))
-    if len(uni) == 1:
-        return 0.0
-    idx = {s: i for i, s in enumerate(uni)}
-    cnt = np.zeros((len(uni), len(uni)))
-    for a, b in zip(seq[:-1], seq[1:]):
-        cnt[idx[a], idx[b]] += 1
-    cnt += smoothing
-    P = cnt / cnt.sum(axis=1, keepdims=True)
-    vc = pd.Series(seq).value_counts()
-    pi = np.array([vc.get(s, 0) for s in uni], dtype=float) / len(seq)
-    inner = np.array([-np.sum(r[r > 0] * np.log2(r[r > 0])) for r in P])
-    return float(np.sum(pi * inner))
+    return markov_entropy(seq, smoothing_factor=smoothing)
 
 
 def transition_table(df):

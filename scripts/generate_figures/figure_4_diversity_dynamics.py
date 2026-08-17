@@ -40,6 +40,14 @@ from src.config import (
     SYLLABLE_TIMEBIN_250MS,
 )
 from src.plotting import plot_chord_diagram
+from src.statistics import (
+    determinism,
+    markov_entropy,
+    recurrence_rate,
+)
+from src.statistics import (
+    lempel_ziv_complexity as lz_complexity,
+)
 
 plt.rcParams["axes.grid"] = False
 
@@ -227,29 +235,6 @@ def transition_matrix_flow(seq: list[str]) -> np.ndarray:
     return transition_matrix(filtered)
 
 
-def lz_complexity(seq: list[str]) -> int:
-    token_map = {value: i for i, value in enumerate(pd.unique(pd.Series(seq)))}
-    tokens = [token_map[x] for x in seq]
-    n, i, c, k = len(tokens), 0, 1, 1
-    while True:
-        if i + k > n:
-            break
-        sub = tokens[i : i + k]
-        found = any(tokens[j : j + k] == sub for j in range(i))
-        if found:
-            k += 1
-            if i + k > n:
-                c += 1
-                break
-        else:
-            c += 1
-            i += k
-            k = 1
-        if i >= n:
-            break
-    return c
-
-
 def transition_metrics(sequences: dict[str, list[str]], meta: pd.DataFrame) -> pd.DataFrame:
     rows = []
     meta_map = meta.set_index("Animal").to_dict("index")
@@ -267,73 +252,6 @@ def transition_metrics(sequences: dict[str, list[str]], meta: pd.DataFrame) -> p
             }
         )
     return pd.DataFrame(rows)
-
-
-def _bout_lengths(seq: list[str]) -> list[int]:
-    lengths = []
-    prev = seq[0]
-    length = 1
-    for cluster in seq[1:] + ["__END__"]:
-        if cluster == prev:
-            length += 1
-        else:
-            lengths.append(length)
-            prev = cluster
-            length = 1
-    return lengths
-
-
-def recurrence_rate(seq: list[str]) -> float:
-    _, counts = np.unique(seq, return_counts=True)
-    n = len(seq)
-    return float(np.sum(counts * counts) / (n * n))
-
-
-def determinism(seq: list[str], min_length: int = 2) -> float:
-    arr = np.asarray(seq)
-    n = len(arr)
-    total = 0
-    diag_sum = 0
-    for offset in range(-n + 1, n):
-        diag = (
-            arr[: n - abs(offset)] == arr[abs(offset) :]
-            if offset >= 0
-            else arr[-offset:] == arr[: n + offset]
-        )
-        if offset == 0:
-            total += int(diag.sum()) - n
-        else:
-            total += int(diag.sum())
-        run = 0
-        for value in diag:
-            if value:
-                run += 1
-            else:
-                if run >= min_length:
-                    diag_sum += run
-                run = 0
-        if run >= min_length:
-            diag_sum += run
-    return float(diag_sum / total) if total > 0 else 0.0
-
-
-def markov_entropy(seq: list[str], smoothing_factor: float = 0.01) -> float:
-    states = list(seq)
-    unique_states = list(pd.unique(pd.Series(states)))
-    if len(unique_states) == 1:
-        return 0.0
-    idx = {state: i for i, state in enumerate(unique_states)}
-    counts = np.zeros((len(unique_states), len(unique_states)), dtype=float)
-    for a, b in zip(states, states[1:]):
-        counts[idx[a], idx[b]] += 1
-    counts += smoothing_factor
-    probs = counts / counts.sum(axis=1, keepdims=True)
-    value_counts = pd.Series(states).value_counts()
-    stationary = np.array(
-        [value_counts.get(state, 0) for state in unique_states], dtype=float
-    ) / len(states)
-    inner = np.array([-np.sum(row[row > 0] * np.log2(row[row > 0])) for row in probs])
-    return float(np.sum(stationary * inner))
 
 
 def representative(usage: pd.DataFrame, group: str) -> str:
