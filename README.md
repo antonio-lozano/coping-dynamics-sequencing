@@ -72,10 +72,18 @@ figures/              Canonical manuscript figure exports
 report/               raw-data workbook and canonical statistical report
 classifier/           Classifier artifact used in Figure 7A-C and Supplementary Figure 4
 scripts/              Rebuild, report, figure, and validation entry points
+scripts/migrations/   One-time imports from the legacy tree, kept for provenance
 src/                  Shared analysis, plotting, statistics, and classifier code
 docs/                 Data dictionary and focused provenance notes
 config/               Figure metadata used by the report package
 ```
+
+Two kinds of scripts are not part of a rebuild. `scripts/migrations/` holds the
+one-time utilities that imported the legacy SHAP analysis; they need `--source`
+pointing at the legacy keypoint-MoSeq tree, which is not part of this
+repository. `scripts/prepare_results_differences.py` and
+`scripts/prepare_revised_results.py` rewrite Results text for one specific
+manuscript revision and go stale at the next edit; see their docstrings.
 
 `data/raw/` contains inputs. `data/processed/`, `figure_source_data/`,
 `statistics/`, `figures/`, and `report/` are regenerated products. The term
@@ -126,7 +134,7 @@ Raw inputs include:
 | Supplementary Figure 1 | `scripts/generate_figures/supplementary_figure_1_tracking_clusters.py` |
 | Supplementary Figure 2 | Canonical tracked export (analysis workflow schematic) |
 | Supplementary Figure 3 | `scripts/generate_figures/supplementary_figure_3_distances.py` |
-| Supplementary Figure 4 | `scripts/generate_figures/supplementary_figure_4_classifier_shap.py --source DIR` |
+| Supplementary Figure 4 | `scripts/generate_figures/supplementary_figure_4_classifier_shap.py` |
 
 Figures 1 and Supplementary Figure 2 are tracked as canonical assembled
 manuscript figures. Figure 7 is regenerated from tracked source tables and the

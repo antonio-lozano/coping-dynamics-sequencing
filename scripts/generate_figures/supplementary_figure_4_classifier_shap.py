@@ -38,7 +38,7 @@ REPO = Path(__file__).resolve().parents[2]
 if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
 
-from scripts.import_legacy_shap_summary import (  # noqa: E402
+from scripts.migrations.import_legacy_shap_summary import (  # noqa: E402
     BEHAVIOR_ORDER,
     CLASS_LABELS,
     parameter_label,

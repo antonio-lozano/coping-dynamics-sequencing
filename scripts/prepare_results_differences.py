@@ -1,5 +1,13 @@
 #!/usr/bin/env python
-"""Extract the manuscript Results section and mark regenerated-statistic differences."""
+"""Extract the manuscript Results section and mark regenerated-statistic differences.
+
+Revision-bound: the paragraph markers and before/after statistic strings below
+are tied to the manuscript revision current in August 2026 (the one audited by
+``statistics/manuscript_consistency_audit.csv``). They match on exact text, so
+the next manuscript edit silently stops matching; re-derive the strings from
+the audit CSV before trusting the output against a newer draft. Not part of
+the reproducibility rebuild.
+"""
 from __future__ import annotations
 
 import argparse

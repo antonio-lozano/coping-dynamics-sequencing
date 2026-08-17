@@ -118,8 +118,8 @@ REQUIRED_FILES = [
     "scripts/derive_tables/fig6_resilience_stats.py",
     "scripts/generate_figures/figure_7_resilience_prediction.py",
     "scripts/generate_figures/supplementary_figure_4_classifier_shap.py",
-    "scripts/import_legacy_shap_summary.py",
-    "scripts/import_legacy_shap_values.py",
+    "scripts/migrations/import_legacy_shap_summary.py",
+    "scripts/migrations/import_legacy_shap_values.py",
 ]
 
 FIGURE_STEMS = [

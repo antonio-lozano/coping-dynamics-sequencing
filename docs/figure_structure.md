@@ -50,16 +50,19 @@ The legacy analysis is archived under `classifier/legacy_shap/`:
 colours, and the class order), `legacy_feature_ranks.csv` (the authoritative
 per-class ranks), `xgb_model.pkl` and `label_encoder.pkl`. The values were
 repacked out of a scikit-learn 1.2.1 joblib pickle by
-`scripts/import_legacy_shap_values.py`, because a pickle is neither a safe nor a
-durable archive format. Only the 179 MB balanced feature matrix, needed solely
-to retrain the legacy model, is left outside the repository.
+`scripts/migrations/import_legacy_shap_values.py`, because a pickle is neither
+a safe nor a durable archive format. The raw SHAP pickle (60 MB), the feature
+sample behind the dot colours (19 MB), and the 179 MB balanced feature matrix
+needed to retrain the legacy model are left outside the repository, in the
+legacy keypoint-MoSeq tree.
 
 `scripts/generate_figures/supplementary_figure_4_classifier_shap.py` redraws the
 eight panels from that archive with `shap.summary_plot`, as the legacy figure
 script did, and needs nothing outside the repository. Both it and
-`scripts/import_legacy_shap_summary.py` accept `--source` to read the legacy
-keypoint-MoSeq results directory instead, which reproduces the tracked outputs
-byte for byte.
+`scripts/migrations/import_legacy_shap_summary.py` accept `--source` to read
+the legacy keypoint-MoSeq results directory instead, which reproduces the
+tracked outputs byte for byte. The `scripts/migrations/` utilities are
+one-time imports kept for provenance, not steps of a rebuild.
 
 Each panel's x-axis is limited to the central 99.5% of its own plotted values
 (`XLIM_PERCENTILE`). Without this, a few extreme SHAP outliers stretch the axis

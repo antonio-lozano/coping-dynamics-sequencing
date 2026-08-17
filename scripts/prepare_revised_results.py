@@ -1,5 +1,11 @@
 #!/usr/bin/env python
-"""Create a clean Word Results section using the regenerated statistics."""
+"""Create a clean Word Results section using the regenerated statistics.
+
+Revision-bound: builds on ``prepare_results_differences.py`` and inherits its
+hard-coded before/after statistic strings, which target the manuscript
+revision current in August 2026. Re-check those strings after any manuscript
+edit. Not part of the reproducibility rebuild.
+"""
 from __future__ import annotations
 
 import argparse
