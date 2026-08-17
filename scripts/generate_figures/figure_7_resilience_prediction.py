@@ -899,21 +899,22 @@ def draw_individual_overtime(ax: plt.Axes, table: pd.DataFrame, panel: str,
 
 
 def figure7_global_shap_values() -> pd.DataFrame:
-    """Recover Figure 7B's exact stacked-bar widths from the source PDF.
+    """Figure 7B's exact stacked-bar widths, from the archival source data.
 
-    The legacy PDF is an unversioned local asset, so fall back to the exported
-    source-data CSV when it is absent: that CSV was written by this same
-    extraction and carries identical values, which keeps the figure buildable
-    from a clean checkout.
+    The values were extracted once from the legacy figure PDF, which was lost
+    before it could be committed; the exported CSV written by that extraction
+    is now the archival source of record (docs/figure_structure.md). When a
+    recovered copy of the PDF is present, the original extraction runs instead
+    so the CSV can be re-derived and compared against the archived values.
     """
     exported = SOURCE_OUT / "figure7_classifier_global_shap.csv"
     if not FIGURE7_PDF.exists():
         if exported.exists():
-            print(f"  [source data] {exported.name} (legacy PDF unavailable)")
+            print(f"  [source data] {exported.name} (archival source)")
             return pd.read_csv(exported, index_col="feature")
         raise FileNotFoundError(
-            f"Figure 7 source PDF not found: {FIGURE7_PDF}\n"
-            f"and no exported fallback at: {exported}"
+            f"Figure 7B archival source data not found: {exported}\n"
+            f"and no legacy PDF to re-extract it from at: {FIGURE7_PDF}"
         )
 
     source_colours = {

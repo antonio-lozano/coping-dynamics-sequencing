@@ -27,7 +27,7 @@ exports, Excel reports, and reproducibility checks.
 | Supplementary Figure 1 | A-D | Omitted/mixed behavior dynamics and total frequencies | `data/processed/supplementary_figure1_*` |
 | Supplementary Figure 2 | assembled | Behavioral-dynamics workflow | Canonical tracked export |
 | Supplementary Figure 3 | A-K | Alternative distance metrics and resilient-group overlap | `data/processed/supplementary_figure3_*` |
-| Supplementary Figure 4 | A-H (published as Figure 7 panels D-M) | Class-specific behavior-classifier SHAP panels | `figure_source_data/supplementary_figure4_shap_summary.csv`; original at `data/raw/legacy_figures/figure7_classifier_original.pdf` |
+| Supplementary Figure 4 | A-H (published as Figure 7 panels D-M) | Class-specific behavior-classifier SHAP panels | `figure_source_data/supplementary_figure4_shap_summary.csv` |
 
 ### Supplementary Figure 4 comes from the legacy classifier
 
@@ -97,3 +97,14 @@ Figure 7B contains all 20 features displayed in the published global SHAP
 panel across all eight behavior classes. The reusable classifier artifact has
 a separate 33-column engineering feature catalog; those columns are not mixed
 into Figure 7B because they are not the feature labels shown in that panel.
+
+### The legacy figure PDF is retired
+
+Figure 7B's 20 x 8 values were extracted programmatically from the legacy
+figure PDF (`data/raw/legacy_figures/figure7_classifier_original.pdf`). That
+PDF was lost before it could be committed and exists on no known machine, so
+**`figure_source_data/figure7_classifier_global_shap.csv` - written by that
+same extraction - is the archival source of record** for these values. The
+figure generator reads the CSV directly; if a recovered copy of the PDF is
+ever placed back at the path above, the generator re-runs the original
+extraction so the CSV can be re-derived and compared.

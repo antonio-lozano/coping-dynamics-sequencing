@@ -20,7 +20,12 @@ in the repository. Row counts and checksums are verified by
 | `data/raw/syllable_usage_per_timebin_30s.csv` | MoSeq syllable usage at 30 s resolution. |
 | `data/raw/syllable_usage_per_timebin_250ms.csv` | MoSeq syllable usage at 250 ms resolution. |
 | `data/raw/updated_results.pkl.gz` | Compressed MoSeq result object used for dynamics and distance analyses. |
-| `data/raw/legacy_figures/figure7_classifier_original.pdf` | Archived legacy classifier figure retained for provenance. |
+
+The legacy classifier figure PDF once kept at
+`data/raw/legacy_figures/figure7_classifier_original.pdf` was lost before it
+could be committed and is retired;
+`figure_source_data/figure7_classifier_global_shap.csv` is the archival source
+of record for its values (see `docs/figure_structure.md`).
 
 ## Processed Tables
 

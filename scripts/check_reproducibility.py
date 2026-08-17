@@ -48,7 +48,6 @@ REQUIRED_FILES = [
     "data/raw/syllable_usage_per_timebin_30s.csv",
     "data/raw/syllable_usage_per_timebin_250ms.csv",
     "data/raw/updated_results.pkl.gz",
-    "data/raw/legacy_figures/figure7_classifier_original.pdf",
     "data/raw/manuscript_tables/statistical_report/provenance.md",
     "data/raw/manuscript_tables/statistical_report/reported_cells.jsonl",
     "data/raw/manuscript_tables/statistical_report/reported_layout.json",
