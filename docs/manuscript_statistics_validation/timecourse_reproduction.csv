@@ -1,0 +1,7 @@
+panel,key,cluster,term,beta_repro,beta_reported,SE_repro,SE_reported,z_repro,z_reported,n_animals,n_obs,verdict
+Fig2E,Fig2E_time,Freezing,time,0.1262,0.126,0.0038,0.004,32.917,32.602,83,1245,MATCH
+Fig2E,Fig2E_inter,Freezing,interaction,-0.0233,-0.023,0.0055,0.005,-4.274,-4.241,83,1245,MATCH
+Fig3B,Fig3B,Freezing,interaction,-0.0233,-0.023,0.0055,0.005,-4.274,-4.241,83,1245,MATCH
+Fig3C,Fig3C,Locomotion,interaction,0.0048,0.005,0.0021,0.002,2.28,2.553,83,1245,MATCH
+Fig3E,Fig3E,Sniffing,interaction,-0.0109,-0.014,0.0039,0.004,-2.78,-3.656,83,1245,CLOSE
+Fig3F,Fig3F,Turn,interaction,0.0251,0.026,0.0071,0.007,3.542,3.61,83,1245,MATCH

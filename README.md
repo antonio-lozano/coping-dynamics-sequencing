@@ -178,6 +178,10 @@ classifier in `classifier/legacy_shap/`, not from
 - `docs/figure_structure.md`: canonical main and supplementary panel mapping.
 - `docs/behavior_classifier.md`: classifier and Supplementary Figure 4 usage.
 - `docs/cleanup_todo.md`: known loose ends and pending cleanup decisions.
+- `docs/manuscript_statistics_validation/`: independent validation of the
+  statistics reported in the manuscript (Wald-identity checks plus mixed-model
+  re-fits), with the HTML report and the scripts that rebuild it under
+  `scripts/analysis/`.
 - `tools/behavior_dlc_classifier/GUIDE.md`: standalone DeepLabCut freezing and
   seven-behavior video classifier with its own environment and lock file,
   outside the reproducibility contract and unrelated to the Figure 7
