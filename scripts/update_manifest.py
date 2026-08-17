@@ -90,9 +90,39 @@ def iter_artifacts() -> list[Path]:
     return sorted(paths, key=lambda p: p.as_posix().lower())
 
 
+# Text artifacts the generators rewrite. pandas and csv default to the
+# platform's line endings, so on Windows a regenerated CSV lands on disk with
+# CRLF while the repository stores LF and every clean clone checks out LF.
+NORMALIZE_SUFFIXES = {".csv", ".md", ".txt", ".json"}
+
+
+def normalize_line_endings(paths: list[Path]) -> int:
+    """Rewrite CRLF as LF in text artifacts before hashing.
+
+    Hashing the bytes as the generators wrote them would record hashes that no
+    clean clone can reproduce, and Git would renormalize the files on the next
+    touch anyway. Doing it here keeps the manifest a record of what a clone
+    contains, whichever platform regenerated the artifacts.
+    """
+    changed = 0
+    for path in paths:
+        if path.suffix.lower() not in NORMALIZE_SUFFIXES:
+            continue
+        data = path.read_bytes()
+        if b"\r\n" in data:
+            path.write_bytes(data.replace(b"\r\n", b"\n"))
+            changed += 1
+    return changed
+
+
 def main() -> None:
+    artifacts = iter_artifacts()
+    normalized = normalize_line_endings(artifacts)
+    if normalized:
+        print(f"Normalized line endings to LF in {normalized} text artifacts")
+
     rows = []
-    for path in iter_artifacts():
+    for path in artifacts:
         rel = path.relative_to(ROOT).as_posix()
         rows.append(
             {

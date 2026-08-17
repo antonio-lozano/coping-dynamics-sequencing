@@ -83,7 +83,9 @@ def main() -> None:
             raise AssertionError("Feature values did not round-trip through the archive")
 
     size_mb = args.output.stat().st_size / 1024 / 1024
-    print(f"Wrote {args.output.relative_to(REPO)} ({size_mb:.1f} MB)")
+    output = args.output.resolve()
+    shown = output.relative_to(REPO) if output.is_relative_to(REPO) else output
+    print(f"Wrote {shown} ({size_mb:.1f} MB)")
     print(f"  {stacked.shape[0]} classes x {stacked.shape[1]} frames x {stacked.shape[2]} parameters")
 
 
