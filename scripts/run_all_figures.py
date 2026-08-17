@@ -31,7 +31,7 @@ FIGURE_SCRIPTS = [
     ("Figure 7 - Resilience prediction", "figure_7_resilience_prediction.py"),
     ("Supplementary Figure 1 - Tracking clusters", "supplementary_figure_1_tracking_clusters.py"),
     ("Supplementary Figure 3 - Distance metrics", "supplementary_figure_3_distances.py"),
-    ("Supplementary Figure 4 - Classifier SHAP", "supplementary_figure_4_classifier_shap.py"),
+    ("Supplementary Figure 5 - Class-specific classifier SHAP", "supplementary_figure_5_classifier_shap.py"),
 ]
 
 

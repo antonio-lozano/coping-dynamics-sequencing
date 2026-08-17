@@ -1,6 +1,6 @@
 """Repack the legacy class-specific SHAP values into a tracked archive.
 
-Supplementary Figure 4 is drawn from the legacy classifier's SHAP values, which
+Supplementary Figure 5 is drawn from the legacy classifier's SHAP values, which
 live outside this repository as a joblib pickle written under scikit-learn
 1.2.1.  Pickles are not a durable archive format - they already warn on newer
 scikit-learn and can stop loading altogether - so this one-time utility converts

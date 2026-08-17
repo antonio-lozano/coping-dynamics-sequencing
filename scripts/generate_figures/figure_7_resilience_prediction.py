@@ -396,9 +396,11 @@ def panel_tag(ax: plt.Axes, letter: str, x: float = -0.12, y: float = 1.12) -> p
             fontsize=7.5, fontweight="bold", color=AXIS, clip_on=False)
 
 
-def line_legend(ax: plt.Axes, *, ncol: int = 1, fontsize: float = 4.6) -> None:
+def line_legend(ax: plt.Axes, *, ncol: int = 1, fontsize: float = 4.6,
+                columnspacing: float = 0.7) -> None:
     leg = ax.legend(frameon=False, fontsize=fontsize, loc="lower right", ncol=ncol,
-                    handlelength=1.15, handletextpad=0.35, columnspacing=0.7,
+                    handlelength=1.15, handletextpad=0.35,
+                    columnspacing=columnspacing,
                     labelspacing=0.22, borderaxespad=0.15)
     for text in leg.get_texts():
         text.set_color(AXIS)
@@ -475,6 +477,12 @@ def remap_family_name(name: str) -> str:
     return remap.get(name, name)
 
 
+# Panels I and J sit side by side and should use the same legend type size.
+# Four points is large enough to remain legible at final figure size while the
+# four-column legend in I still clears the trajectories beneath it.
+IJ_LEGEND_FONTSIZE = 4.0
+
+
 def plot_panel_a(ax: plt.Axes, onset: pd.DataFrame, letter: str = "A") -> plt.Text:
     combined = onset.loc[onset["feature_set"] == COMBINED].sort_values("horizon_min")
 
@@ -495,6 +503,8 @@ def plot_panel_a(ax: plt.Axes, onset: pd.DataFrame, letter: str = "A") -> plt.Te
     ax.set_xlabel(HORIZON_XLABEL)
     ax.set_ylabel("ROC AUC")
     ax.set_title("Behaviour dynamics over time", fontsize=6.4, color=AXIS, pad=3)
+    # Same 0-1 axis as panel J beside it: the legend sits inside the plot, in
+    # the clear band above the curves on the left half.
     ax.set_ylim(0.0, 1.0)
     ax.set_xlim(HORIZON_XLIM)
     ax.set_xticks(HORIZON_XTICKS)
@@ -509,10 +519,10 @@ def plot_panel_a(ax: plt.Axes, onset: pd.DataFrame, letter: str = "A") -> plt.Te
     legend_order = [COMBINED, "Freeze", "Sniff", "Groom",
                     "Turn", "Locomotion", "Climb", "Jump"]
     leg = ax.legend([handle_map[label] for label in legend_order], legend_order,
-                    loc="lower right", bbox_to_anchor=(0.985, 0.02),
-                    ncol=1, frameon=False, handlelength=0.85,
-                    handletextpad=0.3, labelspacing=0.10,
-                    fontsize=3.65, borderaxespad=0.0)
+                    loc="upper left", bbox_to_anchor=(0.005, 1.0),
+                    ncol=4, frameon=False, handlelength=0.7,
+                    handletextpad=0.25, labelspacing=0.12, columnspacing=0.55,
+                    fontsize=IJ_LEGEND_FONTSIZE, borderaxespad=0.0)
     for text in leg.get_texts():
         text.set_color(AXIS)
     return panel_tag(ax, letter, x=-0.105, y=1.12)
@@ -521,8 +531,10 @@ def plot_panel_a(ax: plt.Axes, onset: pd.DataFrame, letter: str = "A") -> plt.Te
 def plot_panel_b(ax: plt.Axes, cross: pd.DataFrame, letter: str = "B",
                  tests: pd.DataFrame | None = None) -> plt.Text:
     directions = [("Exp3", "Exp1"), ("Exp1", "Exp3")]
-    width = 0.18
-    xs = np.arange(len(directions)) * 0.70
+    # The two groups sit close together near the middle of the panel; the
+    # three-line labels below are narrow enough not to collide at this pitch.
+    width = 0.15
+    xs = np.arange(len(directions)) * 0.60
     bar_tops: dict[str, list[float]] = {}
     for k, (name, colour) in enumerate(
         [("Behaviour dynamics", DYNAMICS_COLOR), ("Freeze only", FREEZE_ONLY_COLOR)]
@@ -536,41 +548,37 @@ def plot_panel_b(ax: plt.Axes, cross: pd.DataFrame, letter: str = "B",
         bar_tops[name] = vals
         ax.bar(pos, vals, width=width, color=colour, edgecolor="white",
                linewidth=0.4, label=display_feature_set(name), zorder=2)
-        for p, v in zip(pos, vals):
-            ax.text(p, v + 0.025, f"{v:.2f}", ha="center", va="bottom", fontsize=6)
 
-    if tests is not None:
-        for i, (test_exp, _) in enumerate(directions):
-            row = tests.loc[tests["test_experiment"] == test_exp]
-            if row.empty:
-                continue
-            # Clear both bars and the value labels printed just above them.
-            top = max(bar_tops["Behaviour dynamics"][i], bar_tops["Freeze only"][i])
-            sig_bracket(ax, xs[i] - 0.5 * width, xs[i] + 0.5 * width,
-                        top + 0.165, str(row["stars"].iloc[0]))
+    # The paired AUC tests are all non-significant and are reported in
+    # statistics/figure7_panel_de_auc_tests.csv; the brackets and the per-bar
+    # value labels are left off the panel to keep it readable at print size.
 
     ax.axhline(0.5, color=CHANCE_GREY, linewidth=0.5, linestyle=(0, (2.5, 2)), zorder=1)
     ax.set_xticks(xs)
-    # Keep the cohort names on their own lines rather than flattening each to a
-    # single long line: since C moved onto this row there is no longer width for
-    # the one-line form, which ran into the neighbouring panel.
+    # Both cohort names keep their own break, with the arrow leading the test
+    # cohort. At the same type size as panel E, and with the groups this close
+    # together, no line may be wider than a half cohort name.
     ax.set_xticklabels(
         [f"{tier1.COHORT_LABELS[train]}\n\u2192 {tier1.COHORT_LABELS[test]}"
          for test, train in directions],
-        fontsize=3.6,
+        fontsize=4.0,
         ha="center",
         multialignment="center",
     )
     ax.set_ylabel("ROC AUC")
-    # Headroom for the significance brackets above the value labels.
-    ax.set_ylim(0, 1.32)
+    # Headroom for the legend, which sits inside the axes so the strip above
+    # them stays clear for the panel letter. Ticks still stop at 1.
+    ax.set_ylim(0, 1.20)
     ax.set_yticks([0, 0.2, 0.4, 0.6, 0.8, 1.0])
     ax.set_xlim(xs[0] - 0.30, xs[-1] + 0.30)
-    ax.set_title("Held-out cohort", fontsize=6.4, color=AXIS, pad=3)
+    ax.set_title("Held-out cohort", fontsize=6.0, color=AXIS, pad=3)
     ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.02), frameon=False,
-              handlelength=1.0, fontsize=4.8, labelspacing=0.2,
+              handlelength=1.0, fontsize=4.4, labelspacing=0.2,
               borderpad=0.0, ncol=2, columnspacing=0.7, handletextpad=0.35)
     _tidy(ax)
+    # After _tidy: it sets one tick label size for both axes, which would undo
+    # the smaller size the two-line cohort names need to stay inside the panel.
+    ax.tick_params(axis="x", labelsize=4.0)
     fit_spines_to_ticks(ax)
     full_x_spine(ax)
     return panel_tag(ax, letter, x=-0.12, y=1.12)
@@ -591,25 +599,27 @@ def plot_panel_c(ax: plt.Axes, head: pd.DataFrame, letter: str = "C",
                           [row["ci_high"] - row["roc_auc"]]],
                     color=recap.darken(colour, factor=0.68),
                     linewidth=0.8, capsize=2.2, zorder=3)
-        ax.text(x, row["ci_high"] + 0.03, f"{row['roc_auc']:.2f}", ha="center",
-                va="bottom", fontsize=6)
         tops.append(float(row["ci_high"]))
 
-    if tests is not None and not tests.empty:
-        # Clear the taller error bar and its value label.
-        sig_bracket(ax, xs[0], xs[-1], max(tops) + 0.105,
-                    str(tests["stars"].iloc[0]))
+    # As in panel D: the paired test is non-significant and lives in the
+    # statistics table, so no bracket and no value labels are drawn here.
 
     ax.axhline(0.5, color=CHANCE_GREY, linewidth=0.5, linestyle=(0, (2.5, 2)), zorder=1)
     ax.set_xticks(xs)
-    ax.set_xticklabels(["Behaviour\ndynamics", "Freeze\ndynamics\nonly"], fontsize=4.4)
+    # Three lines here, unlike D: this panel is the narrowest on the row, and
+    # "Freeze dynamics" on one line is wider than the gap between its two bars.
+    ax.set_xticklabels(["Behaviour\ndynamics\n ", "Freeze\ndynamics\nonly"],
+                       fontsize=4.0)
     ax.set_ylabel("ROC AUC")
-    # Headroom for the significance bracket above the taller CI whisker.
-    ax.set_ylim(0, 1.25)
+    # No bracket above the CI whiskers any more, so the axis stops at 1.
+    ax.set_ylim(0, 1.0)
     ax.set_yticks([0, 0.2, 0.4, 0.6, 0.8, 1.0])
     ax.set_xlim(xs[0] - 0.30, xs[-1] + 0.30)
-    ax.set_title("Full-session cross-validation", fontsize=6.4, color=AXIS, pad=4)
+    ax.set_title("Full-session\ncross-validation", fontsize=6.0, color=AXIS, pad=3)
     _tidy(ax)
+    # After _tidy, as in panel D: keep the two-line condition names small enough
+    # that they do not run into each other or into panel F.
+    ax.tick_params(axis="x", labelsize=4.0)
     fit_spines_to_ticks(ax)
     full_x_spine(ax)
     return panel_tag(ax, letter, x=-0.12, y=1.12)
@@ -782,7 +792,7 @@ def draw_family_overtime(ax: plt.Axes, table: pd.DataFrame, letter: str) -> plt.
     _tidy(ax)
     fit_spines_to_ticks(ax)
     mark_final_horizon(ax)
-    line_legend(ax, ncol=1, fontsize=4.7)
+    line_legend(ax, ncol=1, fontsize=IJ_LEGEND_FONTSIZE)
     return panel_tag(ax, letter, x=-0.105, y=1.12)
 
 
@@ -873,15 +883,36 @@ def draw_family_mini_pair(top_ax: plt.Axes, bottom_ax: plt.Axes,
     )
 
 
+def behaviour_legend_label(metric: str) -> str:
+    """Shorten a per-behaviour legend to the behaviour name alone.
+
+    Every entry in the Frequency and Bout panels is respectively a frequency or
+    a bout duration, so repeating that on all seven or eight lines only costs
+    width. The Bout panel's one non-behaviour entry is the average across
+    behaviours, which is named explicitly instead.
+    """
+    if metric == "Mean bout duration":
+        return "Mean all behaviours"
+    return metric.replace(" bout duration", "").replace(" frequency", "")
+
+
 def draw_individual_overtime(ax: plt.Axes, table: pd.DataFrame, panel: str,
-                             letter: str, title: str, ncol: int = 2) -> plt.Text:
+                             letter: str, title: str, ncol: int = 2,
+                             columnspacing: float = 0.7) -> plt.Text:
     subtab = table.loc[table["panel"] == panel]
     add_event_spans(ax)
     for name, sub in subtab.groupby("metric", sort=False):
         sub = sub.sort_values("horizon_min")
-        ax.plot(sub["horizon_min"], sub["cv_auc"], color=sub["color"].iloc[0],
+        label = (behaviour_legend_label(name)
+                 if panel in ("Bout", "Frequency") else name)
+        # The mean-across-behaviours line has no behaviour colour of its own;
+        # draw it grey so it reads as the summary rather than as an eighth
+        # behaviour.
+        color = (COMBINED_COLOR if panel == "Bout" and name == "Mean bout duration"
+                 else sub["color"].iloc[0])
+        ax.plot(sub["horizon_min"], sub["cv_auc"], color=color,
                 lw=0.8, marker="o", ms=2.0, mec="white", mew=0.2,
-                linestyle=sub["linestyle"].iloc[0], label=name, alpha=0.95)
+                linestyle=sub["linestyle"].iloc[0], label=label, alpha=0.95)
     ax.axhline(0.5, color=CHANCE_GREY, lw=0.45, ls=(0, (2.5, 2)), zorder=1)
     ax.set_xlim(HORIZON_XLIM)
     ax.set_xticks(HORIZON_XTICKS)
@@ -894,7 +925,7 @@ def draw_individual_overtime(ax: plt.Axes, table: pd.DataFrame, panel: str,
     _tidy(ax)
     fit_spines_to_ticks(ax)
     mark_final_horizon(ax)
-    line_legend(ax, ncol=ncol, fontsize=3.9)
+    line_legend(ax, ncol=ncol, fontsize=3.9, columnspacing=columnspacing)
     return panel_tag(ax, letter, x=-0.12, y=1.12)
 
 
@@ -995,12 +1026,14 @@ def draw_figure7_a(ax: plt.Axes) -> plt.Text:
 
     for y, value, note in zip(ys, FIGURE7_ACCURACY, FIGURE7_ACCURACY_NOTES):
         ax.text(value + 0.012, y, f"{value:.2f}\n({note})", ha="left", va="center",
-                fontsize=5.6, color=AXIS, linespacing=1.05)
+                fontsize=4.4, color=AXIS, linespacing=1.05)
 
     ax.axvline(0.12, color=AXIS, linewidth=0.5, linestyle=(0, (2.5, 2)), zorder=3)
     ax.set_yticks(ys)
     ax.set_yticklabels(labels, fontsize=4.2)
-    ax.invert_yaxis()
+    # Pin the category limits with half a bar of padding at each end. The default
+    # margins clipped the top bar (Freeze) against the axes edge.
+    ax.set_ylim(len(labels) - 0.5, -0.5)
     # The value annotations sit to the right of each bar; at the enlarged label
     # size the longest one ("0.86 (+0.74, 6.9x)") runs past 1.0, so the axis is
     # padded beyond the last tick to keep it inside the panel.
@@ -1012,8 +1045,11 @@ def draw_figure7_a(ax: plt.Axes) -> plt.Text:
     ax.set_title("Accuracy versus chance", fontsize=6.4, color=AXIS, pad=8)
     _tidy(ax)
     fit_spines_to_ticks(ax)
-    ax.text(1.28, 7.0, "Dashed line: chance = 0.12",
-            ha="right", va="center", fontsize=3.45, color=AXIS)
+    # Keep the chance key in the open lower-right corner. Two lines allow a
+    # slightly larger type size without crowding the lower bars.
+    ax.text(0.985, 0.035, "Dashed line:\nchance = 0.12",
+            transform=ax.transAxes, ha="right", va="bottom", fontsize=4.2,
+            color=AXIS, linespacing=1.18)
     return panel_tag(ax, "A", x=-0.20, y=1.15)
 
 
@@ -1044,8 +1080,8 @@ def draw_figure7_b(ax: plt.Axes, shap_values: pd.DataFrame) -> plt.Text:
     # Sits in the open wedge to the right of the shorter lower bars, so the panel
     # no longer needs a wide empty right margin just to hold the key.
     leg = ax.legend(loc="lower right", bbox_to_anchor=(0.99, 0.03), frameon=False,
-                    fontsize=3.6, ncol=1, handlelength=1.5, handletextpad=0.35,
-                    labelspacing=0.10, borderaxespad=0.0)
+                    fontsize=5.2, ncol=1, handlelength=1.4, handletextpad=0.4,
+                    labelspacing=0.22, borderaxespad=0.0)
     for text in leg.get_texts():
         text.set_color(AXIS)
     return panel_tag(ax, "B", x=-0.34, y=1.15)
@@ -1061,8 +1097,8 @@ def draw_figure7_c(ax: plt.Axes, cax: plt.Axes) -> plt.Text:
                        rotation_mode="anchor", fontsize=3.7)
     ax.set_yticks(ticks)
     ax.set_yticklabels(FIGURE7_CLASSES, fontsize=4.0)
-    ax.set_xlabel("Predicted label", labelpad=1.5)
-    ax.set_ylabel("True label", labelpad=2)
+    ax.set_xlabel("Predicted label", labelpad=1.5, fontsize=5.0)
+    ax.set_ylabel("True label", labelpad=2, fontsize=5.0)
     ax.set_title("Cross-validated confusion matrix", fontsize=6.4, color=AXIS, pad=3)
     ax.tick_params(axis="both", length=0, pad=1.5, colors=AXIS)
     for spine in ax.spines.values():
@@ -1129,11 +1165,15 @@ def build_complete_figure(onset: pd.DataFrame, cross: pd.DataFrame,
 
     # C is square (imshow with aspect="equal"), so it needs a narrower cell than
     # its neighbours; D is trimmed to make room for it.
+    # C is drawn with aspect="equal", so width past its square is dead space:
+    # its cell is trimmed and the room goes to D and E (whose multi-line cohort
+    # labels need it) and to F, which now runs out to the same right margin as
+    # B, G and H.
     def_panels = gs[1, :].subgridspec(
-        1, 4, width_ratios=[0.90, 0.92, 0.62, 1.16], wspace=0.66
+        1, 4, width_ratios=[0.72, 0.92, 0.66, 1.52], wspace=0.52
     )
     c_grid = def_panels[0, 0].subgridspec(
-        1, 2, width_ratios=[1.0, 0.045], wspace=0.22
+        1, 2, width_ratios=[1.0, 0.045], wspace=0.06
     )
     ax_c_source = fig.add_subplot(c_grid[0, 0])
     letter_c = draw_figure7_c(ax_c_source, fig.add_subplot(c_grid[0, 1]))
@@ -1172,15 +1212,19 @@ def build_complete_figure(onset: pd.DataFrame, cross: pd.DataFrame,
     letter_artists.append((ax_j, draw_family_overtime(ax_j, c_recap, letter="J")))
     draw_family_mini_pair(fig.add_subplot(ij[0, 10]), fig.add_subplot(ij[1, 10]), c_recap)
 
-    for columns, panel, letter, title, ncol in [
-        ((0, 2), "Frequency", "K", "Individual frequencies", 2),
-        ((2, 4), "Diversity", "L", "Individual diversity indices", 1),
-        ((4, 6), "Transition", "M", "Transition metrics", 1),
-        ((6, 8), "Bout", "N", "Bout durations", 2),
+    # K's behaviour names are shorter than N's, so its four columns would pack
+    # into a narrower block; the wider column spacing makes the two legends span
+    # the same width.
+    for columns, panel, letter, title, ncol, colspace in [
+        ((0, 2), "Frequency", "K", "Individual frequencies", 4, 2.4),
+        ((2, 4), "Diversity", "L", "Individual diversity indices", 1, 0.7),
+        ((4, 6), "Transition", "M", "Transition metrics", 1, 0.7),
+        ((6, 8), "Bout", "N", "Bout durations", 4, 0.7),
     ]:
         ax = fig.add_subplot(gs[5, columns[0]:columns[1]])
         letter_artists.append(
-            (ax, draw_individual_overtime(ax, individual_time, panel, letter, title, ncol=ncol))
+            (ax, draw_individual_overtime(ax, individual_time, panel, letter, title,
+                                          ncol=ncol, columnspacing=colspace))
         )
 
     align_panel_letters(fig, letter_artists)
