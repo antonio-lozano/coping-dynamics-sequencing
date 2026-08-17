@@ -1,0 +1,55 @@
+name: Reproduction problem
+description: A figure, table, report, or check does not rebuild or does not match
+labels: ["reproducibility"]
+body:
+  - type: checkboxes
+    attributes:
+      label: Before reporting
+      options:
+        - label: I searched the existing issues
+          required: true
+        - label: I ran `python scripts/check_reproducibility.py` and read its output
+          required: true
+  - type: input
+    attributes:
+      label: Commit
+      description: Output of `git rev-parse HEAD` in your clone
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - Linux
+        - macOS
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: Install route
+      description: How the environment was created
+      options:
+        - uv sync --locked
+        - conda (environment.yml)
+        - pip (requirements.txt)
+        - other
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Artifact that fails
+      description: Repository path of the figure, table, report, or check that does not rebuild or match
+      placeholder: statistics/fig6_resilience_stats.csv
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: What happened
+      description: The exact command you ran, what you expected, and what you got instead
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Log output
+      render: shell

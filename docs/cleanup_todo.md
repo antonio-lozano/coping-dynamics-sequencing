@@ -78,3 +78,18 @@ closed and what genuinely remains. Ordered as in the original.
   gives p = 0.042 (SE 4.42 vs 2.66). Recorded in
   `statistics/manuscript_consistency_audit.csv`; the manuscript text or the
   model choice needs to be reconciled by the authors.
+
+- **Mint a Zenodo DOI at release.** Archiving a tagged release on Zenodo gives
+  the repository a citable DOI and a snapshot independent of GitHub. Needs the
+  maintainers' Zenodo account; once minted, add the DOI to the `identifiers`
+  list in `CITATION.cff` and to the README citation section.
+
+- **Move the 93 MB DeepLabCut training snapshot to a release asset.** The
+  vendored tool tracks
+  `tools/behavior_dlc_classifier/models/dlc_project/.../train/snapshot-500000.data-00000-of-00001`
+  as a plain blob, a few MB under GitHub's hard 100 MB push limit — a
+  retrained, slightly larger snapshot would be rejected outright. Decision
+  2026-08-17: keep the blob for now; later attach it to a GitHub Release with
+  a checksum-verified download step, the way the sibling repository already
+  ships its 1 GB classifier model. Every commit stacked on top makes the
+  eventual removal more history surgery, so prefer sooner over later.

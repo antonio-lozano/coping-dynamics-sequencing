@@ -1,5 +1,9 @@
 # Coping Dynamics Sequencing
 
+[![Reproducibility checks](https://github.com/antonio-lozano/coping-dynamics-sequencing/actions/workflows/reproducibility.yml/badge.svg)](https://github.com/antonio-lozano/coping-dynamics-sequencing/actions/workflows/reproducibility.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11-blue.svg)](pyproject.toml)
+
 Self-contained manuscript repository for the behavioral motif, freezing, and
 stress-coping dynamics analyses. All data required to rebuild the data-derived
 figures, statistical CSVs, Excel reports, and validation manifest are included
@@ -154,8 +158,14 @@ classifier in `classifier/legacy_shap/`, not from
   98 raw freezing prediction CSVs, manifest hashes, retired-path absence,
   absence of local absolute paths in text files, and absence of local tool
   traces.
-- `.github/workflows/reproducibility.yml` compiles all Python files and runs the
-  repository validation on GitHub.
+- `.github/workflows/reproducibility.yml` runs three jobs on GitHub: source
+  guards (pre-commit hooks, `uv lock --check`, citation metadata validation),
+  the locked-environment checks (install, import smoke check, compile sweep,
+  layout checker), and an informational full rebuild of the pipeline.
+- `.pre-commit-config.yaml` guards commits locally: oversized files, merge
+  conflict markers, malformed YAML/TOML/JSON, whitespace, and ruff lint and
+  formatting for hand-written sources. Enable with `uvx pre-commit install`.
+  Hooks never touch generated artifacts or `tools/`.
 - All default paths resolve inside the repository through `src/config.py`.
 
 ## Additional Documentation
@@ -173,4 +183,9 @@ classifier in `classifier/legacy_shap/`, not from
   outside the reproducibility contract and unrelated to the Figure 7
   classifier in `classifier/`.
 
-Use `CITATION.cff` for software citation metadata and `LICENSE` for licensing.
+## Citation
+
+Software citation metadata lives in `CITATION.cff`; GitHub's "Cite this
+repository" button reads it, and CI validates it on every push. A Zenodo DOI
+for the archived release is planned and will be added to `CITATION.cff` once
+minted. See `LICENSE` for licensing.
