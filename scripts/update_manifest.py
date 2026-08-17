@@ -90,10 +90,11 @@ def iter_artifacts() -> list[Path]:
     return sorted(paths, key=lambda p: p.as_posix().lower())
 
 
-# Text artifacts the generators rewrite. pandas and csv default to the
-# platform's line endings, so on Windows a regenerated CSV lands on disk with
-# CRLF while the repository stores LF and every clean clone checks out LF.
-NORMALIZE_SUFFIXES = {".csv", ".md", ".txt", ".json"}
+# Text artifacts the generators rewrite. pandas, csv, and matplotlib's SVG
+# backend default to the platform's line endings, so on Windows a regenerated
+# artifact lands on disk with CRLF while the repository stores LF and every
+# clean clone checks out LF.
+NORMALIZE_SUFFIXES = {".csv", ".md", ".txt", ".json", ".svg"}
 
 
 def normalize_line_endings(paths: list[Path]) -> int:
