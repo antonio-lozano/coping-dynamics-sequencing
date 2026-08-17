@@ -32,9 +32,14 @@ jobs:
       - name: Validate citation metadata
         run: uvx cffconvert@2.0.0 --validate
 
-  # The locked environment installs, imports, and passes the layout checks.
+  # The locked environment installs, imports, and passes the layout checks and
+  # the fast test suite, on both operating systems the repository documents.
   checks:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -54,6 +59,7 @@ jobs:
           shap, sklearn, statsmodels, xgboost; import src.config"
 
       - name: Compile every Python file
+        shell: bash
         run: |
           uv run python - <<'PY'
           from pathlib import Path
@@ -66,6 +72,48 @@ jobs:
 
       - name: Check publication artifact layout
         run: uv run python scripts/check_reproducibility.py
+
+      - name: Fast test suite
+        run: uv run pytest -m "not slow" -q
+
+  # The vendored classifier tool manages its own environment and ships its own
+  # test suite; this lane finally runs it. GUI code is imported but no window
+  # is opened, so the suite is headless-safe; the one test needing local demo
+  # tracking data skips itself on a fresh checkout.
+  tool-tests:
+    name: behavior-dlc-classifier tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools/behavior_dlc_classifier
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.10.10"
+          enable-cache: true
+
+      - name: System libraries for OpenCV
+        run: sudo apt-get update && sudo apt-get install -y libgl1 libglib2.0-0
+
+      - name: Lockfile matches pyproject
+        run: uv lock --check
+
+      - name: Install locked environment with test extras
+        run: uv sync --locked --extra video --extra ml --extra dev
+
+      # cv2 and tkinter degrade into silent skips or collection errors when
+      # missing; import them loudly so a broken runner image fails visibly.
+      - name: Optional dependencies import loudly
+        run: uv run --no-sync python -c "import tkinter, cv2, sklearn, openpyxl, matplotlib"
+
+      - name: Run the tool's test suite
+        env:
+          MPLBACKEND: Agg
+        run: uv run --no-sync pytest -q
 
   # Full rebuild on a foreign machine, reported but not (yet) enforced:
   # statsmodels results can differ in the last digits across BLAS builds, which
@@ -94,6 +142,12 @@ jobs:
 
       - name: Rebuild everything
         run: uv run python scripts/run_all.py
+
+      # Same-machine determinism is meaningful even where the bytes differ
+      # from the committed (Windows-built) artifacts: building twice on this
+      # runner must at least agree with itself.
+      - name: Determinism tests (double build)
+        run: uv run pytest -m slow -q
 
       - name: Report working-tree state after rebuild
         if: always()

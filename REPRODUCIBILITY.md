@@ -27,7 +27,7 @@ conda activate coping-dynamics
 ```
 
 ```bash
-python --version  # Python 3.9, 3.10, or 3.11
+python --version  # Python 3.10 or 3.11
 python -m venv .venv
 # Windows:  .venv\Scripts\activate
 # Linux:    source .venv/bin/activate

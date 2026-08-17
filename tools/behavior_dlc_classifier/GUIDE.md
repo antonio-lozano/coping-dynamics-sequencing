@@ -106,6 +106,15 @@ The tool installs and runs identically on Windows and Linux. Give it its own
 environment; do not install it alongside other analyses, because it needs newer
 pandas and XGBoost than many pipelines pin.
 
+In this repository specifically, the tool's environment is deliberately separate
+from the root manuscript environment and must stay that way: the root pins
+`xgboost >=1.7,<3` while the tool needs `>=2,<4`, and XGBoost 1.7 returns
+transposed probability arrays that would silently corrupt the tool's behavior
+predictions. The root pre-commit hooks, ruff config, and artifact manifest all
+exclude `tools/` for the same reason — the tool manages itself. Its test suite
+runs in CI in its own locked environment (see
+`.github/workflows/reproducibility.yml`, job `behavior-dlc-classifier tests`).
+
 ### With uv
 
 [uv](https://docs.astral.sh/uv/) is the shortest route. It downloads a suitable

@@ -2,7 +2,7 @@
 
 [![Reproducibility checks](https://github.com/antonio-lozano/coping-dynamics-sequencing/actions/workflows/reproducibility.yml/badge.svg)](https://github.com/antonio-lozano/coping-dynamics-sequencing/actions/workflows/reproducibility.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11-blue.svg)](pyproject.toml)
+[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11-blue.svg)](pyproject.toml)
 
 Self-contained manuscript repository for the behavioral motif, freezing, and
 stress-coping dynamics analyses. All data required to rebuild the data-derived
@@ -29,7 +29,7 @@ python scripts/check_reproducibility.py
 ```
 
 ```bash
-python --version  # Python 3.9, 3.10, or 3.11
+python --version  # Python 3.10 or 3.11
 python -m venv .venv
 # Windows:  .venv\Scripts\activate
 # Linux:    source .venv/bin/activate
@@ -158,10 +158,16 @@ classifier in `classifier/legacy_shap/`, not from
   98 raw freezing prediction CSVs, manifest hashes, retired-path absence,
   absence of local absolute paths in text files, and absence of local tool
   traces.
-- `.github/workflows/reproducibility.yml` runs three jobs on GitHub: source
+- `tests/` is the root test suite: golden values pinning the canonical metric
+  implementations in `src/statistics.py`, cross-implementation agreement
+  checks, the layout checker under pytest, and slow-marked double-build
+  determinism tests. Run `uv run pytest -m "not slow"` for the fast selection.
+- `.github/workflows/reproducibility.yml` runs four jobs on GitHub: source
   guards (pre-commit hooks, `uv lock --check`, citation metadata validation),
-  the locked-environment checks (install, import smoke check, compile sweep,
-  layout checker), and an informational full rebuild of the pipeline.
+  the locked-environment checks on Ubuntu and Windows (install, import smoke
+  check, compile sweep, layout checker, fast tests), the vendored classifier
+  tool's own test suite in its own locked environment, and an informational
+  full rebuild of the pipeline with double-build determinism tests.
 - `.pre-commit-config.yaml` guards commits locally: oversized files, merge
   conflict markers, malformed YAML/TOML/JSON, whitespace, and ruff lint and
   formatting for hand-written sources. Enable with `uvx pre-commit install`.
