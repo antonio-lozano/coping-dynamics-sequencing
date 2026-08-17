@@ -7,11 +7,17 @@ tracked inputs.
 
 ## Environment
 
+The instructions below are identical on Windows and Linux.
+
 Recommended:
 
 ```bash
-uv sync
+uv sync --locked
 ```
+
+`uv` installs the interpreter named in `.python-version` and resolves from
+`uv.lock`, so the environment is the same on every machine. `--locked` fails
+rather than silently re-resolving if the lock and `pyproject.toml` disagree.
 
 Alternative environments:
 
@@ -22,8 +28,16 @@ conda activate coping-dynamics
 
 ```bash
 python --version  # Python 3.9, 3.10, or 3.11
+python -m venv .venv
+# Windows:  .venv\Scripts\activate
+# Linux:    source .venv/bin/activate
 pip install -r requirements.txt
 ```
+
+Every command in the rest of this document is written as `python ...`. On the
+`uv` route, prefix it with `uv run`, as in
+`uv run python scripts/check_reproducibility.py`. On the conda and pip routes,
+activate the environment first and run it as written.
 
 ## Validation
 

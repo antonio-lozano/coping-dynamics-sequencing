@@ -1,20 +1,23 @@
-* text=auto
+# Every text file is checked out with LF on Windows, macOS and Linux alike, so a
+# working tree holds the same bytes everywhere and the SHA-256 values in
+# MANIFEST.csv identify the same content on every platform.
+#
+# Listing extensions one by one is not enough. Any extension left out falls back
+# to the platform default, so the file arrives as CRLF on Windows and LF
+# elsewhere, and its recorded hash can then only ever match on one of them.
+* text=auto eol=lf
 
-*.py text eol=lf
-*.md text eol=lf
-*.txt text eol=lf
-*.json text eol=lf
-*.yml text eol=lf
-*.yaml text eol=lf
-*.cff text eol=lf
-*.csv text eol=lf
-
+# Binary artifacts are never line-ending converted. Git's own detection already
+# leaves them alone; naming them states that guarantee instead of relying on it,
+# because a corrupted figure or model file stays silent until someone opens it.
 *.xlsx binary
 *.pdf binary
 *.png binary
-*.svg text eol=lf -whitespace
 *.gz binary
 *.joblib binary
 *.pkl binary
 *.parquet binary
 *.npy binary
+
+# Figures are machine-written XML, where whitespace rules add nothing.
+*.svg -whitespace

@@ -7,10 +7,12 @@ in the repository.
 
 ## Quick Start
 
-Use the locked `uv` environment when possible:
+The same commands work on Windows and Linux. Use the locked `uv` environment
+when possible: it installs the Python recorded in `.python-version` itself, and
+resolves from `uv.lock`, so every machine gets identical versions.
 
 ```bash
-uv sync
+uv sync --locked
 uv run python scripts/check_reproducibility.py
 ```
 
@@ -19,20 +21,26 @@ Alternative environments:
 ```bash
 conda env create -f environment.yml
 conda activate coping-dynamics
+python scripts/check_reproducibility.py
 ```
 
 ```bash
 python --version  # Python 3.9, 3.10, or 3.11
+python -m venv .venv
+# Windows:  .venv\Scripts\activate
+# Linux:    source .venv/bin/activate
 pip install -r requirements.txt
 python scripts/check_reproducibility.py
 ```
 
 ## Rebuild Everything
 
-Run commands from the repository root.
+Run commands from the repository root. The `uv run` prefix shown below is only
+needed for the `uv` route; with conda or pip, activate the environment first and
+call `python` directly.
 
 ```bash
-python scripts/run_all.py
+uv run python scripts/run_all.py
 ```
 
 This rebuilds the compact freezing-prediction tables, processed analysis
@@ -45,12 +53,12 @@ manifest, and checks without re-rendering figures.
 Targeted rebuilds:
 
 ```bash
-python scripts/run_all_figures.py
-python scripts/build_raw_data_workbook.py
-python scripts/build_statistical_report.py
-python scripts/audit_manuscript_results.py
-python scripts/update_manifest.py
-python scripts/check_reproducibility.py
+uv run python scripts/run_all_figures.py
+uv run python scripts/build_raw_data_workbook.py
+uv run python scripts/build_statistical_report.py
+uv run python scripts/audit_manuscript_results.py
+uv run python scripts/update_manifest.py
+uv run python scripts/check_reproducibility.py
 ```
 
 ## Repository Contract

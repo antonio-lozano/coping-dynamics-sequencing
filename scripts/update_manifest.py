@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import csv
 import hashlib
+import subprocess
+from functools import lru_cache
 from pathlib import Path
 
 
@@ -42,19 +44,49 @@ def category(path: Path) -> str:
     return "artifact"
 
 
+@lru_cache(maxsize=1)
+def clean_clone_paths() -> frozenset[str] | None:
+    """Repository-relative paths a fresh clone contains, or None outside a checkout.
+
+    Tracked files, plus untracked files Git is not ignoring. Scratch folders that
+    sit inside the tree but never reach the repository are left out, so a working
+    machine and a continuous integration runner agree on which files exist.
+
+    None means Git could not answer, as in an archive unpacked from a data
+    repository. Callers then read the directory tree as it stands, which is the
+    right answer there, because such an archive carries no ignored files.
+    """
+    try:
+        completed = subprocess.run(
+            ["git", "-C", str(ROOT), "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+            capture_output=True,
+            check=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    names = completed.stdout.decode("utf-8", "surrogateescape").split("\0")
+    return frozenset(name for name in names if name)
+
+
 def iter_artifacts() -> list[Path]:
+    """Every publication artifact, in the one order both the writer and the checker use."""
+    included = clean_clone_paths()
     paths: list[Path] = []
     for dirname in ARTIFACT_DIRS:
         base = ROOT / dirname
         if not base.exists():
             continue
-        paths.extend(
-            path
-            for path in base.rglob("*")
-            if path.is_file()
-            and not path.name.startswith("~$")
-            and not EXCLUDED_DIRS.intersection(path.relative_to(ROOT).parts)
-        )
+        for path in base.rglob("*"):
+            if not path.is_file():
+                continue
+            if path.name.startswith("~$"):
+                continue
+            rel = path.relative_to(ROOT)
+            if EXCLUDED_DIRS.intersection(rel.parts):
+                continue
+            if included is not None and rel.as_posix() not in included:
+                continue
+            paths.append(path)
     return sorted(paths, key=lambda p: p.as_posix().lower())
 
 
@@ -71,8 +103,14 @@ def main() -> None:
             }
         )
 
-    with OUT.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=["path", "category", "bytes", "sha256"])
+    # csv.writer ends rows with CRLF by default, which Git then rewrites to LF on
+    # the way in and hands back as LF on the way out, leaving this file reported as
+    # modified after every run. Writing LF directly makes the output match what the
+    # repository stores, so regenerating a manifest that has not changed is a no-op.
+    with OUT.open("w", newline="\n", encoding="utf-8") as handle:
+        writer = csv.DictWriter(
+            handle, fieldnames=["path", "category", "bytes", "sha256"], lineterminator="\n"
+        )
         writer.writeheader()
         writer.writerows(rows)
     print(f"Wrote {OUT.relative_to(ROOT)} with {len(rows)} artifacts")

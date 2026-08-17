@@ -10,6 +10,12 @@ from pathlib import Path
 
 import openpyxl
 
+# The manifest writer owns the definition of what counts as a publication
+# artifact and which files a clean clone contains. Importing it here keeps one
+# definition rather than two that can drift apart unnoticed.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from update_manifest import clean_clone_paths, iter_artifacts, sha256  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -137,6 +143,9 @@ FORBIDDEN_PATHS = {"data/" + "derived"}
 TEXT_SUFFIXES = {".md", ".py", ".txt", ".json", ".yml", ".yaml", ".cff", ".toml"}
 LOCAL_PATH_PATTERN = re.compile(r"(?i)\b[a-z]:\\(?:users|downloads|jen|antonio|big_computer)|/mnt/[a-z]/")
 SKIP_DIRS = {".git", ".venv", "__pycache__", ".mypy_cache", ".pytest_cache", ".uv-cache"}
+# Reading a file back to explain a hash mismatch is only worth it while it fits
+# comfortably in memory; past that the plain mismatch is the more useful report.
+LINE_ENDING_HINT_MAX_BYTES = 64 * 1024 * 1024
 FORBIDDEN_TEXT_TERMS = (
     "Cl" + "aude",
     "Co" + "dex",
@@ -145,14 +154,6 @@ FORBIDDEN_TEXT_TERMS = (
     "AI" + "-generated",
     "AI" + " generated",
 )
-
-
-def sha256(path: Path) -> str:
-    h = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            h.update(chunk)
-    return h.hexdigest()
 
 
 def fail(message: str, errors: list[str]) -> None:
@@ -172,12 +173,20 @@ def path_exists_exact_case(rel: str) -> bool:
 
 
 def iter_files() -> list[Path]:
-    files: list[Path] = []
-    for path in ROOT.rglob("*"):
-        if SKIP_DIRS.intersection(path.parts) or not path.is_file():
-            continue
-        files.append(path)
-    return files
+    """Every file a clean clone would contain.
+
+    Files Git ignores are left out, so a working copy holding local scratch
+    reports exactly what a continuous integration runner reports. Untracked files
+    that are *not* ignored stay in, because those are the ones that would reach
+    the repository unnoticed on the next commit.
+    """
+    included = clean_clone_paths()
+    candidates = (ROOT / rel for rel in included) if included is not None else ROOT.rglob("*")
+    return [
+        path
+        for path in candidates
+        if not SKIP_DIRS.intersection(path.parts) and path.is_file()
+    ]
 
 
 def check_required(errors: list[str]) -> None:
@@ -201,7 +210,7 @@ def check_required(errors: list[str]) -> None:
         fail(f"expected 98 freezing prediction CSVs, found {len(predictions)}", errors)
 
 
-def check_layout(errors: list[str]) -> None:
+def check_layout(files: list[Path], errors: list[str]) -> None:
     for name in FORBIDDEN_TOP_LEVEL:
         if (ROOT / name).exists():
             fail(f"forbidden top-level path exists: {name}", errors)
@@ -209,7 +218,7 @@ def check_layout(errors: list[str]) -> None:
         if path_exists_exact_case(rel):
             fail(f"forbidden retired path exists: {rel}", errors)
 
-    for path in iter_files():
+    for path in files:
         rel = path.relative_to(ROOT).as_posix()
         lower = rel.lower()
         if path.name.lower().startswith("readme") and rel != "README.md":
@@ -227,8 +236,8 @@ def check_layout(errors: list[str]) -> None:
             fail(f"analysis-decision scratch name found: {rel}", errors)
 
 
-def check_text_clean(errors: list[str]) -> None:
-    for path in iter_files():
+def check_text_clean(files: list[Path], errors: list[str]) -> None:
+    for path in files:
         if path.suffix.lower() not in TEXT_SUFFIXES:
             continue
         rel = path.relative_to(ROOT).as_posix()
@@ -243,6 +252,22 @@ def check_text_clean(errors: list[str]) -> None:
                 fail(f"tool-specific text trace in {rel}", errors)
 
 
+def line_ending_hint(path: Path, expected_sha: str) -> str:
+    """Name line endings as the cause when the bytes differ but the content does not.
+
+    A tree checked out with the platform's own line endings hashes differently
+    from one checked out with LF. Without this, that surfaces as an unexplained
+    hash mismatch on every text artifact at once, which reads like data loss.
+    """
+    if not expected_sha or path.stat().st_size > LINE_ENDING_HINT_MAX_BYTES:
+        return ""
+    as_lf = path.read_bytes().replace(b"\r\n", b"\n")
+    variants = (as_lf, as_lf.replace(b"\n", b"\r\n"))
+    if any(hashlib.sha256(variant).hexdigest() == expected_sha for variant in variants):
+        return " (same content, different line endings; see .gitattributes)"
+    return ""
+
+
 def check_manifest(errors: list[str]) -> None:
     manifest = ROOT / "MANIFEST.csv"
     if not manifest.exists():
@@ -255,25 +280,38 @@ def check_manifest(errors: list[str]) -> None:
         fail("MANIFEST.csv has no artifact rows", errors)
         return
 
-    seen = set()
+    recorded = {row.get("path", "") for row in rows}
+    if len(recorded) != len(rows):
+        fail("MANIFEST.csv lists the same path more than once", errors)
+
     for row in rows:
         rel = row.get("path", "")
-        seen.add(rel)
         path = ROOT / rel
         if not path.is_file():
             fail(f"manifest path missing: {rel}", errors)
             continue
-        actual_size = path.stat().st_size
-        if int(row.get("bytes", -1)) != actual_size:
-            fail(f"manifest size mismatch: {rel}", errors)
-        actual_sha = sha256(path)
-        if row.get("sha256") != actual_sha:
-            fail(f"manifest sha256 mismatch: {rel}", errors)
 
-    artifact_prefixes = ("data/", "figure_source_data/", "figures/", "statistics/", "report/", "classifier/")
-    for rel in REQUIRED_FILES:
-        if rel.startswith(artifact_prefixes) and rel not in seen:
-            fail(f"required artifact absent from manifest: {rel}", errors)
+        expected_sha = row.get("sha256", "")
+        try:
+            expected_size = int(row.get("bytes", ""))
+        except (TypeError, ValueError):
+            fail(f"manifest row has a non-numeric size: {rel}", errors)
+            continue
+
+        actual_size = path.stat().st_size
+        if expected_size != actual_size:
+            hint = line_ending_hint(path, expected_sha)
+            fail(f"manifest size mismatch: {rel} (recorded {expected_size}, found {actual_size}){hint}", errors)
+        if expected_sha != sha256(path):
+            fail(f"manifest sha256 mismatch: {rel}{line_ending_hint(path, expected_sha)}", errors)
+
+    # The reverse direction. Without it, an artifact added to one of the covered
+    # directories and never hashed passes silently, and the manifest stops being
+    # a complete record of what the repository ships.
+    for path in iter_artifacts():
+        rel = path.relative_to(ROOT).as_posix()
+        if rel not in recorded:
+            fail(f"artifact on disk but absent from MANIFEST.csv: {rel}", errors)
 
 
 def check_workbook_figure_structure(errors: list[str]) -> None:
@@ -349,9 +387,10 @@ def check_workbook_figure_structure(errors: list[str]) -> None:
 
 def main() -> int:
     errors: list[str] = []
+    files = iter_files()
     check_required(errors)
-    check_layout(errors)
-    check_text_clean(errors)
+    check_layout(files, errors)
+    check_text_clean(files, errors)
     check_manifest(errors)
     check_workbook_figure_structure(errors)
 
