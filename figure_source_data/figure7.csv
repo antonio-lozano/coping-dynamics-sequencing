@@ -1,0 +1,16 @@
+panel,measure,category,value
+A,classifier_accuracy,Freeze,0.8
+A,classifier_accuracy,Sniff,0.86
+A,classifier_accuracy,Groom,0.45
+A,classifier_accuracy,Turn,0.71
+A,classifier_accuracy,Locomotion,0.61
+A,classifier_accuracy,Climb,0.68
+A,classifier_accuracy,Jump,0.47
+A,classifier_accuracy,Unassigned,0.3
+A,classifier_accuracy,Overall,0.63
+D,held_out_cohort_auc,Behaviour dynamics,0.8166666666666667
+D,held_out_cohort_auc,Behaviour dynamics,0.631578947368421
+D,held_out_cohort_auc,Freeze only,0.7166666666666667
+D,held_out_cohort_auc,Freeze only,0.8947368421052632
+E,full_session_auc,Behaviour dynamics,0.8419540229885057
+E,full_session_auc,Freeze only,0.7902298850574713

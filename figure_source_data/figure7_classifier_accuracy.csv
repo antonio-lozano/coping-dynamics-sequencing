@@ -1,0 +1,10 @@
+class,accuracy,chance_accuracy
+Freeze,0.8,0.125
+Sniff,0.86,0.125
+Groom,0.45,0.125
+Turn,0.71,0.125
+Locomotion,0.61,0.125
+Climb,0.68,0.125
+Jump,0.47,0.125
+Unassigned,0.3,0.125
+Overall,0.63,0.125

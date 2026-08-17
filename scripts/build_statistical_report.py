@@ -36,6 +36,7 @@ TEXT = "FF4D4D4D"
 TITLE_FILL = PatternFill("solid", fgColor="FFEDEDED")
 HEADER_FILL = PatternFill("solid", fgColor="FFF5F5F5")
 SIG_FILL = PatternFill("solid", fgColor="FFF2CEEF")
+TREND_FILL = PatternFill("solid", fgColor="FFB8CCE4")
 BODY_FONT = Font(color=TEXT, size=10)
 TITLE_FONT = Font(color=TEXT, bold=True, size=10)
 HEADER_FONT = Font(color=TEXT, bold=True, size=10)
@@ -129,6 +130,18 @@ def numeric(value: object) -> object:
     if isinstance(value, (int, float, np.integer, np.floating)):
         return float(value)
     return value
+
+
+def style_p_value(cell: openpyxl.cell.cell.Cell, value: object) -> None:
+    """Highlight significant results and 0.05-0.10 trends consistently."""
+    if not isinstance(value, (int, float)):
+        return
+    if value < 0.05:
+        cell.fill = SIG_FILL
+        cell.font = SIG_FONT
+    elif value < 0.10:
+        cell.fill = TREND_FILL
+        cell.font = SIG_FONT
 
 
 def apply_bh_fdr(
@@ -225,16 +238,23 @@ def write_table(
     p_cols = {
         idx
         for idx, column in enumerate(df.columns)
-        if str(column).lower() in {"p>|z|", "p", "p_value", "p_bh_fdr", "p_bonferroni"}
+        if str(column).lower() in {
+            "p>|z|",
+            "p",
+            "p_value",
+            "p_bh_fdr",
+            "p_bonferroni",
+            "p value",
+            "p value corrected",
+        }
     }
     for row_idx, values in enumerate(df.itertuples(index=False), header_row + 1):
         for offset, value in enumerate(values):
             value = numeric(value)
             cell = ws.cell(row_idx, col + offset, format_p(value))
             cell.font = BODY_FONT
-            if offset in p_cols and isinstance(value, (int, float)) and value < 0.05:
-                cell.fill = SIG_FILL
-                cell.font = SIG_FONT
+            if offset in p_cols:
+                style_p_value(cell, value)
     return header_row + len(df) + 2
 
 
@@ -380,7 +400,7 @@ def write_metadata_column(ws, header_row: int, col: int, metadata: list[tuple[st
         ws.cell(offset, col + 1, numeric(value) if isinstance(value, float) else value).font = BODY_FONT
 
 
-POSTHOC_COLS = ["Time", "t stat", "P value", "P value corrected"]
+POSTHOC_COLS = ["Time (min)", "t stat", "P value", "P value corrected"]
 
 
 def write_section(
@@ -414,7 +434,10 @@ def write_section(
         if posthoc is not None:
             for row_idx, (_, values) in enumerate(posthoc.iterrows(), header_row + 2):
                 for offset, value in enumerate(values):
-                    ws.cell(row_idx, left + 8 + offset, numeric(value) if isinstance(value, float) else value).font = BODY_FONT
+                    cell = ws.cell(row_idx, left + 8 + offset, numeric(value) if isinstance(value, float) else value)
+                    cell.font = BODY_FONT
+                    if offset in {2, 3}:
+                        style_p_value(cell, value)
             used = max(used, header_row + 1 + len(posthoc))
         else:
             ws.cell(header_row + 2, left + 8, NOT_IN_REPO).font = BODY_FONT
@@ -554,9 +577,9 @@ def timecourse_descriptive(tc: pd.DataFrame, cluster: str, value_col: str, time_
             mean = float(values.mean()) if n else float("nan")
             sd = float(values.std(ddof=1)) if n > 1 else float("nan")
             sem = sd / np.sqrt(n) if n else float("nan")
-            rows.append({"Stress": grp, "Time": time_value, "N": n, "Mean": mean, "SD": sd, "SEM": sem, "": "", "Cohen's d": ""})
+            rows.append({"Stress": grp, "Time (min)": time_value / 60.0, "N": n, "Mean": mean, "SD": sd, "SEM": sem, "": "", "Cohen's d": ""})
         group_values[grp] = grp_rows[value_col].dropna()
-    frame = pd.DataFrame(rows, columns=["Stress", "Time", "N", "Mean", "SD", "SEM", "", "Cohen's d"])
+    frame = pd.DataFrame(rows, columns=["Stress", "Time (min)", "N", "Mean", "SD", "SEM", "", "Cohen's d"])
     control, els = group_values["Control"], group_values["ELS"]
     if len(control) > 1 and len(els) > 1:
         pooled = np.sqrt(((len(control) - 1) * control.std(ddof=1) ** 2 + (len(els) - 1) * els.std(ddof=1) ** 2) / (len(control) + len(els) - 2))
@@ -583,7 +606,7 @@ def timecourse_posthoc(tc: pd.DataFrame, cluster: str, value_col: str, time_col:
             corrected = min(float(p_value) * n_comparisons, 1.0)
         else:
             t_stat, p_value, corrected = float("nan"), float("nan"), float("nan")
-        rows.append({"Time": time_value, "t stat": float(t_stat), "P value": float(p_value), "P value corrected": corrected})
+        rows.append({"Time (min)": time_value / 60.0, "t stat": float(t_stat), "P value": float(p_value), "P value corrected": corrected})
     return pd.DataFrame(rows, columns=POSTHOC_COLS)
 
 
@@ -631,10 +654,18 @@ def add_timecourse_sheet(
                 continue
 
             params, metadata = timecourse_block(sub, dep_var)
+            params = scale_parameter_rows(
+                params,
+                {
+                    "Time": "Time (per minute)",
+                    "Stress x time": "Stress x time (per minute)",
+                },
+                60.0,
+            )
             metadata.extend(
                 [
-                    ("Time source unit", "seconds"),
-                    ("Reported time effect", "change per second"),
+                    ("Time source unit", "minutes"),
+                    ("Reported time effect", "change per minute"),
                 ]
             )
             section = {"title": title, "params": params, "metadata": metadata}
@@ -803,7 +834,7 @@ def ground_truth_posthoc(data: pd.DataFrame, value_col: str = "freezing_pct") ->
             t_stat, p_value, corrected = float("nan"), float("nan"), float("nan")
         rows.append(
             {
-                "Time": int(time_value),
+                "Time (min)": float(time_value / 60.0),
                 "t stat": round(float(t_stat), 4),
                 "P value": round(float(p_value), 4),
                 "P value corrected": round(float(corrected), 4),
@@ -819,7 +850,7 @@ def ground_truth_descriptive(data: pd.DataFrame, value_col: str = "freezing_pct"
     columns and the effect sizes in their own Time/Cohen's d pair after a gap.
     """
     times = sorted(data["time_s"].unique())
-    columns = ["Stress", "Time", "N", "Mean", "SD", "SEM ", "", "Time ", "Cohen's d"]
+    columns = ["Stress", "Time (min)", "N", "Mean", "SD", "SEM ", "", "Time (min) ", "Cohen's d"]
     rows = []
     for group in ["Control", "ELS"]:
         for time_value in times:
@@ -829,13 +860,13 @@ def ground_truth_descriptive(data: pd.DataFrame, value_col: str = "freezing_pct"
             rows.append(
                 {
                     "Stress": group,
-                    "Time": int(time_value),
+                    "Time (min)": float(time_value / 60.0),
                     "N": n,
                     "Mean": round(float(values.mean()), 5) if n else "",
                     "SD": round(sd, 5) if n > 1 else "",
                     "SEM ": round(sd / np.sqrt(n), 5) if n > 1 else "",
                     "": "",
-                    "Time ": "",
+                    "Time (min) ": "",
                     "Cohen's d": "",
                 }
             )
@@ -850,7 +881,7 @@ def ground_truth_descriptive(data: pd.DataFrame, value_col: str = "freezing_pct"
 
     for index, time_value in enumerate(times):
         at_time = data[data["time_s"] == time_value]
-        frame.loc[index, "Time "] = int(time_value)
+        frame.loc[index, "Time (min) "] = float(time_value / 60.0)
         frame.loc[index, "Cohen's d"] = cohens_d(
             at_time[at_time["group"] == "Control"][value_col].dropna(),
             at_time[at_time["group"] == "ELS"][value_col].dropna(),
@@ -863,11 +894,11 @@ def ground_truth_descriptive(data: pd.DataFrame, value_col: str = "freezing_pct"
     )
     blank = {column: "" for column in columns}
     frame.loc[len(frame)] = blank
-    frame.loc[len(frame)] = {**blank, "Time ": "Global Cohen's d"}
-    frame.loc[len(frame)] = {**blank, "Time ": global_d}
+    frame.loc[len(frame)] = {**blank, "Time (min) ": "Global Cohen's d"}
+    frame.loc[len(frame)] = {**blank, "Time (min) ": global_d}
     # The effect-size pair repeats the "Time" header; the trailing space above
     # only keeps the two columns addressable while the frame is being built.
-    frame.columns = ["Stress", "Time", "N", "Mean", "SD", "SEM ", "", "Time", "Cohen's d"]
+    frame.columns = ["Stress", "Time (min)", "N", "Mean", "SD", "SEM ", "", "Time (min)", "Cohen's d"]
     return frame
 
 
@@ -881,14 +912,22 @@ def figure2_ground_truth_sections() -> list[dict]:
         metadata = ground_truth_metadata(result, subset)
         metadata.extend(
             [
-                ("Time source unit", "30-second bin index"),
-                ("Reported time effect", "change per 30 seconds"),
+                ("Time source unit", "minutes"),
+                ("Reported time effect", "change per minute"),
             ]
+        )
+        params = scale_parameter_rows(
+            ground_truth_params(result),
+            {
+                "Time": "Time (per minute)",
+                "Stress x time ": "Stress x time (per minute)",
+            },
+            60.0 / BIN_SECONDS,
         )
         blocks.append(
             {
                 "title": title,
-                "params": ground_truth_params(result),
+                "params": params,
                 "metadata": metadata,
                 "posthoc": ground_truth_posthoc(subset),
                 "descriptive": ground_truth_descriptive(subset),
@@ -929,11 +968,11 @@ def figure2_syllable_usage(experiment: int | None = None) -> pd.DataFrame:
     videos = frames.loc[frames["frames_in_video"] > 0].groupby("syllable", as_index=False)["animal_id"].nunique()
     videos = videos.rename(columns={"syllable": "Syllable", "animal_id": "Videos_with_syllable"})
     out = counts.merge(videos, on="Syllable", how="left")
-    out["Percent_all_frames"] = out["Total_frames_all_videos"] / total_frames * 100
+    out["Percentage_all_frames"] = out["Total_frames_all_videos"] / total_frames * 100
     out["Videos_with_syllable"] = out["Videos_with_syllable"].fillna(0).astype(int).astype(str) + f"/{n_videos}"
     # Most-used syllable first, as the submitted sheet lists them.
     out = out.sort_values("Total_frames_all_videos", ascending=False, kind="stable")
-    return out[["Syllable", "Total_frames_all_videos", "Percent_all_frames", "Videos_with_syllable"]].reset_index(drop=True)
+    return out[["Syllable", "Total_frames_all_videos", "Percentage_all_frames", "Videos_with_syllable"]].reset_index(drop=True)
 
 
 def figure2_syllable_usage_summary(experiment: int | None = None) -> pd.DataFrame:
@@ -957,11 +996,7 @@ def figure2_syllable_usage_summary(experiment: int | None = None) -> pd.DataFram
 
 
 def figure2_overlap_summary() -> pd.DataFrame:
-    """Describe both the manuscript raw S0+28 table and the plotted S0+28+40 source."""
-    raw = pd.read_csv(RAW_DIR / "manuscript_tables" / "raw_data" / "Overlap_0_28.csv")
-    raw = raw.rename(columns={"percent_freezing_covered_by_syllable_0_28": "overlap_pct"})
-    raw["source"] = "Raw table: syllables 0 + 28"
-
+    """Summarize the animal-level 0+28+40 overlap values plotted in Figure 2G."""
     plotted = pd.read_csv(RAW_DIR / "freezing_overlap_by_group.csv")
     plotted["animal_id"] = (
         plotted["recording"].str.extract(r"Animal[_ ](\d+_\d+)")[0].str.replace("_", ".", regex=False)
@@ -969,29 +1004,31 @@ def figure2_overlap_summary() -> pd.DataFrame:
     experiments = pd.read_csv(PROCESSED_DIR / "cluster_frequency_per_animal.csv")[["animal_id", "experiment"]].drop_duplicates()
     experiments["animal_id"] = experiments["animal_id"].map(lambda value: f"{float(value):.1f}")
     plotted = plotted.merge(experiments, on="animal_id", how="left", validate="many_to_one")
-    plotted["source"] = "Figure panel source: syllables 0 + 28 + 40"
-
     rows = []
-    for source in [raw, plotted]:
-        for analysis, subset in [
-            (analysis_label(None), source),
-            (analysis_label(1), source[source["experiment"] == 1]),
-            (analysis_label(3), source[source["experiment"] == 3]),
-        ]:
-            for group, values in subset.groupby("group", sort=False)["overlap_pct"]:
-                rows.append(
-                    {
-                        "Source": source["source"].iloc[0],
-                        "Analysis": analysis,
-                        "Group": group,
-                        "N": int(values.count()),
-                        "Mean": float(values.mean()),
-                        "SD": float(values.std(ddof=1)),
-                        "SEM": float(values.sem(ddof=1)),
-                        "Minimum": float(values.min()),
-                        "Maximum": float(values.max()),
-                    }
-                )
+    for analysis, subset in [
+        (analysis_label(None), plotted),
+        (analysis_label(1), plotted[plotted["experiment"] == 1]),
+        (analysis_label(3), plotted[plotted["experiment"] == 3]),
+    ]:
+        control = subset.loc[subset["group"] == "Control", "overlap_pct"].dropna()
+        els = subset.loc[subset["group"] == "ELS", "overlap_pct"].dropna()
+        pooled = np.sqrt(
+            ((len(control) - 1) * control.var(ddof=1) + (len(els) - 1) * els.var(ddof=1))
+            / (len(control) + len(els) - 2)
+        )
+        effect = float((els.mean() - control.mean()) / pooled) if pooled else float("nan")
+        for group, values in [("Control", control), ("ELS", els)]:
+            rows.append(
+                {
+                    "Analysis": analysis,
+                    "Group": group,
+                    "N": int(values.count()),
+                    "Mean": float(values.mean()),
+                    "SD": float(values.std(ddof=1)),
+                    "SEM": float(values.sem(ddof=1)),
+                    "Cohen's d (ELS - Control)": effect if group == "Control" else "",
+                }
+            )
     return pd.DataFrame(rows)
 
 
@@ -1000,23 +1037,95 @@ def figure2_precision_recall_summary(experiment: int | None = None) -> pd.DataFr
     if experiment is not None:
         by_animal = by_animal[by_animal["experiment"] == experiment]
     metrics = ["precision_percent", "recall_percent", "overlap_frames", "syllable_frames"]
-    long = by_animal.melt(
-        id_vars=["syllable", "group"],
-        value_vars=metrics,
-        var_name="Metric",
-        value_name="value",
-    )
-    out = (
-        long.groupby(["syllable", "group", "Metric"], as_index=False)["value"]
-        .agg(N="count", Mean="mean", SD="std")
-        .rename(columns={"syllable": "Syllable", "group": "Group"})
-    )
-    out["SEM"] = out["SD"] / np.sqrt(out["N"])
-    # Syllable, then Control before ELS, then the submitted metric order.
-    out["__g"] = out["Group"].map({"Control": 0, "ELS": 1}).fillna(9)
-    out["__m"] = out["Metric"].map({name: i for i, name in enumerate(metrics)})
-    out = out.sort_values(["Syllable", "__g", "__m"], kind="stable").drop(columns=["__g", "__m"])
-    return out[["Syllable", "Group", "Metric", "N", "Mean", "SD", "SEM"]].reset_index(drop=True)
+    rows = []
+    for syllable in sorted(by_animal["syllable"].dropna().unique()):
+        at_syllable = by_animal[by_animal["syllable"] == syllable]
+        effect_sizes = {}
+        for metric in metrics:
+            control = at_syllable.loc[at_syllable["group"] == "Control", metric].dropna()
+            els = at_syllable.loc[at_syllable["group"] == "ELS", metric].dropna()
+            if len(control) > 1 and len(els) > 1:
+                pooled = np.sqrt(
+                    ((len(control) - 1) * control.var(ddof=1) + (len(els) - 1) * els.var(ddof=1))
+                    / (len(control) + len(els) - 2)
+                )
+                effect_sizes[metric] = float((els.mean() - control.mean()) / pooled) if pooled else float("nan")
+            else:
+                effect_sizes[metric] = float("nan")
+
+        for group in ["Control", "ELS"]:
+            group_data = at_syllable[at_syllable["group"] == group]
+            row = {"Syllable": int(syllable), "Group": group, "N": int(len(group_data))}
+            for metric in metrics:
+                values = group_data[metric].dropna()
+                sd = float(values.std(ddof=1)) if len(values) > 1 else float("nan")
+                row[f"{metric}__Mean"] = float(values.mean()) if len(values) else float("nan")
+                row[f"{metric}__SD"] = sd
+                row[f"{metric}__SEM"] = sd / np.sqrt(len(values)) if len(values) > 1 else float("nan")
+                row[f"{metric}__Cohen's d"] = effect_sizes[metric] if group == "Control" else ""
+            rows.append(row)
+    return pd.DataFrame(rows)
+
+
+PRECISION_RECALL_METRICS = ["precision_percent", "recall_percent", "overlap_frames", "syllable_frames"]
+PRECISION_RECALL_LABELS = {
+    "precision_percent": "Precision_Percentage",
+    "recall_percent": "Recall_Percentage",
+    "overlap_frames": "Overlap_Frames",
+    "syllable_frames": "Syllable_Frames",
+}
+
+
+def add_precision_recall_sheet(wb: openpyxl.Workbook) -> None:
+    """Write Figure 2E-F with a two-level metric/statistic column header."""
+    ws = new_sheet(wb, "Fig.2E-F_Precision_recall")
+    row = 1
+    sections = [
+        (section_title("Precision/recall", None), figure2_precision_recall_summary()),
+        (section_title("Precision/recall", 1), figure2_precision_recall_summary(1)),
+        (section_title("Precision/recall", 3), figure2_precision_recall_summary(3)),
+    ]
+    subheaders = ["Mean", "SD", "SEM", "Cohen's d (ELS - Control)"]
+    width = 3 + len(PRECISION_RECALL_METRICS) * len(subheaders)
+    for title, frame in sections:
+        write_title(ws, row, 1, title, width)
+        top_header = row + 2
+        lower_header = top_header + 1
+        for col, label in enumerate(["Syllable", "Group", "N"], 1):
+            ws.merge_cells(start_row=top_header, start_column=col, end_row=lower_header, end_column=col)
+            cell = ws.cell(top_header, col, label)
+            cell.fill = HEADER_FILL
+            cell.font = HEADER_FONT
+            cell.alignment = CENTER
+            ws.cell(lower_header, col).fill = HEADER_FILL
+
+        col = 4
+        for metric in PRECISION_RECALL_METRICS:
+            ws.merge_cells(start_row=top_header, start_column=col, end_row=top_header, end_column=col + 3)
+            for metric_col in range(col, col + 4):
+                ws.cell(top_header, metric_col).fill = HEADER_FILL
+            metric_cell = ws.cell(top_header, col, PRECISION_RECALL_LABELS[metric])
+            metric_cell.font = HEADER_FONT
+            metric_cell.alignment = CENTER
+            for offset, label in enumerate(subheaders):
+                cell = ws.cell(lower_header, col + offset, label)
+                cell.fill = HEADER_FILL
+                cell.font = HEADER_FONT
+                cell.alignment = CENTER
+            col += 4
+
+        for row_idx, values in enumerate(frame.to_dict("records"), lower_header + 1):
+            ws.cell(row_idx, 1, values["Syllable"]).font = BODY_FONT
+            ws.cell(row_idx, 2, values["Group"]).font = BODY_FONT
+            ws.cell(row_idx, 3, values["N"]).font = BODY_FONT
+            col = 4
+            for metric in PRECISION_RECALL_METRICS:
+                for label in ["Mean", "SD", "SEM", "Cohen's d"]:
+                    value = values.get(f"{metric}__{label}")
+                    ws.cell(row_idx, col, numeric(value)).font = BODY_FONT
+                    col += 1
+        row = lower_header + len(frame) + 3
+    style_widths(ws)
 
 
 def syllable_timecourse(syllables: list[int]) -> pd.DataFrame:
@@ -1068,8 +1177,8 @@ def figure2h_sections() -> list[dict]:
             metadata[1] = ("Dependent Variable", "Percentage")
             metadata.extend(
                 [
-                    ("Time source unit", "30-second bin index"),
-                    ("Reported time effect", "change per second"),
+                    ("Time source unit", "minutes"),
+                    ("Reported time effect", "change per minute"),
                 ]
             )
             params = ground_truth_params(result)
@@ -1077,10 +1186,10 @@ def figure2h_sections() -> list[dict]:
             params = scale_parameter_rows(
                 params,
                 {
-                    "Time": "Time (per second)",
-                    "Stress x time": "Stress x time (per second)",
+                    "Time": "Time (per minute)",
+                    "Stress x time": "Stress x time (per minute)",
                 },
-                1.0 / BIN_SECONDS,
+                60.0 / BIN_SECONDS,
             )
             sections.append(
                 {
@@ -1117,20 +1226,11 @@ def add_figure2_sheets(wb: openpyxl.Workbook) -> None:
         ],
         header_gap=2,
     )
-    add_vertical_tables(
-        wb,
-        "Fig.2E-F_Precision_recall",
-        [
-            (section_title("Precision/recall", None), figure2_precision_recall_summary()),
-            (section_title("Precision/recall", 1), figure2_precision_recall_summary(1)),
-            (section_title("Precision/recall", 3), figure2_precision_recall_summary(3)),
-        ],
-        header_gap=2,
-    )
+    add_precision_recall_sheet(wb)
     add_vertical_tables(
         wb,
         "Fig.2G_Freezing_overlap",
-        [("Freezing overlap source comparison", figure2_overlap_summary())],
+        [("Freezing overlap (%)", figure2_overlap_summary())],
         header_gap=2,
     )
     add_metric_blocks_sheet(wb, "Fig.2H_Freezing_syllables", figure2h_sections(), header_gap=1, pitch=18)
@@ -1356,11 +1456,15 @@ def attach_experiment(df: pd.DataFrame, animal_col: str) -> pd.DataFrame:
 
 
 def score_block(title: str, df: pd.DataFrame, value_col: str, dep_var: str, *, with_experiment: bool) -> dict:
-    """One per-animal distance-score OLS block."""
+    """One per-animal distance-score MixedLM block using the documented model."""
     formula = f"{value_col} ~ C(group, Treatment('Control'))"
     if with_experiment:
         formula += " + experiment"
-    res = smf.ols(formula, df).fit()
+    model = smf.mixedlm(formula, df, groups=df["animal_key"])
+    try:
+        res = model.fit(reml=False, method="lbfgs")
+    except Exception:
+        res = model.fit(reml=False)
     params = model_param_table(
         res,
         {
@@ -1368,7 +1472,8 @@ def score_block(title: str, df: pd.DataFrame, value_col: str, dep_var: str, *, w
             "experiment": "Dataset covariate (coded 1/3)",
         },
     )
-    metadata = [("Model", "OLS"), ("Dependent Variable", dep_var), ("No. Observations", int(res.nobs))]
+    metadata = model_metadata(res, "MixedLM", dep_var, df, "animal_key")
+    metadata.append(("Random intercept", "Animal"))
     return {"title": title, "params": params, "metadata": metadata, "descriptive": descriptive_rows(df, value_col)}
 
 
@@ -1386,8 +1491,8 @@ def add_figure5_sheets(wb: openpyxl.Workbook) -> None:
     scores = attach_experiment(pd.read_csv(PROCESSED_DIR / "figure5_dynamics_scores.csv"), "animal")
     add_metric_blocks_sheet(
         wb,
-        "Fig.5B_Euclidean distance",
-        [score_metric_block("Euclidean distance", scores, "dynamics_score", "Euclidean")],
+        "Fig.5A-B_Dynamics",
+        [score_metric_block("Euclidean Distance", scores, "dynamics_score", "Euclidean")],
         header_gap=1,
     )
     add_figure5_frequency_sheet(
@@ -1703,12 +1808,11 @@ def add_figure5_frequency_sheet(wb: openpyxl.Workbook) -> None:
     apply_bh_fdr(blocks, ["ELS resilient - ELS vulnerable"])
     add_metric_blocks_sheet(
         wb,
-        "Fig.5C_Clusters_frequency",
+        "Fig.5C_Cluster_frequency",
         blocks,
         header_gap=1,
         pitch=13,
-        first_col=2,
-        band_label="Full and source-dataset analyses",
+        first_col=1,
     )
 
 
@@ -1723,14 +1827,14 @@ def resilience_timecourse_descriptive(data: pd.DataFrame) -> pd.DataFrame:
             rows.append(
                 {
                     "Stress": group.replace(" ", "_"),
-                    "Time": time_value,
+                    "Time (min)": time_value / 60.0,
                     "N": n,
                     "Mean": float(values.mean()) if n else "",
                     "SD": sd if n > 1 else "",
                     "SEM": sd / np.sqrt(n) if n > 1 else "",
                 }
             )
-    return pd.DataFrame(rows, columns=["Stress", "Time", "N", "Mean", "SD", "SEM"])
+    return pd.DataFrame(rows, columns=["Stress", "Time (min)", "N", "Mean", "SD", "SEM"])
 
 
 def figure5_timecourse_posthoc(data: pd.DataFrame) -> pd.DataFrame:
@@ -1766,7 +1870,7 @@ def figure5_timecourse_posthoc(data: pd.DataFrame) -> pd.DataFrame:
                             "Analysis": analysis,
                             "Behavior": cluster,
                             "Contrast": contrast,
-                            "Time_seconds": int(time_s),
+                            "Time (min)": float(time_s / 60.0),
                             "N_first": int(len(first)),
                             "N_second": int(len(second)),
                             "Mean_difference": float(second.mean() - first.mean()) if len(first) and len(second) else float("nan"),
@@ -1813,11 +1917,11 @@ def figure5_timecourse_section(title: str, data: pd.DataFrame, *, with_experimen
     params = scale_parameter_rows(
         params,
         {
-            "Time": "Time (per 30 s)",
-            "Control - ELS vulnerable x time": "Control - ELS vulnerable x time (per 30 s)",
-            "ELS resilient - ELS vulnerable x time": "ELS resilient - ELS vulnerable x time (per 30 s)",
+            "Time": "Time (per minute)",
+            "Control - ELS vulnerable x time": "Control - ELS vulnerable x time (per minute)",
+            "ELS resilient - ELS vulnerable x time": "ELS resilient - ELS vulnerable x time (per minute)",
         },
-        BIN_SECONDS,
+        60.0,
     )
     params = insert_parameter_rows(
         params,
@@ -1832,19 +1936,19 @@ def figure5_timecourse_section(title: str, data: pd.DataFrame, *, with_experimen
             ),
             named_contrast_row(
                 result,
-                "ELS resilient - Control x time (per 30 s)",
+                "ELS resilient - Control x time (per minute)",
                 {
                     "C(group_ext, Treatment('ELS'))[T.Control]:time_bin": -1.0,
                     "C(group_ext, Treatment('ELS'))[T.ELS resilient]:time_bin": 1.0,
                 },
-                scale=BIN_SECONDS,
+                scale=60.0,
             ),
         ],
     )
     metadata.extend(
         [
-            ("Time source unit", "seconds (0, 30, ..., 420)"),
-            ("Reported time effect", "change per 30 seconds"),
+            ("Time source unit", "minutes"),
+            ("Reported time effect", "change per minute"),
         ]
     )
     return {
@@ -1880,11 +1984,11 @@ def add_figure5_timecourse_sheet(wb: openpyxl.Workbook) -> None:
                 ]
             }
         )
-    apply_bh_fdr(blocks, ["ELS resilient - ELS vulnerable x time (per 30 s)"])
-    add_metric_blocks_sheet(wb, "Fig.5D-J_Clusters_over_time", blocks, header_gap=1, pitch=18)
+    apply_bh_fdr(blocks, ["ELS resilient - ELS vulnerable x time (per minute)"])
+    add_metric_blocks_sheet(wb, "Fig.5D-J_Cluster_timecourse", blocks, header_gap=1, pitch=18)
     add_vertical_tables(
         wb,
-        "Fig.5_time_posthoc",
+        "Fig.5D-J_Time_posthoc",
         [("Figure 5 pairwise posthoc tests by time bin", figure5_timecourse_posthoc(timecourse))],
         header_gap=2,
     )
@@ -1915,15 +2019,15 @@ def add_figure6_sheets(wb: openpyxl.Workbook) -> None:
         }
     )
     diversity_blocks = [
-        resilience_block("Simpson index", diversity, "simpson", "Simpson"),
-        resilience_block("Shannon entropy index", diversity, "shannon", "Entropy"),
-        resilience_block("Eveness index", diversity, "evenness", "Evenness"),
-        resilience_block("Cumulative usage index", diversity, "cui", "CUI"),
+        resilience_block("Simpson Index", diversity, "simpson", "Simpson"),
+        resilience_block("Shannon Entropy Index", diversity, "shannon", "Entropy"),
+        resilience_block("Evenness Index", diversity, "evenness", "Evenness"),
+        resilience_block("Cumulative Usage Index", diversity, "cui", "CUI"),
     ]
     apply_bh_fdr(diversity_blocks, [label for label, _ in RESILIENCE_CONTRASTS])
     add_metric_blocks_sheet(
         wb,
-        "Fig.6G-J_frequency_metrics",
+        "Fig.6G-K_Frequency_metrics",
         diversity_blocks,
         header_gap=1,
         meta_offset=9,
@@ -1937,18 +2041,18 @@ def add_figure6_sheets(wb: openpyxl.Workbook) -> None:
         sub = bouts[bouts["cluster"] == cluster].rename(columns={"bout_duration": cluster})
         bout_blocks.append(resilience_block(FIG6_BOUT_TITLES.get(cluster, cluster), sub, cluster, "MeanBoutDuration"))
     apply_bh_fdr(bout_blocks[1:], [label for label, _ in RESILIENCE_CONTRASTS])
-    add_metric_blocks_sheet(wb, "Fig.6L-S_bout_duration", bout_blocks, header_gap=1, meta_offset=9, columns=FIG6_COLUMNS_8)
+    add_metric_blocks_sheet(wb, "Fig.6L-S_Bout_duration", bout_blocks, header_gap=1, meta_offset=9, columns=FIG6_COLUMNS_8)
 
     transition_blocks = [
-        resilience_block("Lempel-Ziv complexity", transition, "lz", "LZ complexity"),
-        resilience_block("Recurrence rate", transition, "recurrence", "Recurrence"),
+        resilience_block("Lempel-Ziv Complexity", transition, "lz", "LZ complexity"),
+        resilience_block("Recurrence Rate", transition, "recurrence", "Recurrence"),
         resilience_block("Determinism", transition, "determinism", "Determinism"),
-        resilience_block("Markov entropy index", transition, "markov", "Markov entropy"),
+        resilience_block("Markov Entropy Index", transition, "markov", "Markov entropy"),
     ]
     apply_bh_fdr(transition_blocks, [label for label, _ in RESILIENCE_CONTRASTS])
     add_metric_blocks_sheet(
         wb,
-        "Fig.6W-Z_transition_metrics",
+        "Fig.6W-Z_Transition_metrics",
         transition_blocks,
         header_gap=1,
         meta_offset=9,
@@ -1956,88 +2060,176 @@ def add_figure6_sheets(wb: openpyxl.Workbook) -> None:
     )
 
 
+def resilience_overlap_summary() -> pd.DataFrame:
+    """Animals classified as resilient by both Euclidean and each control metric."""
+    euclidean = pd.read_csv(PROCESSED_DIR / "figure5_dynamics_scores.csv")
+    euclidean["animal_key"] = euclidean["animal"].map(lambda value: f"{float(value):.1f}")
+    euclidean_mask = euclidean["resilient_by_zero"].astype(str).str.lower().eq("true")
+    euclidean_animals = set(euclidean.loc[(euclidean["group"] == "ELS") & euclidean_mask, "animal_key"])
+
+    supplementary = pd.read_csv(PROCESSED_DIR / "supplementary_figure3_distance_scores.csv")
+    supplementary["animal_key"] = supplementary["animal"].map(lambda value: f"{float(value):.1f}")
+    supplementary_mask = supplementary["resilient_by_zero"].astype(str).str.lower().eq("true")
+    supplementary = supplementary.loc[(supplementary["group"] == "ELS") & supplementary_mask]
+
+    rows = []
+    denominator = len(euclidean_animals)
+    for metric, metric_rows in supplementary.groupby("metric", sort=False):
+        metric_animals = set(metric_rows["animal_key"])
+        overlap = sorted(euclidean_animals.intersection(metric_animals), key=float)
+        rows.append(
+            {
+                "Metric": metric,
+                "Overlapping_Animals": ", ".join(overlap),
+                "Overlap_Count": len(overlap),
+                "Overlap_Percentage_of_Euclidean": round(100.0 * len(overlap) / denominator, 1)
+                if denominator
+                else float("nan"),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
 def add_supplementary_sheets(wb: openpyxl.Workbook) -> None:
     scores = attach_experiment(pd.read_csv(PROCESSED_DIR / "supplementary_figure3_distance_scores.csv"), "animal")
     blocks = [score_metric_block(f"{metric}_score", sub, "dynamics_score", metric) for metric, sub in scores.groupby("metric", sort=False)]
-    add_metric_blocks_sheet(wb, "Sup-Fig.3_distance_scores", blocks, header_gap=1, pitch=11)
+    add_metric_blocks_sheet(wb, "Suppl.Fig.3A-K", blocks, header_gap=1, pitch=11)
 
-    overlap = pd.concat(
-        [
-            pd.read_csv(PROCESSED_DIR / "figure5_resilience_threshold_audit.csv").assign(metric_source="Euclidean"),
-            pd.read_csv(PROCESSED_DIR / "supplementary_figure3_threshold_audit.csv").assign(metric_source="Supplementary"),
-        ],
-        ignore_index=True,
+    add_vertical_tables(
+        wb,
+        "Resilience_overlap_methods",
+        [("Animals overlapping with the Euclidean resilient set", resilience_overlap_summary())],
+        header_gap=2,
     )
-    add_vertical_tables(wb, "Resilience_overlap_methods", [("Resilience overlap methods", overlap)])
 
 
-def report_overview() -> pd.DataFrame:
-    rows = [
-        ("Canonical output", "report/statistical_report.xlsx"),
-        ("Scope", f"{COMBINED_ANALYSIS}, {DATASET_LABELS[1]}, and {DATASET_LABELS[3]}"),
-        ("Combined models", "Source dataset included as a fixed effect where supported"),
-        ("Dataset-specific models", "Same outcome/model family fitted separately for each source dataset"),
-        ("Raw p-value", "P>|z|"),
-        ("Adjusted p-value", "P_BH_FDR; Benjamini-Hochberg within the named behavior/metric family"),
-        ("Figure 2A-C time effects", "Change per 30 seconds"),
-        ("Figure 2H time effects", "Change per second; converted from the 30-second bin-index model"),
-        ("Figure 3 time effects", "Change per second"),
-        ("Figure 5 time effects", "Change per 30 seconds"),
-        ("Time-bin posthoc", "Welch pairwise tests with Bonferroni and BH-FDR correction within dataset/behavior"),
-        ("Figure 2 overlap", "Both raw S0+28 and plotted S0+28+40 sources are reported"),
-        ("Historical report", "Preserved as transparent source cells under data/raw/manuscript_tables"),
-        ("Known discrepancy", "Figure 6 Lempel-Ziv beta matches, but regenerated SE/z/p do not match the manuscript"),
-    ]
-    return pd.DataFrame(rows, columns=["Field", "Value"])
-
-
-def manuscript_audit() -> pd.DataFrame:
-    audit = pd.read_csv(STATISTICS_DIR / "manuscript_consistency_audit.csv")
-    return audit.fillna("")
+def add_figure7_sheets(wb: openpyxl.Workbook) -> None:
+    """Add Figure 7 inferential/performance summaries without raw-data copies."""
+    cross_cohort = pd.read_csv(STATISTICS_DIR / "figure7_cross_cohort_auc.csv")
+    dataset_names = {
+        "Exp1": "Sanguino-Gomez and Krugers, 2024",
+        "Exp3": "Sanguino-Gomez et al., 2024",
+    }
+    cross_cohort["train_experiment"] = cross_cohort["train_experiment"].replace(dataset_names)
+    cross_cohort["test_experiment"] = cross_cohort["test_experiment"].replace(dataset_names)
+    cross_cohort = cross_cohort.rename(
+        columns={"train_experiment": "train_dataset", "test_experiment": "test_dataset"}
+    )
+    de_tests = pd.read_csv(STATISTICS_DIR / "figure7_panel_de_auc_tests.csv")
+    de_tests["test_experiment"] = de_tests["test_experiment"].replace(dataset_names)
+    de_tests = de_tests.rename(columns={"test_experiment": "test_dataset"})
+    add_vertical_tables(
+        wb,
+        "Fig.7D-E_Prediction",
+        [
+            ("Held-out-cohort ROC AUC", cross_cohort),
+            ("Full-session leave-one-out ROC AUC", pd.read_csv(STATISTICS_DIR / "figure7_full_session_auc.csv")),
+            (
+                "Behaviour dynamics vs Freeze dynamics only: paired bootstrap test on "
+                "the AUC difference (same held-out animals scored by both models; "
+                "two-sided, 10000 resamples)",
+                de_tests,
+            ),
+        ],
+        header_gap=1,
+    )
+    add_vertical_tables(
+        wb,
+        "Fig.7F_SHAP",
+        [("Exact linear-model Shapley contributions", pd.read_csv(REPO / "figure_source_data" / "figure7_shapley_contributions.csv"))],
+        header_gap=1,
+    )
+    add_vertical_tables(
+        wb,
+        "Fig.7I_Prediction_onset",
+        [("Within-cohort permutation reference across opening-session horizons", pd.read_csv(STATISTICS_DIR / "figure7_prediction_permutation.csv"))],
+        header_gap=1,
+    )
 
 
 def validate_report_workbook(wb: openpyxl.Workbook) -> None:
     """Fail the build if manuscript-facing coverage disappears."""
     required_sheets = {
-        "Report_overview",
-        "Manuscript_audit",
+        "Fig.1A_ SimBA_validation",
+        "Fig.2A-C_Ground_truth ",
+        "Fig.2D_Syllable_usage",
+        "Fig.2E-F_Precision_recall",
         "Fig.2G_Freezing_overlap",
+        "Fig.2H_Freezing_syllables",
         "Fig.3A_Clusters_frequency",
         "Fig.3B-H_Clusters_over_time",
+        "Fig.4E-H_frequency_metrics",
         "Fig.4J-Q_bout_duration",
-        "Fig.5C_Clusters_frequency",
-        "Fig.5D-J_Clusters_over_time",
-        "Fig.5_time_posthoc",
-        "Fig.6G-J_frequency_metrics",
-        "Fig.6L-S_bout_duration",
-        "Fig.6W-Z_transition_metrics",
+        "Fig.4T-W_transition_metrics",
+        "Fig.5A-B_Dynamics",
+        "Fig.5C_Cluster_frequency",
+        "Fig.5D-J_Cluster_timecourse",
+        "Fig.5D-J_Time_posthoc",
+        "Fig.6G-K_Frequency_metrics",
+        "Fig.6L-S_Bout_duration",
+        "Fig.6W-Z_Transition_metrics",
+        "Fig.7D-E_Prediction",
+        "Fig.7F_SHAP",
+        "Fig.7I_Prediction_onset",
+        "Suppl.Fig.3A-K",
     }
     missing = sorted(required_sheets.difference(wb.sheetnames))
     if missing:
         raise AssertionError(f"Statistical report is missing sheets: {missing}")
 
-    fdr_sheets = required_sheets.difference({"Report_overview", "Manuscript_audit", "Fig.2G_Freezing_overlap"})
+    raw_only_figure7 = {
+        "Fig.7A_Classifier_accuracy",
+        "Fig.7B_Classifier_SHAP",
+        "Fig.7C_Confusion_matrix",
+        "Fig.7G-H_Predictors",
+        "Fig.7J_Family_timecourse",
+        "Fig.7K-N_Metric_timecourse",
+    }
+    duplicated = sorted(raw_only_figure7.intersection(wb.sheetnames))
+    if duplicated:
+        raise AssertionError(f"Statistical report duplicates raw Figure 7 sheets: {duplicated}")
+
+    legacy_percent_labels = []
+    for sheet in wb.worksheets:
+        for cell in sheet._cells.values():
+            if not isinstance(cell.value, str):
+                continue
+            words = cell.value.replace(" ", "_").lower().split("_")
+            if "percent" in words:
+                legacy_percent_labels.append(f"{sheet.title}!{cell.coordinate}={cell.value}")
+    if legacy_percent_labels:
+        raise AssertionError(
+            "Statistical report contains legacy Percent labels: " + ", ".join(legacy_percent_labels)
+        )
+
+    fdr_sheets = {
+        "Fig.3A_Clusters_frequency",
+        "Fig.3B-H_Clusters_over_time",
+        "Fig.4J-Q_bout_duration",
+        "Fig.5A-B_Dynamics",
+        "Fig.5C_Cluster_frequency",
+        "Fig.5D-J_Cluster_timecourse",
+        "Fig.5D-J_Time_posthoc",
+        "Fig.6G-K_Frequency_metrics",
+        "Fig.6L-S_Bout_duration",
+        "Fig.6W-Z_Transition_metrics",
+        "Suppl.Fig.3A-K",
+    }
     for sheet_name in sorted(fdr_sheets):
         values = [cell.value for cell in wb[sheet_name]._cells.values()]
         if "P_BH_FDR" not in values:
             raise AssertionError(f"{sheet_name} has no BH-FDR column")
 
-    fig5_values = [cell.value for cell in wb["Fig.5D-J_Clusters_over_time"]._cells.values()]
-    direct_label = "ELS resilient - ELS vulnerable x time (per 30 s)"
+    fig5_values = [cell.value for cell in wb["Fig.5D-J_Cluster_timecourse"]._cells.values()]
+    direct_label = "ELS resilient - ELS vulnerable x time (per minute)"
     if fig5_values.count(direct_label) != len(CLUSTER_ORDER) * 3:
         raise AssertionError("Figure 5 time-course report does not contain every full/source-dataset contrast")
-
-    if "Known discrepancy" not in [cell.value for cell in wb["Report_overview"]._cells.values()]:
-        raise AssertionError("Report overview does not disclose the known manuscript discrepancy")
-
 
 def build_statistical_report(output: Path = REPORT_OUT) -> None:
     """Build the single canonical full and source-dataset statistical report."""
     output.parent.mkdir(parents=True, exist_ok=True)
     wb = openpyxl.Workbook()
     wb.remove(wb.active)
-    add_vertical_tables(wb, "Report_overview", [("Statistical report scope and conventions", report_overview())], header_gap=2)
-    add_vertical_tables(wb, "Manuscript_audit", [("Regenerated versus manuscript headline results", manuscript_audit())], header_gap=2)
     add_vertical_tables(wb, "Fig.1A_ SimBA_validation", [("SimBA validation correlation", simba_validation_summary())], header_gap=2)
     add_figure2_sheets(wb)
     add_figure3a_frequency_sheet(wb)
@@ -2049,11 +2241,12 @@ def build_statistical_report(output: Path = REPORT_OUT) -> None:
         value_col="pct",
         time_col="time_s",
         header_gap=1,
-        fdr_parameters=["Stress x time"],
+        fdr_parameters=["Stress x time (per minute)"],
     )
     add_fig4_sheets(wb)
     add_figure5_sheets(wb)
     add_figure6_sheets(wb)
+    add_figure7_sheets(wb)
     add_supplementary_sheets(wb)
     validate_report_workbook(wb)
     wb.save(output)

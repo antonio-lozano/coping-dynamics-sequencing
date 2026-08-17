@@ -1,0 +1,7 @@
+analysis,feature_set,train_experiment,test_experiment,n_train,n_test,n_features,n_resilient_test,n_vulnerable_test,roc_auc,average_precision,accuracy,balanced_accuracy,sensitivity_resilient,specificity_vulnerable,tn_vulnerable,fp_vulnerable_as_resilient,fn_resilient_as_vulnerable,tp_resilient,panel,ci_low,ci_high
+cross_cohort,Behaviour dynamics,Exp1,Exp3,25.0,16.0,7,6.0,10.0,0.8166666666666667,0.7079365079365079,0.6875,0.7166666666666667,0.8333333333333334,0.6,6.0,4.0,1.0,5.0,B held-out cohort,,
+cross_cohort,Behaviour dynamics,Exp3,Exp1,16.0,25.0,7,6.0,19.0,0.631578947368421,0.3823412698412698,0.4,0.6052631578947368,1.0,0.21052631578947367,4.0,15.0,0.0,6.0,B held-out cohort,,
+cross_cohort,Freeze only,Exp1,Exp3,25.0,16.0,1,6.0,10.0,0.7166666666666667,0.6075396825396825,0.5625,0.6166666666666667,0.8333333333333334,0.4,4.0,6.0,1.0,5.0,B held-out cohort,,
+cross_cohort,Freeze only,Exp3,Exp1,16.0,25.0,1,6.0,19.0,0.8947368421052632,0.7999999999999999,0.84,0.6666666666666666,0.3333333333333333,1.0,19.0,0.0,4.0,2.0,B held-out cohort,,
+,Behaviour dynamics,,,,,7,,,0.8419540229885057,,,,,,,,,,C full-session LOOCV,0.6924888591800357,0.9505958747135217
+,Freeze only,,,,,1,,,0.7902298850574713,,,,,,,,,,C full-session LOOCV,0.6116695804195804,0.9306870428422153

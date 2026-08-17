@@ -26,6 +26,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from src.config import FIGURES_DIR, PROCESSED_DATA_DIR, SUPPLEMENTARY_TRACKING_CSV
+from src.panel_letters import align_panel_letters
 
 
 SOURCE_CSV = SUPPLEMENTARY_TRACKING_CSV
@@ -34,6 +35,8 @@ COLORS = {"Control": "#F9C74F", "ELS": "#C37BA0"}
 AXIS_COLOR = "#4D4D4D"
 SHADE_COLOR = "#F5F5F5"
 A4_PORTRAIT = (8.27, 11.69)
+BIN_SECONDS = 30
+FREQUENCY_YMAX = 150
 
 PANEL_SPECS = [
     {
@@ -47,7 +50,7 @@ PANEL_SPECS = [
     {
         "cluster": "Inaccurate tracking",
         "title": "Inaccurate tracking",
-        "letter": "B",
+        "letter": "C",
         "ylim": 30,
         "yticks": np.arange(0, 30.1, 5),
         "legend_loc": "upper right",
@@ -86,6 +89,14 @@ def summarize_time(long: pd.DataFrame) -> pd.DataFrame:
     )
 
 
+def total_frequency(long: pd.DataFrame) -> pd.DataFrame:
+    return (
+        long.assign(frequency_seconds=long["percentage"] / 100.0 * BIN_SECONDS)
+        .groupby(["animal_id", "group", "cluster"], as_index=False)["frequency_seconds"]
+        .sum()
+    )
+
+
 def style_axis(ax: plt.Axes) -> None:
     ax.spines[["top", "right"]].set_visible(False)
     for spine in ["left", "bottom"]:
@@ -97,8 +108,8 @@ def style_axis(ax: plt.Axes) -> None:
     ax.title.set_color(AXIS_COLOR)
 
 
-def panel_letter(ax: plt.Axes, letter: str, x: float = -0.17, y: float = 1.16) -> None:
-    ax.text(
+def panel_letter(ax: plt.Axes, letter: str, x: float = -0.17, y: float = 1.16) -> plt.Text:
+    return ax.text(
         x,
         y,
         letter,
@@ -116,7 +127,7 @@ def add_shock_shading(ax: plt.Axes) -> None:
         ax.axvspan(start, start + 0.5, color=SHADE_COLOR, zorder=0)
 
 
-def plot_time_panel(ax: plt.Axes, summary: pd.DataFrame, spec: dict[str, object]) -> None:
+def plot_time_panel(ax: plt.Axes, summary: pd.DataFrame, spec: dict[str, object]) -> plt.Text:
     add_shock_shading(ax)
     panel = summary[summary["cluster"] == spec["cluster"]]
 
@@ -137,8 +148,11 @@ def plot_time_panel(ax: plt.Axes, summary: pd.DataFrame, spec: dict[str, object]
         ax.fill_between(x, mean - err, mean + err, color=COLORS[group], alpha=0.22, linewidth=0)
 
     ax.set_title(str(spec["title"]), fontsize=7, pad=5, y=1.03)
-    ax.set_xlim(0.5, 7.5)
+    # Data runs 0.5-7.5 min; start at zero and pad past 7.5 so the first and
+    # last markers are drawn whole.
+    ax.set_xlim(0.0, 7.65)
     ax.set_ylim(0, float(spec["ylim"]))
+    # Ticks on whole minutes 1-7 only.
     ax.set_xticks(np.arange(1, 8))
     ax.set_yticks(spec["yticks"])
     ax.set_xlabel("Time (minutes)", fontsize=6.5, labelpad=2)
@@ -153,7 +167,94 @@ def plot_time_panel(ax: plt.Axes, summary: pd.DataFrame, spec: dict[str, object]
         handletextpad=0.35,
     )
     style_axis(ax)
-    panel_letter(ax, str(spec["letter"]))
+    # After style_axis: the axis line runs on to 7.5 so the final data point
+    # sits over the spine rather than past its end.
+    ax.spines["bottom"].set_bounds(0.0, 7.5)
+    return panel_letter(ax, str(spec["letter"]))
+
+
+def plot_frequency_panel(
+    ax: plt.Axes,
+    frequency: pd.DataFrame,
+    spec: dict[str, object],
+    letter: str,
+) -> plt.Text:
+    panel = frequency[frequency["cluster"] == spec["cluster"]]
+    groups = ["Control", "ELS"]
+    values_by_group = [
+        panel.loc[panel["group"] == group, "frequency_seconds"].dropna().to_numpy()
+        for group in groups
+    ]
+    rng = np.random.default_rng(42 + ord(letter))
+    for index, (group, values) in enumerate(zip(groups, values_by_group)):
+        color = COLORS[group]
+        boxplot = ax.boxplot(
+            values,
+            positions=[index],
+            widths=0.42,
+            patch_artist=True,
+            showfliers=False,
+            boxprops={"facecolor": color, "edgecolor": color, "linewidth": 1.15},
+            whiskerprops={"color": color, "linewidth": 1.15},
+            capprops={"color": color, "linewidth": 1.15},
+            medianprops={"color": color, "linewidth": 1.35},
+        )
+        boxplot["boxes"][0].set_alpha(0.15)
+        jitter = rng.normal(index, 0.022, len(values))
+        ax.scatter(jitter, values, s=8, color=color, alpha=0.78, linewidth=0, zorder=3)
+
+    ax.set_xticks([0, 1])
+    ax.set_xticklabels(groups)
+    ax.set_xlim(-0.55, 1.55)
+    # Both panels share one 0-150 s scale so B and D can be read against each
+    # other; the largest animal total is 144.1 s, so nothing is clipped.
+    maximum = max(float(values.max()) for values in values_by_group if len(values))
+    if maximum > FREQUENCY_YMAX:
+        raise AssertionError(
+            f"{spec['title']}: total frequency {maximum:.1f} s exceeds the {FREQUENCY_YMAX} s axis"
+        )
+    ax.set_ylim(0, FREQUENCY_YMAX)
+    ax.set_yticks(np.arange(0, FREQUENCY_YMAX + 1, 25))
+    ax.set_title(str(spec["title"]), fontsize=7, pad=5, y=1.03)
+    ax.set_ylabel("Total frequency (s)", fontsize=6.5, labelpad=2)
+    style_axis(ax)
+    # Stop the left axis at the last tick so it ends on 150, not above it.
+    ax.spines["left"].set_bounds(0, FREQUENCY_YMAX)
+    # Bounding the bottom spine to the two category positions left only a stub
+    # between the ticks. Run it across the panel from the y axis, matching the
+    # baseline the other categorical panels in the figure set draw.
+    ax.spines["bottom"].set_bounds(*ax.get_xlim())
+    return panel_letter(ax, letter, x=-0.28)
+
+
+def align_letters_to_titles(
+    fig: plt.Figure,
+    letter_artists: list[tuple[plt.Axes, plt.Text]],
+    gap: float = 0.012,
+) -> None:
+    """Sit each panel letter just left of its own panel title.
+
+    ``align_panel_letters`` anchors letters to the y-axis title column, which on
+    this figure leaves them stranded far to the left of the centred titles
+    ("Mixed behaviors", "Inaccurate tracking").  Horizontally each letter is put
+    next to the title it belongs to; vertically it is anchored to the top of its
+    own y axis rather than to the title, so the letters sit on the axes line
+    they label instead of riding up with the title text.
+    """
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    fig_inv = fig.transFigure.inverted()
+    for ax, text in letter_artists:
+        if text is None:
+            continue
+        title_box = ax.title.get_window_extent(renderer=renderer)
+        axes_box = ax.get_window_extent(renderer=renderer)
+        x_fig = fig_inv.transform((title_box.x0, axes_box.y1))[0]
+        y_fig = fig_inv.transform((axes_box.x0, axes_box.y1))[1]
+        text.set_transform(fig.transFigure)
+        text.set_position((x_fig - gap, y_fig))
+        text.set_ha("right")
+        text.set_va("bottom")
 
 
 def export_source_tables(summary: pd.DataFrame) -> None:
@@ -169,6 +270,7 @@ def main() -> None:
 
     long = load_supplementary_time_data()
     summary = summarize_time(long)
+    frequency = total_frequency(long)
 
     fig = plt.figure(figsize=A4_PORTRAIT, dpi=300, facecolor="white")
     # Keep the manuscript page A4, but preserve the compact panel proportions
@@ -184,13 +286,21 @@ def main() -> None:
         hspace=0.56,
         wspace=0.28,
     )
-    axes = [
-        fig.add_subplot(gs[0, 0:4]),
-        fig.add_subplot(gs[0, 5:9]),
+    panel_grid = gs[0, :].subgridspec(
+        1,
+        4,
+        width_ratios=[1.7, 0.7, 1.7, 0.7],
+        wspace=0.45,
+    )
+    axes = [fig.add_subplot(panel_grid[0, index]) for index in range(4)]
+    letter_artists = [
+        (axes[0], plot_time_panel(axes[0], summary, PANEL_SPECS[0])),
+        (axes[1], plot_frequency_panel(axes[1], frequency, PANEL_SPECS[0], "B")),
+        (axes[2], plot_time_panel(axes[2], summary, PANEL_SPECS[1])),
+        (axes[3], plot_frequency_panel(axes[3], frequency, PANEL_SPECS[1], "D")),
     ]
-
-    for ax, spec in zip(axes, PANEL_SPECS):
-        plot_time_panel(ax, summary, spec)
+    align_panel_letters(fig, letter_artists)
+    align_letters_to_titles(fig, letter_artists)
 
     pdf_path = FIGURES_DIR / "supplementary_figure1.pdf"
     svg_path = FIGURES_DIR / "supplementary_figure1.svg"
