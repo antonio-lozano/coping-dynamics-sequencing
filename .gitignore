@@ -12,6 +12,12 @@ data/**/*.npy
 *.parquet
 *.npy
 
+# The archived legacy classifier is the one deliberate pickle exception: these
+# two files are the model of record behind Supplementary Figure 4 and the class
+# order its import utilities read (docs/figure_structure.md).
+!classifier/legacy_shap/xgb_model.pkl
+!classifier/legacy_shap/label_encoder.pkl
+
 # Python
 .venv/
 .uv-cache/
