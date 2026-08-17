@@ -17,7 +17,7 @@ Primary entry points:
 
 Figure scripts live in `scripts/generate_figures/`. Processed-table scripts
 live in `scripts/derive_tables/`. Shared analysis, plotting, statistics, path
-configuration, and classifier code live in `src/`.
+configuration, and classifier code live in `coping_dynamics/`.
 
 For publication, cite the archived release DOI for this repository when
 available.

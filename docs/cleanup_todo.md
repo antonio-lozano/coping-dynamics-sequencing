@@ -79,6 +79,18 @@ closed and what genuinely remains. Ordered as in the original.
   `statistics/manuscript_consistency_audit.csv`; the manuscript text or the
   model choice needs to be reconciled by the authors.
 
+- **`requirements.txt` is generated, not hand-maintained.** Since the
+  2026-08-17 packaging change it is a `uv export` product (the exact command is
+  in its header) and pins the locked versions, including `-e .` for the
+  package itself. Regenerate it whenever `pyproject.toml` or `uv.lock` change;
+  `environment.yml` remains the one hand-curated environment file because
+  conda cannot consume the uv lock.
+
+- **A `[gui]` extra is deliberately absent.** The interactive viewers live in
+  `tools/` with their own environments; the root package gains a `gui` extra
+  only if tool functionality is ever surfaced at the root (see the lazy
+  `__getattr__` gate already present in `coping_dynamics/__init__.py`).
+
 - **Mint a Zenodo DOI at release.** Archiving a tagged release on Zenodo gives
   the repository a citable DOI and a snapshot independent of GitHub. Needs the
   maintainers' Zenodo account; once minted, add the DOI to the `identifiers`

@@ -21,7 +21,6 @@ Writes statistics/fig6_diversity_resilience_stats.csv
        statistics/fig6_transition_resilience_stats.csv
 """
 
-import sys
 import warnings
 from pathlib import Path
 
@@ -33,15 +32,13 @@ from scipy.stats import entropy
 from statsmodels.stats.multitest import multipletests
 
 REPO = Path(__file__).resolve().parents[2]
-if str(REPO) not in sys.path:
-    sys.path.insert(0, str(REPO))
 
-from src.statistics import (
+from coping_dynamics.statistics import (
     determinism,
     markov_entropy,
     recurrence_rate,
 )
-from src.statistics import (
+from coping_dynamics.statistics import (
     lempel_ziv_complexity as lz_complexity,
 )
 

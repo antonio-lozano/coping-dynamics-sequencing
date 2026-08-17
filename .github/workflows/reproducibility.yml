@@ -56,7 +56,7 @@ jobs:
       - name: Import smoke check
         run: >
           uv run python -c "import matplotlib, numpy, openpyxl, pandas, scipy,
-          shap, sklearn, statsmodels, xgboost; import src.config"
+          shap, sklearn, statsmodels, xgboost; import coping_dynamics.config"
 
       - name: Compile every Python file
         shell: bash

@@ -11,8 +11,6 @@ Values are animal-level percentages per 30 s bin from the bundled source CSV.
 from __future__ import annotations
 
 import math
-import sys
-from pathlib import Path
 
 import matplotlib
 
@@ -21,12 +19,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
-
-from src.config import FIGURES_DIR, PROCESSED_DATA_DIR, SUPPLEMENTARY_TRACKING_CSV
-from src.panel_letters import align_panel_letters
+from coping_dynamics.config import FIGURES_DIR, PROCESSED_DATA_DIR, SUPPLEMENTARY_TRACKING_CSV
+from coping_dynamics.panel_letters import align_panel_letters
 
 SOURCE_CSV = SUPPLEMENTARY_TRACKING_CSV
 

@@ -8,11 +8,11 @@ import importlib
 import pytest
 
 REPO_MODULES = [
-    "src",
-    "src.config",
-    "src.panel_letters",
-    "src.plotting",
-    "src.statistics",
+    "coping_dynamics",
+    "coping_dynamics.config",
+    "coping_dynamics.panel_letters",
+    "coping_dynamics.plotting",
+    "coping_dynamics.statistics",
 ]
 
 THIRD_PARTY = [
@@ -35,7 +35,7 @@ def test_module_imports(name):
 
 
 def test_config_paths_resolve_inside_repo():
-    from src import config
+    from coping_dynamics import config
 
     repo_root = config.PROJECT_ROOT.resolve()
     for attr in dir(config):

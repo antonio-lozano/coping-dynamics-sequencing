@@ -11,8 +11,6 @@ cluster mapping used elsewhere in this repository.
 from __future__ import annotations
 
 import math
-import sys
-from pathlib import Path
 
 import matplotlib
 
@@ -21,19 +19,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
-
-from src.config import (
+from coping_dynamics.config import (
     CLUSTER_FREQUENCY_CSV,
     FIGURE_SOURCE_DATA_DIR,
     FIGURES_DIR,
     STATISTICS_DIR,
     SYLLABLE_TIMEBIN_30S,
 )
-from src.panel_letters import align_panel_letters
-from src.statistics import fit_mixed_models
+from coping_dynamics.panel_letters import align_panel_letters
+from coping_dynamics.statistics import fit_mixed_models
 
 FIGURE_OUTPUT_DIR = FIGURES_DIR
 SOURCE_OUTPUT_DIR = FIGURE_SOURCE_DATA_DIR

@@ -77,7 +77,7 @@ report/               raw-data workbook and canonical statistical report
 classifier/           Classifier artifact used in Figure 7A-C and Supplementary Figure 4
 scripts/              Rebuild, report, figure, and validation entry points
 scripts/migrations/   One-time imports from the legacy tree, kept for provenance
-src/                  Shared analysis, plotting, statistics, and classifier code
+coping_dynamics/      Shared analysis, plotting, statistics, and classifier code (installed package)
 docs/                 Data dictionary and focused provenance notes
 config/               Figure metadata used by the report package
 tools/                Self-contained companion tools, outside the rebuild and the manifest
@@ -159,7 +159,7 @@ classifier in `classifier/legacy_shap/`, not from
   absence of local absolute paths in text files, and absence of local tool
   traces.
 - `tests/` is the root test suite: golden values pinning the canonical metric
-  implementations in `src/statistics.py`, cross-implementation agreement
+  implementations in `coping_dynamics/statistics.py`, cross-implementation agreement
   checks, the layout checker under pytest, and slow-marked double-build
   determinism tests. Run `uv run pytest -m "not slow"` for the fast selection.
 - `.github/workflows/reproducibility.yml` runs four jobs on GitHub: source
@@ -172,7 +172,8 @@ classifier in `classifier/legacy_shap/`, not from
   conflict markers, malformed YAML/TOML/JSON, whitespace, and ruff lint and
   formatting for hand-written sources. Enable with `uvx pre-commit install`.
   Hooks never touch generated artifacts or `tools/`.
-- All default paths resolve inside the repository through `src/config.py`.
+- All default paths resolve inside the repository through
+  `coping_dynamics/config.py`.
 
 ## Additional Documentation
 

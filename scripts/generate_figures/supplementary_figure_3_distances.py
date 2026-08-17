@@ -6,8 +6,6 @@ from __future__ import annotations
 
 import gzip
 import pickle
-import sys
-from pathlib import Path
 
 import matplotlib
 
@@ -22,16 +20,12 @@ from scipy.optimize import minimize
 from scipy.spatial.distance import cityblock, correlation, cosine
 from scipy.stats import ttest_ind
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
-
-from src.config import (
+from coping_dynamics.config import (
     FIGURES_DIR,
     PROCESSED_DATA_DIR,
     UPDATED_MOSEQ_PICKLE,
 )
-from src.panel_letters import align_panel_letters
+from coping_dynamics.panel_letters import align_panel_letters
 
 FIGURE_OUTPUT_DIR = FIGURES_DIR
 TABLE_OUTPUT_DIR = PROCESSED_DATA_DIR

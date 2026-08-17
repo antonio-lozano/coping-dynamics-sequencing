@@ -5,7 +5,7 @@
 The transition-metric quartet (Lempel-Ziv, recurrence rate, determinism,
 Markov entropy) historically existed as one copy per consumer: the Figure 4
 script, the Figure 6 script, the Figure 6 statistics derivation, and
-``src.statistics``. These tests assert all consumers produce bit-identical
+``coping_dynamics.statistics``. These tests assert all consumers produce bit-identical
 values, so the copies can be (and now are) a single canonical implementation.
 
 Two look-alikes are DELIBERATELY different published behaviors, pinned here so
@@ -14,7 +14,8 @@ nobody "fixes" them into the shared version:
 - ``fig6_resilience_stats.diversity_table`` embeds a second Markov entropy at
   Laplace smoothing 0.002 (column ``MarkovEntropy``), not the quartet's 0.01.
 - The derive script normalizes CUI by named-cluster totals; the figure scripts
-  and ``src.statistics`` normalize by all-cluster totals (unmapped included).
+  and ``coping_dynamics.statistics`` normalize by all-cluster totals
+  (unmapped included).
 """
 
 import importlib.util
@@ -22,7 +23,7 @@ from pathlib import Path
 
 import pytest
 
-from src.statistics import (
+from coping_dynamics.statistics import (
     determinism,
     lempel_ziv_complexity,
     markov_entropy,

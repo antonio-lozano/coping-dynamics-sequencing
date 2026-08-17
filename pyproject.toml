@@ -27,6 +27,9 @@ dependencies = [
   "shap>=0.41.0,<1.0.0",
 ]
 
+[project.scripts]
+behavior-classifier = "coping_dynamics.behavior_classifier.cli:main"
+
 [dependency-groups]
 dev = [
   "pytest>=8.0.0,<9.0.0",
@@ -35,8 +38,12 @@ dev = [
   "pre-commit>=4.0.0,<5.0.0",
 ]
 
-[tool.uv]
-package = false
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["coping_dynamics"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -61,4 +68,4 @@ ignore = ["E501"]
 "behavior_classifier.py" = ["E402"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["src", "scripts"]
+known-first-party = ["coping_dynamics", "scripts"]

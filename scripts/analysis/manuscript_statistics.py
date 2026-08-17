@@ -52,22 +52,18 @@ from __future__ import annotations
 
 import math
 import pickle
-import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-# Ensure repo root on sys.path so `src` imports work from any CWD
 _repo_root = Path(__file__).resolve().parents[2]
-if str(_repo_root) not in sys.path:
-    sys.path.insert(0, str(_repo_root))
 
 import warnings  # noqa: E402
 
 import statsmodels.formula.api as smf  # noqa: E402
 
-from src.config import (  # noqa: E402
+from coping_dynamics.config import (  # noqa: E402
     BEHAVIOR_MAPPING,
     BIN_SECONDS,
     FPS,

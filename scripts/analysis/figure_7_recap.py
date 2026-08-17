@@ -66,16 +66,19 @@ from matplotlib.patches import Patch
 
 REPO = Path(__file__).resolve().parents[2]
 OUT = REPO / "figure_source_data"
+
+# The scripts.* helper modules are not part of the installed package, so their
+# imports still need the repository root on sys.path.
 if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
 
-from scripts.analysis import figure_7_feature_families as efa  # noqa: E402
-from scripts.analysis import figure_7_modeling as direct  # noqa: E402
-from src.statistics import (  # noqa: E402
+from coping_dynamics.statistics import (  # noqa: E402
     compute_bout_duration,
     compute_diversity_metrics,
     transition_sequence_metrics,
 )
+from scripts.analysis import figure_7_feature_families as efa  # noqa: E402
+from scripts.analysis import figure_7_modeling as direct  # noqa: E402
 
 RANDOM_SEED = direct.RANDOM_SEED
 # Sampled every 30 s to match the behaviour-dynamics time courses in

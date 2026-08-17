@@ -15,13 +15,10 @@ from __future__ import annotations
 import argparse
 import pickle
 import re
-import sys
 import warnings
 from pathlib import Path
 
 repo_root = Path(__file__).resolve().parents[2]
-if str(repo_root) not in sys.path:
-    sys.path.insert(0, str(repo_root))
 
 import matplotlib
 
@@ -32,7 +29,7 @@ import pandas as pd
 import seaborn as sns
 from matplotlib.patches import Rectangle
 
-from src.config import (
+from coping_dynamics.config import (
     BIN_SECONDS,
     CLUSTER_FREQUENCY_CSV,
     FIGURE_SOURCE_DATA_DIR,
@@ -44,7 +41,7 @@ from src.config import (
     PALETTE,
     SOURCE_DATA_DIR,
 )
-from src.statistics import cohens_d, fit_mixed_models
+from coping_dynamics.statistics import cohens_d, fit_mixed_models
 
 FIGURE_OUTPUT_DIR = FIGURES_DIR
 SOURCE_OUTPUT_DIR = FIGURE_SOURCE_DATA_DIR

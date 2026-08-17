@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Jeniffer Sanguino Gomez and Antonio Lozano
 """Golden-value tests for the canonical metric implementations in
-``src.statistics``.
+``coping_dynamics.statistics``.
 
 The values below were computed from the implementations as published and pin
 their exact behavior: any refactor (e.g. consolidating duplicated metric code
@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.statistics import (
+from coping_dynamics.statistics import (
     cohens_d,
     compute_bout_duration,
     compute_diversity_metrics,

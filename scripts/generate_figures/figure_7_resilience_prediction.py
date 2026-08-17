@@ -36,19 +36,21 @@ import pandas as pd
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.gridspec import GridSpec
 
-REPO = Path(__file__).resolve().parents[2]
-if str(REPO) not in sys.path:
-    sys.path.insert(0, str(REPO))
+# The scripts.* helper modules are not part of the installed package, so their
+# imports still need the repository root on sys.path.
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
-from scripts.analysis import figure_7_core as tier1  # noqa: E402
-from scripts.analysis import figure_7_recap as recap  # noqa: E402
-from src.config import (  # noqa: E402
+from coping_dynamics.config import (  # noqa: E402
     FIGURE_SOURCE_DATA_DIR,
     FIGURES_DIR,
     RAW_DATA_DIR,
     STATISTICS_DIR,
 )
-from src.panel_letters import align_panel_letters  # noqa: E402
+from coping_dynamics.panel_letters import align_panel_letters  # noqa: E402
+from scripts.analysis import figure_7_core as tier1  # noqa: E402
+from scripts.analysis import figure_7_recap as recap  # noqa: E402
 
 OUT = FIGURES_DIR
 SOURCE_OUT = FIGURE_SOURCE_DATA_DIR

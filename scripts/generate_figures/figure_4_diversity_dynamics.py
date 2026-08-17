@@ -11,12 +11,10 @@ assembles them into the manuscript Figure 4 layout.
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 import matplotlib
 
 matplotlib.use("Agg")
-import sys
 
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
@@ -27,11 +25,7 @@ from matplotlib.ticker import FormatStrFormatter
 from matplotlib.transforms import blended_transform_factory
 from scipy.stats import entropy
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
-
-from src.config import (
+from coping_dynamics.config import (
     CLUSTER_JSON,
     FIGURE_SOURCE_DATA_DIR,
     FIGURES_DIR,
@@ -39,13 +33,13 @@ from src.config import (
     STATISTICS_DIR,
     SYLLABLE_TIMEBIN_250MS,
 )
-from src.plotting import plot_chord_diagram
-from src.statistics import (
+from coping_dynamics.plotting import plot_chord_diagram
+from coping_dynamics.statistics import (
     determinism,
     markov_entropy,
     recurrence_rate,
 )
-from src.statistics import (
+from coping_dynamics.statistics import (
     lempel_ziv_complexity as lz_complexity,
 )
 

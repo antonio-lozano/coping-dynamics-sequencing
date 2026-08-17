@@ -20,7 +20,7 @@ The bundled classifier artifact is:
 classifier/figure7_behavior_classifier.joblib
 ```
 
-The feature extraction code is in `src/behavior_classifier/features.py`.
+The feature extraction code is in `coping_dynamics/behavior_classifier/features.py`.
 
 ## Train Or Evaluate From The Bundled MoSeq Table
 
