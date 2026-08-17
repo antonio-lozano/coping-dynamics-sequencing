@@ -1,130 +1,80 @@
-# Cleanup TODO
+# Cleanup ledger
 
-Everything in the working tree is now tracked. That was done deliberately, to
-stop the repository from depending on files that existed only on one machine:
-several already-tracked scripts imported or required untracked ones, so a clean
-clone was broken before this commit.
+The 2026-08-17 "track everything" sweep tracked every working-tree file so a
+clean clone would stop depending on files that existed only on one machine, and
+recorded eight open items here. This revision of the note records how each was
+closed and what genuinely remains. Ordered as in the original.
 
-Tracking everything also swept in work that is unfinished, oversized, or only
-ever meant to be run once. This note records what still needs a decision, so
-the sweep does not quietly become the final state of the package.
+## Closed
 
-Ordered roughly by how much it matters.
+1. **The legacy Figure 7 source PDF is retired.**
+   `data/raw/legacy_figures/figure7_classifier_original.pdf` was lost before it
+   was ever committed and exists on no machine we can reach.
+   `figure_source_data/figure7_classifier_global_shap.csv`, written by the same
+   extraction, is now the archival source of record (`docs/figure_structure.md`,
+   `docs/data_dictionary.md`), and the checker no longer requires the PDF. The
+   extraction code and the layout-check exception remain, so a recovered copy
+   dropped back at the original path is re-extracted and compared, not rejected.
 
-## 1. The legacy Figure 7 source PDF is gone
+2. **`classifier/legacy_shap/shap_values.npz` stays a plain git blob.** 54 MB is
+   under GitHub's hard limit, the figure rebuilds from it alone, and Git LFS
+   would change every clone's workflow. Revisit only if GitHub starts refusing
+   pushes or repository growth becomes a real problem.
 
-`data/raw/legacy_figures/figure7_classifier_original.pdf` disappeared from disk
-during the session that produced this commit. It was **never committed on any
-branch**, so it cannot be restored from git history.
+3. **The two legacy pickles are tracked.** `xgb_model.pkl` (2.9 MB) and
+   `label_encoder.pkl` (629 B) are committed under a scoped `.gitignore`
+   exception. Before committing, the tracked `shap_values.npz` was re-derived
+   from the same legacy tree and all four arrays came back identical.
 
-Consequences:
+4. **One-time utilities moved to `scripts/migrations/`.** Both legacy SHAP
+   import utilities live there now, and README and `docs/figure_structure.md`
+   state they are provenance, not rebuild steps.
 
-- `scripts/check_reproducibility.py` still lists it as required, so the check
-  currently fails on a clean clone. This is the only failing item.
-- Figure 7 panel B no longer reads it. The generator falls back to
-  `figure_source_data/figure7_classifier_global_shap.csv`, which was exported
-  from that PDF and holds the same 20 x 8 values, so the figure still rebuilds
-  correctly.
+5. **The manuscript-text helpers are annotated.** Their docstrings state they
+   target the August 2026 manuscript revision and that the hard-coded
+   before/after strings silently stop matching after the next edit.
 
-Decide one of:
+6. **The environment is locked with `shap`.** `uv.lock` is committed and
+   resolves shap 0.49.1 with numpy held at 1.26.4 — the feared numpy 2.x pull
+   did not happen under the lock. `uv sync --locked` is the documented route.
 
-- **Restore it** from the keypoint-MoSeq working tree or a backup, commit it,
-  and drop the fallback branch in `figure7_global_shap_values()`; or
-- **Retire it** — remove it from the required-file list and the manifest check
-  in `check_reproducibility.py`, and state in `docs/figure_structure.md` that
-  the exported CSV is now the archival source for those values.
+7. **All figures are rebuilt under one environment.** Every render is
+   regenerated under the locked matplotlib 3.11.0 on the reference machine, so
+   the set embeds a single version. `run_all_figures.py` now includes
+   Supplementary Figure 4.
 
-The second option is honest only if the CSV really is accepted as the source of
-record; the PDF is the primary artifact and the CSV is a derivative of it.
+8. **Excel lock files are ignored and skipped.** `~$*.xlsx` is in `.gitignore`
+   and `update_manifest.py` skips such files. Still close workbooks before
+   regenerating reports — Excel can write a stale copy back over a fresh one.
 
-## 2. `classifier/legacy_shap/shap_values.npz` is 54 MB
+## Still open
 
-Tracked as an ordinary git blob. It is under GitHub's 100 MB hard limit but
-over the 50 MB warning threshold, and the repository history is already ~1.1 GB.
+- **Hunt a backup of the retired PDF.** If a copy of
+  `figure7_classifier_original.pdf` turns up in mail, a backup, or another
+  machine, place it at `data/raw/legacy_figures/` and rebuild Figure 7: the
+  generator re-runs the original extraction so the archived CSV can be
+  confirmed against it.
 
-It earns its place: Supplementary Figure 4 regenerates from it alone, with no
-`--source` and no external working tree. This was verified by rebuilding the
-figure from the tracked archive — the source-data CSV came back byte-identical.
+- **Full re-derivation of the SHAP archive still needs the legacy tree.**
+  `shap_values.pkl` (60 MB) and `shap_sample.csv` (19 MB) remain outside the
+  repository, and the ranks CSV that fed `import_legacy_shap_summary.py`
+  (`features_defining_each_behavior_from_shap.csv`) no longer exists anywhere —
+  its tracked output `legacy_feature_ranks.csv` is what preserves that
+  information.
 
-Still worth deciding whether it belongs in Git LFS. Moving it would be a
-repository-wide workflow change affecting every clone, so it was not done
-unilaterally.
+- **`shap_values.npz` needs `allow_pickle=True`** because `feature_names` and
+  `class_names` are object arrays. Saving them as fixed-width strings would let
+  the archive load with `allow_pickle=False` and finish the move off pickles.
 
-Related, smaller point: the archive stores `feature_names` and `class_names` as
-object arrays, so `load_archive()` must pass `allow_pickle=True`. That
-partially undercuts the stated reason for moving off pickles
-(`scripts/import_legacy_shap_values.py`). Saving those two arrays as plain
-fixed-width strings would let the archive load with `allow_pickle=False`.
+- **`statistics/fig5_timecourse_mixedlm.csv` has 24 of 56 degenerate rows**
+  (coefficients ~1e-19, standard errors ~5.8e7, p = 1.0) in intercept and
+  main-effect terms; slopes and interactions are well-formed. A "Fix singular
+  MixedLM" commit exists in history, so the singularity is known but not fully
+  resolved. Confirm before quoting any intercept or main-effect term from that
+  file.
 
-## 3. The two `.pkl` files beside it are still untracked
-
-`classifier/legacy_shap/xgb_model.pkl` and `label_encoder.pkl` are excluded by
-the global `*.pkl` rule in `.gitignore`. They are **not** needed to draw
-Supplementary Figure 4 from the tracked `.npz`, so the figure is safe.
-
-They are only needed to re-derive the archive from the legacy source. If that
-path is meant to stay open on a clean clone, they need either an ignore
-exception or a documented external location. Right now the re-derivation path
-silently depends on one machine.
-
-## 4. One-time migration utilities are now tracked as if they were pipeline steps
-
-- `scripts/import_legacy_shap_summary.py`
-- `scripts/import_legacy_shap_values.py`
-
-Both are one-shot migrations that require `--source DIR` pointing at the legacy
-keypoint-MoSeq tree, which is not part of this repository. Their own docstrings
-say so, but nothing in the repository layout does.
-
-Consider moving them under something like `scripts/migrations/`, or noting in
-the README that they are historical and not part of a rebuild.
-
-## 5. Manuscript-text helpers are unreviewed
-
-- `scripts/prepare_results_differences.py`
-- `scripts/prepare_revised_results.py`
-
-These parse the manuscript `.docx` and emit revised Results text with
-regenerated statistics. They carry hard-coded before/after strings such as
-`beta = 0.621 -> 0.623`, tied to one manuscript revision.
-
-They are not wired into `run_all_figures.py` or `check_reproducibility.py`.
-Decide whether they are part of the deliverable or scratch work; if they stay,
-they need a note about which manuscript revision they target, because the
-hard-coded strings will silently stop matching after the next edit.
-
-## 6. `shap` was missing from every environment file
-
-`requirements.txt` advertised covering Supplementary Figure 4 but omitted
-`shap`, which that generator imports at module load. `pyproject.toml` and
-`environment.yml` omitted it too, so no documented install route could build
-the figure. All three now declare `shap>=0.41`.
-
-Two things to watch:
-
-- Installing `shap` pulls `numba`/`llvmlite`, and resolvers will happily drag
-  in numpy 2.x, which violates the `numpy<2.0.0` pin the rest of the package
-  relies on. Verified working combination: numpy 1.26.4, shap 0.51.0,
-  numba 0.67.0. If `uv sync` starts producing numpy 2.x, pin `numba` too.
-- No lockfile is committed, so these resolutions are not reproducible across
-  machines. Committing `uv.lock` would fix that.
-
-## 7. Figures were not regenerated in this commit
-
-The figure files here are the previously committed renders. Supplementary
-Figure 4 was rebuilt during verification and then restored, because installing
-`shap` also moved matplotlib 3.10.6 -> 3.11.0, and shipping one figure rendered
-under a different matplotlib than its siblings would be misleading.
-
-The rebuild differed only in the embedded matplotlib version string and
-randomised clip-path IDs — no geometry or data changed. Before the next
-release, rebuild **all** figures under one pinned matplotlib so the set is
-internally consistent.
-
-## 8. Excel lock file
-
-`report/~$raw_data.xlsx` was present, meaning `raw_data.xlsx` was open in Excel
-while these files were staged. `~$*.xlsx` is now in `.gitignore`.
-
-Close the workbook before regenerating reports — Excel can hold a stale copy in
-memory and write it back over a freshly generated one.
+- **The audit records one `major_mismatch`.** Figure 6W (Lempel–Ziv, vulnerable
+  ELS vs Control): the manuscript reports p < 0.001, the regenerated model
+  gives p = 0.042 (SE 4.42 vs 2.66). Recorded in
+  `statistics/manuscript_consistency_audit.csv`; the manuscript text or the
+  model choice needs to be reconciled by the authors.

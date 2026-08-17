@@ -105,7 +105,11 @@ def main() -> None:
     if not frames:
         raise FileNotFoundError(f"No freezing prediction CSVs found in {PRED_DIR}")
 
-    pd.concat(frames, ignore_index=True).to_csv(OUT_LIGHT, index=False, compression="gzip")
+    # mtime=0 keeps the gzip header out of the bytes, so rebuilding unchanged
+    # data is a no-op instead of a new hash in MANIFEST.csv every run.
+    pd.concat(frames, ignore_index=True).to_csv(
+        OUT_LIGHT, index=False, compression={"method": "gzip", "mtime": 0}
+    )
     pd.DataFrame(index_rows).to_csv(OUT_INDEX, index=False)
     print(f"Saved {OUT_LIGHT.relative_to(REPO)}")
     print(f"Saved {OUT_INDEX.relative_to(REPO)} ({len(index_rows)} files)")

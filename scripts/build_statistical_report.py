@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import sys
 import warnings
 from pathlib import Path
 
@@ -22,6 +23,10 @@ from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 from scipy import stats
 from statsmodels.stats.multitest import multipletests
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from save_deterministic import save_workbook  # noqa: E402
 
 
 warnings.filterwarnings("ignore")
@@ -2249,7 +2254,7 @@ def build_statistical_report(output: Path = REPORT_OUT) -> None:
     add_figure7_sheets(wb)
     add_supplementary_sheets(wb)
     validate_report_workbook(wb)
-    wb.save(output)
+    save_workbook(wb, output)
     print(f"Saved full and source-dataset statistical report: {output.relative_to(REPO)}")
 
 

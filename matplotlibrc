@@ -1,0 +1,7 @@
+# Read by matplotlib from the working directory, so every figure command run
+# from the repository root picks it up. A fixed hash salt makes SVG clip-path
+# and gradient ids deterministic instead of drawn from a random uuid, which is
+# what lets an unchanged figure produce an unchanged .svg byte for byte.
+# Pair with SOURCE_DATE_EPOCH=0 (set by scripts/run_all_figures.py) to also
+# freeze the embedded PDF/SVG dates.
+svg.hashsalt: coping-dynamics-sequencing

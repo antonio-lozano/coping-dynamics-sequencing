@@ -116,6 +116,17 @@ python scripts/update_manifest.py
 python scripts/check_reproducibility.py
 ```
 
+## Byte-Stable Rebuilds
+
+Rebuilding unchanged inputs reproduces every artifact byte for byte: the
+repository `matplotlibrc` pins the SVG hash salt, `run_all_figures.py` sets
+`SOURCE_DATE_EPOCH=0` to freeze the dates embedded in PDF and SVG output, the
+report workbooks are written with fixed timestamps, and the compressed
+freezing-prediction table is gzipped without an mtime header. When running a
+single figure script directly rather than through `run_all_figures.py`, set
+`SOURCE_DATE_EPOCH=0` in the environment to get the same bytes the runner
+produces; run it from the repository root so `matplotlibrc` is picked up.
+
 ## Expected Clean State
 
 A publication-ready state should satisfy:

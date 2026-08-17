@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import re
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -18,6 +19,10 @@ import openpyxl
 import pandas as pd
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from save_deterministic import save_workbook  # noqa: E402
 
 
 REPO = Path(__file__).resolve().parents[1]
@@ -1306,7 +1311,7 @@ def build_raw_data_workbook(output: Path = OUT) -> None:
     write_titled_dataframe(wb, "Suppl.Fig.3A-K", "Supplementary Figure 3A-K: distance-metric control scores per animal", supplementary_figure3_scores())
     write_titled_dataframe(wb, "Suppl.Fig.4A-H_SHAP", "Supplementary Figure 4A-H: all 719 legacy classifier parameters per behavior; top 10 plotted per class", supplementary_figure4_shap_raw())
     validate_figure_structure(wb)
-    wb.save(output)
+    save_workbook(wb, output)
     print(f"Saved: {output.relative_to(REPO)}")
 
 

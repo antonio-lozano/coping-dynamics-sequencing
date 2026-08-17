@@ -138,6 +138,9 @@ def build_figure(by_behavior: dict[str, np.ndarray], sample: pd.DataFrame) -> pl
         "pdf.fonttype": 42,
         "svg.fonttype": "none",
     })
+    # summary_plot jitters beeswarm dots through the global numpy RNG; seeding
+    # here pins the dot positions so rebuilding the figure reproduces it.
+    np.random.seed(0)
     figure = plt.figure(figsize=(8.27, 11.69), dpi=300)
     for index, behavior in enumerate(BEHAVIOR_ORDER):
         ax = figure.add_subplot(4, 2, index + 1)

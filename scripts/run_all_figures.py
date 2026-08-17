@@ -41,6 +41,10 @@ def run_script(label: str, script_path: Path) -> tuple[str, float]:
     env = os.environ.copy()
     env["BATCH_MODE"] = "1"  # skip plt.show()
     env["MPLBACKEND"] = "Agg"
+    # Freeze the dates matplotlib embeds in PDF (CreationDate) and SVG
+    # (dc:date) output; together with svg.hashsalt in the repository
+    # matplotlibrc this makes an unchanged figure an unchanged file.
+    env.setdefault("SOURCE_DATE_EPOCH", "0")
     try:
         subprocess.run([sys.executable, str(script_path)],
                        cwd=script_path.parents[2], check=True, env=env)
