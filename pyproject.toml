@@ -26,8 +26,22 @@ dependencies = [
   "shap>=0.41.0,<1.0.0",
 ]
 
+[dependency-groups]
+dev = [
+  "pytest>=8.0.0,<9.0.0",
+  # Same version as .pre-commit-config.yaml so the hook and `uv run ruff` agree.
+  "ruff==0.15.6",
+  "pre-commit>=4.0.0,<5.0.0",
+]
+
 [tool.uv]
 package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+  "slow: rebuilds real artifacts (workbooks, figures); run explicitly or in the CI pipeline job",
+]
 
 [tool.ruff]
 line-length = 100
