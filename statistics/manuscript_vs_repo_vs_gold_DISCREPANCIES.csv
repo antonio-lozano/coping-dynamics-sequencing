@@ -1,0 +1,12 @@
+claim,manuscript,repo_statistics,gold_workbook,coef_agrees
+Fig2 Exp1 ELS x time,-0.887/0.181/-4.898,-0.998/0.210/-4.757,-0.887/0.181/-4.898,False
+Fig2 Exp3 ELS x time,-0.721/0.270/-2.667,-0.758/0.271/-2.798,-0.721/0.270/-2.667,False
+Fig2 Comb ELS x time,-0.822/0.154/-5.327,-0.865/0.171/-5.052,-0.822/0.154/-5.327,False
+Fig4E Simpson,-0.013/0.007/-1.886,-0.013/0.007/-1.915,-0.006/0.003/-2.252,True
+Fig4H CUI, 0.064/0.028/ 2.316, 0.064/0.028/ 2.250, 0.064/0.021/ 2.968,True
+Fig4K Freeze bout,-0.094/0.038/-2.446,-0.094/0.033/-2.824,CORRUPT SHEET,True
+Fig4L Sniff bout, 0.321/0.127/ 2.519, 0.321/0.126/ 2.540,CORRUPT SHEET,True
+Fig4N Turn bout, 0.164/0.061/ 2.693, 0.164/0.058/ 2.824,CORRUPT SHEET,True
+Fig4U Recurrence, 0.013/0.007/ 1.890, 0.013/0.007/ 1.908, 0.013/0.006/ 2.264,True
+Fig4V Determinism, 0.016/0.007/ 2.167, 0.016/0.007/ 2.167, 0.016/0.005/ 3.382,True
+Fig4W Markov,not reported,-0.041/0.025/-1.638,-0.041/0.018/-2.342,False

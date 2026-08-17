@@ -1,23 +1,23 @@
 section,claim,repo_source,manuscript_beta,manuscript_se,manuscript_z,manuscript_p,repo_beta,repo_se,repo_z,repo_p,status,note
 Figure 1,"Classifier validation r=0.95, R2=0.90, p<0.001",data/raw/simba_validation_manual_vs_automatic.csv,0.95,,,<0.001,0.9466,,,9.58e-24,match,repo_beta stores Pearson r for this validation row.
 Figure 3A,Freeze ELS vs Control frequency,statistics/stats_figure3A_GEE.csv,-0.204,0.081,-2.510,0.012,-0.2041,0.0813,-2.5103,0.0121,match,
-Figure 3A,Sniff ELS vs Control frequency,statistics/stats_figure3A_GEE.csv,0.621,0.231,2.694,0.007,0.6228,0.231,2.6959,0.007,numeric_mismatch_same_conclusion,
+Figure 3A,Sniff ELS vs Control frequency,statistics/stats_figure3A_GEE.csv,0.623,0.231,2.696,0.007,0.6228,0.231,2.6959,0.007,match,
 Figure 3A,Turn ELS vs Control frequency,statistics/stats_figure3A_GEE.csv,0.101,0.032,3.099,0.002,0.1005,0.0324,3.0988,0.0019,match,
-Figure 4E,Simpson diversity ELS vs Control,statistics/stats_figure4_diversity_MixedLM.csv,-0.013,0.007,-1.915,0.056,-0.0134,0.0071,-1.8864,0.0592,minor_mismatch_same_interpretation,Repo remains near-threshold and non-significant.
-Figure 4H,Cumulative usage index ELS vs Control,statistics/stats_figure4_diversity_MixedLM.csv,0.064,0.028,2.250,0.025,0.0636,0.0275,2.316,0.0206,numeric_mismatch_same_conclusion,
-Figure 4K,Freezing bout duration ELS vs Control,statistics/stats_figure4_bouts_MixedLM.csv,-0.094,0.033,-2.824,0.005,-0.0938,0.0384,-2.4462,0.0144,numeric_mismatch_same_conclusion,Repo remains significant but less strong than the manuscript value.
-Figure 4L,Sniffing bout duration ELS vs Control,statistics/stats_figure4_bouts_MixedLM.csv,0.321,0.126,2.540,0.011,0.3209,0.1274,2.5191,0.0118,numeric_mismatch_same_conclusion,
-Figure 4N,Turn bout duration ELS vs Control,statistics/stats_figure4_bouts_MixedLM.csv,0.164,0.058,2.824,0.005,0.1638,0.0608,2.6928,0.0071,numeric_mismatch_same_conclusion,
-Figure 4U,Recurrence ELS vs Control,statistics/stats_figure4_transition_MixedLM.csv,0.013,0.007,1.908,0.056,0.0134,0.0071,1.89,0.0588,minor_mismatch_same_interpretation,Repo remains near-threshold and non-significant.
+Figure 4E,Simpson diversity ELS vs Control,statistics/stats_figure4_diversity_MixedLM.csv,-0.013,0.007,-1.915,0.055,-0.0134,0.007,-1.9152,0.0555,match,Repo remains near-threshold and non-significant.
+Figure 4H,Cumulative usage index ELS vs Control,statistics/stats_figure4_diversity_MixedLM.csv,0.064,0.028,2.250,0.024,0.0636,0.0283,2.2496,0.0245,match,
+Figure 4K,Freezing bout duration ELS vs Control,statistics/stats_figure4_bouts_MixedLM.csv,-0.094,0.033,-2.824,0.005,-0.0938,0.0332,-2.8238,0.0047,match,
+Figure 4L,Sniffing bout duration ELS vs Control,statistics/stats_figure4_bouts_MixedLM.csv,0.321,0.126,2.540,0.011,0.3209,0.1263,2.5403,0.0111,match,
+Figure 4N,Turn bout duration ELS vs Control,statistics/stats_figure4_bouts_MixedLM.csv,0.164,0.058,2.824,0.005,0.1638,0.058,2.8243,0.0047,match,
+Figure 4U,Recurrence ELS vs Control,statistics/stats_figure4_transition_MixedLM.csv,0.013,0.007,1.908,0.056,0.0134,0.007,1.9084,0.0563,match,Repo remains near-threshold and non-significant.
 Figure 4V,Determinism ELS vs Control,statistics/stats_figure4_transition_MixedLM.csv,0.016,0.007,2.167,0.030,0.0161,0.0074,2.1666,0.0303,match,
-Figure 4W,Markov entropy ELS vs Control,statistics/stats_figure4_transition_MixedLM.csv,-0.041,0.025,-1.638,0.102,-0.0412,0.0255,-1.618,0.1057,numeric_mismatch_same_conclusion,Repo remains non-significant.
-Figure 5C,Freeze resilient vs vulnerable ELS frequency,statistics/fig5c_frequency_gee.csv,0.409,0.118,3.476,<0.001,0.4087,0.1176,3.4751,0.0005,numeric_mismatch_same_conclusion,
+Figure 4W,Markov entropy ELS vs Control,statistics/stats_figure4_transition_MixedLM.csv,-0.041,0.025,-1.638,0.102,-0.0412,0.0252,-1.6375,0.1015,match,Repo remains non-significant.
+Figure 5C,Freeze resilient vs vulnerable ELS frequency,statistics/fig5c_frequency_gee.csv,0.409,0.118,3.475,<0.001,0.4087,0.1176,3.4751,0.0005,match,
 Figure 5C,Turn resilient vs vulnerable ELS frequency,statistics/fig5c_frequency_gee.csv,-0.145,0.033,-4.437,<0.001,-0.1445,0.0326,-4.4374,9.11e-06,match,
-Figure 5D,Freeze time resilient vs vulnerable ELS,statistics/fig5_timecourse_mixedlm.csv,1.865,0.249,7.484,<0.001,1.865,0.2407,7.747,9.41e-15,numeric_mismatch_same_conclusion,Repo coefficient and standard error are scaled per 30 s bin for the audit.
-Figure 6G,Simpson vulnerable ELS vs Control,statistics/fig6_diversity_resilience_stats.csv,-0.022,0.008,-2.835,0.005,-0.022,0.0078,-2.8178,0.0048,numeric_mismatch_same_conclusion,
-Figure 6M,Freezing bout resilient vs vulnerable ELS,statistics/fig6_bout_resilience_stats.csv,0.263,0.089,2.969,0.003,0.263,0.0885,2.9721,0.003,numeric_mismatch_same_conclusion,
-Figure 6W,Lempel-Ziv vulnerable ELS vs Control,statistics/fig6_transition_resilience_stats.csv,-8.965,2.658,-3.37,<0.001,-8.9654,4.4174,-2.0296,0.0424,major_mismatch,Repo p-value is significant at 0.05 but does not support p<0.001.
-Figure 6X,Recurrence vulnerable ELS vs Control,statistics/fig6_transition_resilience_stats.csv,0.026,0.008,2.798,0.005,0.0258,0.0085,3.0248,0.0025,numeric_mismatch_same_conclusion,
-Figure 6X,Recurrence resilient vs vulnerable ELS,statistics/fig6_transition_resilience_stats.csv,-0.029,0.011,-2.727,0.006,-0.0333,0.0121,-2.755,0.0059,numeric_mismatch_same_conclusion,
-Figure 6Y,Determinism vulnerable ELS vs Control,statistics/fig6_transition_resilience_stats.csv,0.010,0.003,2.860,0.004,0.0096,0.0034,2.7987,0.0051,numeric_mismatch_same_conclusion,
-Figure 6Z,Markov entropy vulnerable ELS vs Control,statistics/fig6_transition_resilience_stats.csv,-0.044,0.022,-1.99,0.046,-0.0435,0.0207,-2.1002,0.0357,numeric_mismatch_same_conclusion,
+Figure 5D,Freeze time resilient vs vulnerable ELS,statistics/fig5_timecourse_mixedlm.csv,1.865,0.241,7.747,<0.001,1.865,0.2407,7.747,9.41e-15,match,Repo coefficient and standard error are scaled per 30 s bin for the audit.
+Figure 6G,Simpson vulnerable ELS vs Control,statistics/fig6_diversity_resilience_stats.csv,-0.022,0.008,-2.818,0.005,-0.022,0.0078,-2.8178,0.0048,match,
+Figure 6M,Freezing bout resilient vs vulnerable ELS,statistics/fig6_bout_resilience_stats.csv,0.263,0.089,2.972,0.003,0.263,0.0885,2.9721,0.003,match,
+Figure 6W,Lempel-Ziv vulnerable ELS vs Control,statistics/fig6_transition_resilience_stats.csv,-8.965,4.417,-2.030,0.042,-8.9654,4.4174,-2.0296,0.0424,match,
+Figure 6X,Recurrence vulnerable ELS vs Control,statistics/fig6_transition_resilience_stats.csv,0.026,0.009,3.025,0.003,0.0258,0.0085,3.0248,0.0025,match,
+Figure 6X,Recurrence resilient vs vulnerable ELS,statistics/fig6_transition_resilience_stats.csv,-0.033,0.012,-2.755,0.006,-0.0333,0.0121,-2.755,0.0059,match,
+Figure 6Y,Determinism vulnerable ELS vs Control,statistics/fig6_transition_resilience_stats.csv,0.010,0.003,2.799,0.005,0.0096,0.0034,2.7987,0.0051,match,
+Figure 6Z,Markov entropy vulnerable ELS vs Control,statistics/fig6_transition_resilience_stats.csv,-0.044,0.021,-2.100,0.036,-0.0435,0.0207,-2.1002,0.0357,match,

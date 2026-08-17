@@ -1,4 +1,4 @@
-"""Hand-curated annotations for Figure 7A-C and Supplementary Figure 4."""
+"""Hand-curated annotations for Figure 7A-C and Supplementary Figure 5."""
 
 from __future__ import annotations
 

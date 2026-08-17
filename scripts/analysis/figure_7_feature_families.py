@@ -493,7 +493,7 @@ def plot_figure(
     panel_label(ax_f, "F")
 
     for ext in ["png", "pdf", "svg"]:
-        fig.savefig(OUT / f"supplementary_figure4_all_parameter_importance.{ext}", dpi=600)
+        fig.savefig(OUT / f"supplementary_figure5_all_parameter_importance.{ext}", dpi=600)
     plt.close(fig)
 
 

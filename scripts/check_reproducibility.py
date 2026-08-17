@@ -9,6 +9,9 @@ import sys
 from pathlib import Path
 
 import openpyxl
+import imageio_ffmpeg
+from docx import Document
+from docx.enum.text import WD_COLOR_INDEX
 
 # The manifest writer owns the definition of what counts as a publication
 # artifact and which files a clean clone contains. Importing it here keeps one
@@ -37,6 +40,7 @@ REQUIRED_FILES = [
     "docs/figure4_coping_provenance.md",
     "docs/figure_structure.md",
     "docs/behavior_classifier.md",
+    "docs/supplementary_media.md",
     "docs/workbook_match_audit.md",
     "data/raw/animal_groups.csv",
     "data/raw/behavioral_flexibility_scores.xlsx",
@@ -80,7 +84,7 @@ REQUIRED_FILES = [
     "figure_source_data/figure7_predictor_timecourse.csv",
     "figure_source_data/figure7_shapley_contributions.csv",
     "figure_source_data/figure7_shapley_per_animal.csv",
-    "figure_source_data/supplementary_figure4_shap_summary.csv",
+    "figure_source_data/supplementary_figure5_shap_summary.csv",
     "statistics/stats_figure3A_GEE.csv",
     "statistics/stats_figure3_overtime.csv",
     "statistics/stats_figure4_bouts_MixedLM.csv",
@@ -103,8 +107,12 @@ REQUIRED_FILES = [
     "statistics/figure7_full_session_auc.csv",
     "statistics/figure7_prediction_permutation.csv",
     "classifier/figure7_behavior_classifier.joblib",
+    "supplementary_media/Supplementary_Video_1_MoSeq_syllable_atlas.mp4",
+    "supplementary_media/Supplementary_Video_1_source_index.csv",
     "report/raw_data.xlsx",
     "report/statistical_report.xlsx",
+    "report/SIGuide.docx",
+    "report/Sanguino-Gómez_coping_strategies_Nature_Neuroscience_highlighted.docx",
     "scripts/run_all.py",
     "scripts/run_all_figures.py",
     "scripts/update_manifest.py",
@@ -119,7 +127,8 @@ REQUIRED_FILES = [
     "scripts/derive_tables/tracking_exclusions.py",
     "scripts/derive_tables/fig6_resilience_stats.py",
     "scripts/generate_figures/figure_7_resilience_prediction.py",
-    "scripts/generate_figures/supplementary_figure_4_classifier_shap.py",
+    "scripts/generate_figures/supplementary_figure_5_classifier_shap.py",
+    "scripts/generate_supplementary_video_1.py",
     "scripts/migrations/import_legacy_shap_summary.py",
     "scripts/migrations/import_legacy_shap_values.py",
 ]
@@ -136,6 +145,7 @@ FIGURE_STEMS = [
     "supplementary_figure2",
     "supplementary_figure3",
     "supplementary_figure4",
+    "supplementary_figure5",
 ]
 FIGURE_EXTS = (".pdf", ".svg", ".png")
 
@@ -224,11 +234,9 @@ def check_layout(files: list[Path], errors: list[str]) -> None:
         lower = rel.lower()
         if path.name.lower().startswith("readme") and rel != "README.md":
             fail(f"subfolder README found: {rel}", errors)
-        allowed_legacy_figure = "data/raw/legacy_figures/figure7_classifier_original.pdf"
         if (
             lower.startswith("data/raw/")
             and path.suffix.lower() in {".pdf", ".png", ".svg"}
-            and lower != allowed_legacy_figure
         ):
             fail(f"figure artifact found in raw data: {rel}", errors)
         if lower.endswith(("_test.xlsx", "_rebuilt.xlsx")) or "smoke" in lower:
@@ -315,6 +323,77 @@ def check_manifest(errors: list[str]) -> None:
             fail(f"artifact on disk but absent from MANIFEST.csv: {rel}", errors)
 
 
+def check_supplementary_video(errors: list[str]) -> None:
+    video = ROOT / "supplementary_media/Supplementary_Video_1_MoSeq_syllable_atlas.mp4"
+    index = ROOT / "supplementary_media/Supplementary_Video_1_source_index.csv"
+    if not video.is_file() or not index.is_file():
+        return
+
+    if video.stat().st_size > 30 * 1024 * 1024:
+        fail("Supplementary Video 1 exceeds 30 MB", errors)
+    reader = imageio_ffmpeg.read_frames(str(video), pix_fmt="rgb24")
+    try:
+        metadata = next(reader)
+    finally:
+        reader.close()
+    if metadata.get("codec") != "h264":
+        fail(f"Supplementary Video 1 codec is {metadata.get('codec')}, not h264", errors)
+    if not str(metadata.get("pix_fmt", "")).startswith("yuv420p"):
+        fail(f"Supplementary Video 1 pixel format is {metadata.get('pix_fmt')}", errors)
+    if tuple(metadata.get("size", ())) != (960, 540):
+        fail(f"Supplementary Video 1 frame size is {metadata.get('size')}", errors)
+    if float(metadata.get("fps", 0)) != 25.0:
+        fail(f"Supplementary Video 1 frame rate is {metadata.get('fps')}", errors)
+
+    with index.open(newline="", encoding="utf-8") as handle:
+        rows = list(csv.DictReader(handle))
+    labels = [int(row["syllable"]) for row in rows]
+    expected = set(range(35)) | {111}
+    if len(rows) != 36 or set(labels) != expected or len(labels) != len(set(labels)):
+        fail("Supplementary Video 1 source index does not uniquely cover 0-34 and 111", errors)
+    if any(len(row.get("source_clip_sha256", "")) != 64 for row in rows):
+        fail("Supplementary Video 1 source index contains an invalid SHA-256", errors)
+
+
+def check_submission_manuscript(errors: list[str]) -> None:
+    path = ROOT / "report/Sanguino-Gómez_coping_strategies_Nature_Neuroscience_highlighted.docx"
+    if not path.is_file():
+        return
+    document = Document(path)
+    paragraphs = document.paragraphs
+    abstract_heading = next(
+        (index for index, paragraph in enumerate(paragraphs) if paragraph.text == "Abstract (150 words)"),
+        None,
+    )
+    if abstract_heading is None or len(paragraphs[abstract_heading + 1].text.split()) != 150:
+        fail("Nature Neuroscience abstract is not exactly 150 space-delimited words", errors)
+
+    video_legend = next(
+        (paragraph for paragraph in paragraphs if paragraph.text.startswith("The video presents")),
+        None,
+    )
+    if video_legend is None or len(video_legend.text.split()) > 100:
+        fail("Supplementary Video 1 legend is missing or exceeds 100 words", errors)
+
+    required_additions = (
+        "Representative pose-overlaid examples and canonical skeleton trajectories",
+        "For the audiovisual atlas, three 20-frame representative occurrences",
+        "Supplementary Video 1. Representative MoSeq syllables",
+    )
+    for addition in required_additions:
+        paragraph = next((item for item in paragraphs if addition in item.text), None)
+        if paragraph is None:
+            fail(f"submission manuscript is missing addition: {addition}", errors)
+            continue
+        highlighted = "".join(
+            run.text
+            for run in paragraph.runs
+            if run.font.highlight_color == WD_COLOR_INDEX.YELLOW
+        )
+        if addition not in highlighted:
+            fail(f"submission manuscript addition is not precisely highlighted: {addition}", errors)
+
+
 def check_workbook_figure_structure(errors: list[str]) -> None:
     """Verify that Figure 7 and supplementary sheets follow the panel map."""
     expectations = {
@@ -330,7 +409,7 @@ def check_workbook_figure_structure(errors: list[str]) -> None:
             "Fig.7K-N_Metric_timecourse",
             "Suppl.Fig.1A-D",
             "Suppl.Fig.3A-K",
-            "Suppl.Fig.4A-H_SHAP",
+            "Suppl.Fig.5A-H_SHAP",
         ],
         "report/statistical_report.xlsx": [
             "Fig.7D-E_Prediction",
@@ -393,6 +472,8 @@ def main() -> int:
     check_layout(files, errors)
     check_text_clean(files, errors)
     check_manifest(errors)
+    check_supplementary_video(errors)
+    check_submission_manuscript(errors)
     check_workbook_figure_structure(errors)
 
     if errors:
