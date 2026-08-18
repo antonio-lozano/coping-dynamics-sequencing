@@ -1,0 +1,83 @@
+animal,group,profile,experiment,litter,ethogram,barcode
+2.4,ELS,ELS resilient,1,2,ethograms/2.4_ethogram.png,barcodes/2.4_barcode.png
+5.4,Control,Control,1,5,ethograms/5.4_ethogram.png,barcodes/5.4_barcode.png
+11.4,Control,Control,1,11,ethograms/11.4_ethogram.png,barcodes/11.4_barcode.png
+11.6,Control,Control,1,11,ethograms/11.6_ethogram.png,barcodes/11.6_barcode.png
+15.4,ELS,ELS resilient,1,15,ethograms/15.4_ethogram.png,barcodes/15.4_barcode.png
+15.6,ELS,ELS vulnerable,1,15,ethograms/15.6_ethogram.png,barcodes/15.6_barcode.png
+23.4,ELS,ELS vulnerable,1,23,ethograms/23.4_ethogram.png,barcodes/23.4_barcode.png
+25.1,ELS,ELS vulnerable,1,25,ethograms/25.1_ethogram.png,barcodes/25.1_barcode.png
+26.4,ELS,ELS resilient,1,26,ethograms/26.4_ethogram.png,barcodes/26.4_barcode.png
+32.2,ELS,ELS vulnerable,1,32,ethograms/32.2_ethogram.png,barcodes/32.2_barcode.png
+32.4,ELS,ELS vulnerable,1,32,ethograms/32.4_ethogram.png,barcodes/32.4_barcode.png
+34.4,Control,Control,1,34,ethograms/34.4_ethogram.png,barcodes/34.4_barcode.png
+34.5,Control,Control,1,34,ethograms/34.5_ethogram.png,barcodes/34.5_barcode.png
+40.4,Control,Control,1,40,ethograms/40.4_ethogram.png,barcodes/40.4_barcode.png
+40.6,Control,Control,1,40,ethograms/40.6_ethogram.png,barcodes/40.6_barcode.png
+41.4,Control,Control,1,41,ethograms/41.4_ethogram.png,barcodes/41.4_barcode.png
+41.5,Control,Control,1,41,ethograms/41.5_ethogram.png,barcodes/41.5_barcode.png
+41.6,Control,Control,1,41,ethograms/41.6_ethogram.png,barcodes/41.6_barcode.png
+43.3,ELS,ELS resilient,1,43,ethograms/43.3_ethogram.png,barcodes/43.3_barcode.png
+43.5,ELS,ELS resilient,1,43,ethograms/43.5_ethogram.png,barcodes/43.5_barcode.png
+47.5,Control,Control,1,47,ethograms/47.5_ethogram.png,barcodes/47.5_barcode.png
+49.5,ELS,ELS vulnerable,1,49,ethograms/49.5_ethogram.png,barcodes/49.5_barcode.png
+49.6,ELS,ELS resilient,1,49,ethograms/49.6_ethogram.png,barcodes/49.6_barcode.png
+50.5,Control,Control,1,50,ethograms/50.5_ethogram.png,barcodes/50.5_barcode.png
+53.5,Control,Control,1,53,ethograms/53.5_ethogram.png,barcodes/53.5_barcode.png
+54.3,Control,Control,1,54,ethograms/54.3_ethogram.png,barcodes/54.3_barcode.png
+54.4,Control,Control,1,54,ethograms/54.4_ethogram.png,barcodes/54.4_barcode.png
+54.6,Control,Control,1,54,ethograms/54.6_ethogram.png,barcodes/54.6_barcode.png
+55.3,ELS,ELS vulnerable,1,55,ethograms/55.3_ethogram.png,barcodes/55.3_barcode.png
+55.5,ELS,ELS vulnerable,1,55,ethograms/55.5_ethogram.png,barcodes/55.5_barcode.png
+56.3,ELS,ELS vulnerable,1,56,ethograms/56.3_ethogram.png,barcodes/56.3_barcode.png
+58.5,Control,Control,1,58,ethograms/58.5_ethogram.png,barcodes/58.5_barcode.png
+62.1,Control,Control,1,62,ethograms/62.1_ethogram.png,barcodes/62.1_barcode.png
+62.2,Control,Control,1,62,ethograms/62.2_ethogram.png,barcodes/62.2_barcode.png
+62.3,Control,Control,1,62,ethograms/62.3_ethogram.png,barcodes/62.3_barcode.png
+62.4,Control,Control,1,62,ethograms/62.4_ethogram.png,barcodes/62.4_barcode.png
+62.5,Control,Control,1,62,ethograms/62.5_ethogram.png,barcodes/62.5_barcode.png
+63.3,ELS,ELS vulnerable,1,63,ethograms/63.3_ethogram.png,barcodes/63.3_barcode.png
+68.1,Control,Control,1,68,ethograms/68.1_ethogram.png,barcodes/68.1_barcode.png
+69.1,ELS,ELS vulnerable,1,69,ethograms/69.1_ethogram.png,barcodes/69.1_barcode.png
+69.2,ELS,ELS vulnerable,1,69,ethograms/69.2_ethogram.png,barcodes/69.2_barcode.png
+69.3,ELS,ELS vulnerable,1,69,ethograms/69.3_ethogram.png,barcodes/69.3_barcode.png
+69.5,ELS,ELS vulnerable,1,69,ethograms/69.5_ethogram.png,barcodes/69.5_barcode.png
+73.1,ELS,ELS vulnerable,1,73,ethograms/73.1_ethogram.png,barcodes/73.1_barcode.png
+73.4,ELS,ELS vulnerable,1,73,ethograms/73.4_ethogram.png,barcodes/73.4_barcode.png
+74.1,Control,Control,1,74,ethograms/74.1_ethogram.png,barcodes/74.1_barcode.png
+75.1,ELS,ELS vulnerable,1,75,ethograms/75.1_ethogram.png,barcodes/75.1_barcode.png
+80.3,Control,Control,1,80,ethograms/80.3_ethogram.png,barcodes/80.3_barcode.png
+88.2,ELS,ELS vulnerable,1,88,ethograms/88.2_ethogram.png,barcodes/88.2_barcode.png
+88.3,ELS,ELS vulnerable,1,88,ethograms/88.3_ethogram.png,barcodes/88.3_barcode.png
+123.1,ELS,ELS vulnerable,3,123,ethograms/123.1_ethogram.png,barcodes/123.1_barcode.png
+123.3,ELS,ELS resilient,3,123,ethograms/123.3_ethogram.png,barcodes/123.3_barcode.png
+128.4,ELS,ELS vulnerable,3,128,ethograms/128.4_ethogram.png,barcodes/128.4_barcode.png
+129.1,Control,Control,3,129,ethograms/129.1_ethogram.png,barcodes/129.1_barcode.png
+129.4,Control,Control,3,129,ethograms/129.4_ethogram.png,barcodes/129.4_barcode.png
+133.3,ELS,ELS vulnerable,3,133,ethograms/133.3_ethogram.png,barcodes/133.3_barcode.png
+134.2,ELS,ELS resilient,3,134,ethograms/134.2_ethogram.png,barcodes/134.2_barcode.png
+134.4,ELS,ELS vulnerable,3,134,ethograms/134.4_ethogram.png,barcodes/134.4_barcode.png
+136.2,Control,Control,3,136,ethograms/136.2_ethogram.png,barcodes/136.2_barcode.png
+136.3,Control,Control,3,136,ethograms/136.3_ethogram.png,barcodes/136.3_barcode.png
+136.5,Control,Control,3,136,ethograms/136.5_ethogram.png,barcodes/136.5_barcode.png
+137.3,Control,Control,3,137,ethograms/137.3_ethogram.png,barcodes/137.3_barcode.png
+144.3,ELS,ELS vulnerable,3,144,ethograms/144.3_ethogram.png,barcodes/144.3_barcode.png
+144.5,ELS,ELS vulnerable,3,144,ethograms/144.5_ethogram.png,barcodes/144.5_barcode.png
+145.5,Control,Control,3,145,ethograms/145.5_ethogram.png,barcodes/145.5_barcode.png
+146.6,Control,Control,3,146,ethograms/146.6_ethogram.png,barcodes/146.6_barcode.png
+147.4,Control,Control,3,147,ethograms/147.4_ethogram.png,barcodes/147.4_barcode.png
+148.4,ELS,ELS resilient,3,148,ethograms/148.4_ethogram.png,barcodes/148.4_barcode.png
+150.3,ELS,ELS resilient,3,150,ethograms/150.3_ethogram.png,barcodes/150.3_barcode.png
+150.5,ELS,ELS resilient,3,150,ethograms/150.5_ethogram.png,barcodes/150.5_barcode.png
+152.3,Control,Control,3,152,ethograms/152.3_ethogram.png,barcodes/152.3_barcode.png
+152.5,Control,Control,3,152,ethograms/152.5_ethogram.png,barcodes/152.5_barcode.png
+153.4,ELS,ELS vulnerable,3,153,ethograms/153.4_ethogram.png,barcodes/153.4_barcode.png
+154.4,ELS,ELS vulnerable,3,154,ethograms/154.4_ethogram.png,barcodes/154.4_barcode.png
+157.1,Control,Control,3,157,ethograms/157.1_ethogram.png,barcodes/157.1_barcode.png
+157.4,Control,Control,3,157,ethograms/157.4_ethogram.png,barcodes/157.4_barcode.png
+158.5,Control,Control,3,158,ethograms/158.5_ethogram.png,barcodes/158.5_barcode.png
+159.3,ELS,ELS vulnerable,3,159,ethograms/159.3_ethogram.png,barcodes/159.3_barcode.png
+159.4,ELS,ELS resilient,3,159,ethograms/159.4_ethogram.png,barcodes/159.4_barcode.png
+159.5,ELS,ELS vulnerable,3,159,ethograms/159.5_ethogram.png,barcodes/159.5_barcode.png
+161.1,Control,Control,3,161,ethograms/161.1_ethogram.png,barcodes/161.1_barcode.png
+161.3,Control,Control,3,161,ethograms/161.3_ethogram.png,barcodes/161.3_barcode.png
