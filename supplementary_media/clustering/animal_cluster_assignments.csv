@@ -1,0 +1,83 @@
+animal,group,profile,litter,experiment,tree_cluster
+2.4,ELS,ELS resilient,2,1,1
+5.4,Control,Control,5,1,3
+11.4,Control,Control,11,1,3
+11.6,Control,Control,11,1,3
+15.4,ELS,ELS resilient,15,1,3
+15.6,ELS,ELS vulnerable,15,1,3
+23.4,ELS,ELS vulnerable,23,1,1
+25.1,ELS,ELS vulnerable,25,1,3
+26.4,ELS,ELS resilient,26,1,3
+32.2,ELS,ELS vulnerable,32,1,1
+32.4,ELS,ELS vulnerable,32,1,1
+34.4,Control,Control,34,1,1
+34.5,Control,Control,34,1,1
+40.4,Control,Control,40,1,1
+40.6,Control,Control,40,1,1
+41.4,Control,Control,41,1,3
+41.5,Control,Control,41,1,1
+41.6,Control,Control,41,1,3
+43.3,ELS,ELS resilient,43,1,1
+43.5,ELS,ELS resilient,43,1,1
+47.5,Control,Control,47,1,1
+49.5,ELS,ELS vulnerable,49,1,1
+49.6,ELS,ELS resilient,49,1,3
+50.5,Control,Control,50,1,3
+53.5,Control,Control,53,1,3
+54.3,Control,Control,54,1,1
+54.4,Control,Control,54,1,3
+54.6,Control,Control,54,1,3
+55.3,ELS,ELS vulnerable,55,1,1
+55.5,ELS,ELS vulnerable,55,1,1
+56.3,ELS,ELS vulnerable,56,1,1
+58.5,Control,Control,58,1,1
+62.1,Control,Control,62,1,1
+62.2,Control,Control,62,1,3
+62.3,Control,Control,62,1,3
+62.4,Control,Control,62,1,3
+62.5,Control,Control,62,1,1
+63.3,ELS,ELS vulnerable,63,1,1
+68.1,Control,Control,68,1,1
+69.1,ELS,ELS vulnerable,69,1,1
+69.2,ELS,ELS vulnerable,69,1,1
+69.3,ELS,ELS vulnerable,69,1,1
+69.5,ELS,ELS vulnerable,69,1,1
+73.1,ELS,ELS vulnerable,73,1,1
+73.4,ELS,ELS vulnerable,73,1,1
+74.1,Control,Control,74,1,1
+75.1,ELS,ELS vulnerable,75,1,1
+80.3,Control,Control,80,1,1
+88.2,ELS,ELS vulnerable,88,1,1
+88.3,ELS,ELS vulnerable,88,1,1
+123.1,ELS,ELS vulnerable,123,3,1
+123.3,ELS,ELS resilient,123,3,3
+128.4,ELS,ELS vulnerable,128,3,2
+129.1,Control,Control,129,3,2
+129.4,Control,Control,129,3,3
+133.3,ELS,ELS vulnerable,133,3,3
+134.2,ELS,ELS resilient,134,3,3
+134.4,ELS,ELS vulnerable,134,3,3
+136.2,Control,Control,136,3,1
+136.3,Control,Control,136,3,1
+136.5,Control,Control,136,3,2
+137.3,Control,Control,137,3,1
+144.3,ELS,ELS vulnerable,144,3,1
+144.5,ELS,ELS vulnerable,144,3,1
+145.5,Control,Control,145,3,1
+146.6,Control,Control,146,3,3
+147.4,Control,Control,147,3,3
+148.4,ELS,ELS resilient,148,3,3
+150.3,ELS,ELS resilient,150,3,3
+150.5,ELS,ELS resilient,150,3,1
+152.3,Control,Control,152,3,1
+152.5,Control,Control,152,3,3
+153.4,ELS,ELS vulnerable,153,3,1
+154.4,ELS,ELS vulnerable,154,3,3
+157.1,Control,Control,157,3,1
+157.4,Control,Control,157,3,1
+158.5,Control,Control,158,3,3
+159.3,ELS,ELS vulnerable,159,3,1
+159.4,ELS,ELS resilient,159,3,3
+159.5,ELS,ELS vulnerable,159,3,1
+161.1,Control,Control,161,3,3
+161.3,Control,Control,161,3,3

@@ -127,6 +127,38 @@ if p is not None:
             "geometrically from arena-floor overlap (Supplementary Fig. 4 and Supplementary "
             "Video 2).", label="cite Supplementary Fig. 4 and Video 2")
 
+# 3b - statistics that disagree with report/statistical_report.xlsx, now the
+#      single source: the models are fitted once and exported from there.
+p = find(lambda t: "SE = 0.241, z = 7.747" in t)
+if p is not None:
+    replace(p, "SE = 0.241, z = 7.747", "SE = 0.249, z = 7.484",
+            label="Fig 5D freeze, resilient vs vulnerable")
+
+p = find(lambda t: "SE = 0.170, z = 1.970" in t)
+if p is not None:
+    replace(p, "SE = 0.170, z = 1.970, p = 0.047, BH_FDR p = 0.109",
+            "SE = 0.176, z = 1.920, p = 0.055, BH_FDR p = 0.128",
+            label="Fig 5E sniff at trial onset")
+
+p = find(lambda t: "z = 2.627; p = 0.009" in t)
+if p is not None:
+    replace(p, "z = 2.627; p = 0.009", "z = 2.641; p = 0.008",
+            label="Fig 6G Simpson, resilient vs vulnerable")
+
+# The BH-corrected value had been pasted into the uncorrected slot, which
+# understated the effect roughly sevenfold.
+p = find(lambda t: "z = 2.972, p = 0.021; BH_FDR p = 0.021" in t)
+if p is not None:
+    replace(p, "z = 2.972, p = 0.021; BH_FDR p = 0.021",
+            "z = 2.972, p = 0.003; BH_FDR p = 0.021",
+            label="Fig 6M freeze bout p value")
+
+p = find(lambda t: "SE = 0.128, z = 3.285" in t)
+if p is not None:
+    replace(p, "SE = 0.128, z = 3.285, p =  0.001, BH_FDR p = 0.004",
+            "SE = 0.131, z = 3.207, p = 0.001, BH_FDR p = 0.005",
+            label="Fig 6N sniff bout")
+
 # 4 - legend claims that outrun their own statistics.
 p = find(lambda t: t.startswith("Fig. 4."))
 if p is not None:
