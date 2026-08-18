@@ -98,32 +98,18 @@ if p is not None:
     replace(p, "Cosine, Jensen–Shannon, Manhattan and Correlation",
             "Cosine, Minkowski, Manhattan and Correlation", label="Methods metric name")
 
-# 2 - the transition-probability panels are back in Supplementary Figure 3, as
-#     I and J rather than J and K: the four frequency-profile metrics now use
-#     A-H, so this keeps the lettering contiguous instead of skipping I.
-p = find(lambda t: "Supplementary Fig. 3J-K" in t)
+# 2 - the transition panels were dropped from Supplementary Figure 3: the
+#     score does not separate Control from ELS, and its overlap with the
+#     Figure 5 resilient set (58.3%) is close to the 48.8% expected by chance
+#     for the number of animals it classifies. The cross-reference and the
+#     legend entries go with them.
+p = find(lambda t: "Supplementary Fig. 3J-K" in t or "Supplementary Fig. 3I" in t)
 if p is not None:
-    replace(p, "(Supplementary Fig. 3J-K)", "(Supplementary Fig. 3I–J)",
-            label="Supp Fig 3 transition cross-reference")
-
-# 2b - restore the matching legend entries.
-p = find(lambda t: t.startswith("Supplementary Fig. 3."))
-if p is not None:
-    tail = ("N Control = 41, N ELS = 41. * ELS effect. Effect p ≤ 0.05.")
-    anchor = "Square markers enclose resilient ELS animals."
-    idx = p.text.rfind(anchor)
-    if idx != -1:
-        replace(p, p.text[idx:],
-                anchor + " I. MDS plot of the Euclidean-distance matrix computed from each "
-                "animal’s behavioral-transition profile (first-order transition "
-                "probabilities between the seven behavioral clusters), the von Ziegler-style "
-                "behavioural-flow embedding. Each dot is the two-dimensional embedding of one "
-                "mouse. Shaded ellipses represent each group’s median. Leave-one-out "
-                "cross-validation accuracy (LOOCV Acc) is indicated in the bottom corner. "
-                "J. Boxplots of the log-transformed Euclidean transition-distance scores "
-                "(mean ± SEM) for control versus ELS animals. No significant difference "
-                "was observed between groups. " + tail,
-                label="Supp Fig 3 legend I and J")
+    for old in ("(Supplementary Fig. 3J-K)", "(Supplementary Fig. 3I–J)"):
+        if old in p.text:
+            replace(p, old, "(Supplementary Materials and Methods)",
+                    label="Supp Fig 3 transition cross-reference removed")
+            break
 
 # 3 - typo.
 p = find(lambda t: "3..025" in t)
