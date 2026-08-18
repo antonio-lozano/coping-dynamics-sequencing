@@ -478,7 +478,7 @@ def main() -> None:
         left=0.075,
         right=0.955,
         top=0.965,
-        bottom=0.60,
+        bottom=0.66,
         wspace=0.78,
         hspace=0.30,
         width_ratios=[2.02, 0.74, 2.02, 0.74],
@@ -492,6 +492,28 @@ def main() -> None:
         letter_artists.append((mds_ax, plot_mds(mds_ax, sub, metric_name, mds_letter)))
         letter_artists.append((box_ax, plot_box(box_ax, sub, metric_name, box_letter)))
         align_box_to_mds(mds_ax, box_ax)
+
+    # Transition-probability panels (I, J) on a new row below: the von
+    # Ziegler-style behavioural-flow embedding, kept alongside the four
+    # frequency-profile metrics for comparison.
+    gs_trans = fig.add_gridspec(
+        nrows=1,
+        ncols=4,
+        left=0.075,
+        right=0.955,
+        top=0.625,
+        bottom=0.47,
+        wspace=0.78,
+        width_ratios=[2.02, 0.74, 2.02, 0.74],
+    )
+    trans_sub = profiles[profiles["metric"] == "Transition"].copy()
+    trans_mds_ax = fig.add_subplot(gs_trans[0, 0])
+    trans_box_ax = fig.add_subplot(gs_trans[0, 1])
+    letter_artists.append(
+        (trans_mds_ax, plot_mds(trans_mds_ax, trans_sub, "Transition Prob., Euclidean", "I"))
+    )
+    letter_artists.append((trans_box_ax, plot_box(trans_box_ax, trans_sub, "Transition", "J")))
+    align_box_to_mds(trans_mds_ax, trans_box_ax)
 
     # After align_box_to_mds, so the letters follow the repositioned box axes.
     align_panel_letters(fig, letter_artists)
