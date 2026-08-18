@@ -1,23 +1,18 @@
 # Manuscript vs repository audit
 
-Source document: `Sanguino-Gómez_coping_strategies.docx`
+Source document: `Sanguino-Gómez_coping_strategies_FIXED.docx`
 
 ## 1. Citation order
 
 - `OK  ` Main figures cited in order: 1, 2, 3, 4, 5, 6, 7.
-- `FAIL` Supplementary figures are not cited in numerical order: first mentions run 1, 2, 3, 5, 4. Journals require numbering by order of first mention.
+- `FAIL` Supplementary figures are not cited in numerical order: first mentions run 4, 1, 2, 3, 5. Journals require numbering by order of first mention.
 - `OK  ` Supplementary tables cited in order: 1, 2.
-
-## 2. Panel letters in the text
-
-- `FAIL` Supplementary Figure 3J-K cites panel J, but that figure has panels A-H only.
-- `FAIL` Supplementary Figure 3J-K cites panel K, but that figure has panels A-H only.
 
 ## 4. References
 
-- `FAIL` 47 distinct references cited; first-mention order is NOT ascending. Reference list holds 50 entries.
-- `FAIL` First-mention sequence breaks at: 23 then 17; 25 then 16; 45 then 35; 50 then 40. Renumber so citations ascend on first appearance.
-- `WARN` Reference list entries never cited in the text: [13, 18, 39].
+- `FAIL` 38 distinct references cited; first-mention order is NOT ascending. Reference list holds 50 entries.
+- `FAIL` First-mention sequence breaks at: 23 then 17; 24 then 16; 44 then 33; 33 then 10. Renumber so citations ascend on first appearance.
+- `WARN` Reference list entries never cited in the text: [5, 8, 13, 18, 21, 25, 29, 31, 39, 41, 49, 50].
 
 ## 5. Repo artifacts
 
