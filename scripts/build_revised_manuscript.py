@@ -92,51 +92,42 @@ shutil.copyfile(SRC, DST)
 doc = docx.Document(str(DST))
 P = doc.paragraphs
 
-# 1 - Methods names a metric the paper does not actually use.
-p = find(lambda t: "Jensen" in t)
+# 1 - Supplementary Video 1 has never been cited. The syllable atlas belongs
+#     where the clusters are introduced.
+p = find(lambda t: "definitions in Supplementary Table 1" in t)
 if p is not None:
-    replace(p, "Cosine, Jensen–Shannon, Manhattan and Correlation",
-            "Cosine, Minkowski, Manhattan and Correlation", label="Methods metric name")
+    replace(p, "(definitions in Supplementary Table 1)",
+            "(definitions in Supplementary Table 1; representative occurrences of every "
+            "syllable are shown in Supplementary Video 1)",
+            label="cite Supplementary Video 1")
 
-# 2 - the transition panels were dropped from Supplementary Figure 3: the
-#     score does not separate Control from ELS, and its overlap with the
-#     Figure 5 resilient set (58.3%) is close to the 48.8% expected by chance
-#     for the number of animals it classifies. The cross-reference and the
-#     legend entries go with them.
-p = find(lambda t: "Supplementary Fig. 3J-K" in t or "Supplementary Fig. 3I" in t)
+# 2 - the Results assert reduced Markov entropy, but the model does not show it
+#     (p = 0.106 in report/statistical_report.xlsx).
+p = find(lambda t: "We also quantified entropy by analyzing the transition probabilities" in t)
 if p is not None:
-    for old in ("(Supplementary Fig. 3J-K)", "(Supplementary Fig. 3I–J)"):
-        if old in p.text:
-            replace(p, old, "(Supplementary Materials and Methods)",
-                    label="Supp Fig 3 transition cross-reference removed")
-            break
+    replace(p,
+            "We also quantified entropy by analyzing the transition probabilities between "
+            "behavioral states using a first-order Markov chain. This reduced complexity "
+            "indicates",
+            "We also quantified entropy by analyzing the transition probabilities between "
+            "behavioral states using a first-order Markov chain; Markov entropy did not "
+            "differ significantly between groups (β = −0.041, SE = 0.025, "
+            "z = −1.618, p = 0.106; Fig. 4W). Taken together with the increased "
+            "determinism, this pattern indicates",
+            label="Markov entropy statistic")
 
-# 3 - typo.
-p = find(lambda t: "3..025" in t)
+# 3 - Supplementary Figure 4 and Video 2 are cited here, between the first
+#     mentions of Supplementary Figures 3 and 5, so the supplementary figures
+#     are finally numbered in order of appearance (they currently run 1,2,3,5,4).
+p = find(lambda t: "misclassifications occurring predominantly among movement-rich motifs" in t)
 if p is not None:
-    replace(p, "z = 3..025", "z = 3.025", label="z = 3..025 typo")
+    replace(p, "(e.g. groom is often mistaken for unlabeled behavior or turn for locomotion).",
+            "(e.g. groom is often mistaken for unlabeled behavior or turn for locomotion). "
+            "Climbing was the one class not recovered by keypoint MoSeq itself but defined "
+            "geometrically from arena-floor overlap (Supplementary Fig. 4 and Supplementary "
+            "Video 2).", label="cite Supplementary Fig. 4 and Video 2")
 
-# 4 - a clause printed twice, joined by a non-breaking space.
-p = find(lambda t: "prolonged bout durations.\xa0showed prolonged" in t)
-if p is not None:
-    replace(p, "showed prolonged bout durations.\xa0showed prolonged bout durations.",
-            "showed prolonged bout durations.", label="duplicated bout clause")
-
-# 5 - Supplementary Figure 4 is deliberately NOT cited here. Climbing is
-#     discussed before Supplementary Figures 1-3 are first mentioned, so a
-#     citation at this point makes Supp. Fig. 4 the first supplementary figure
-#     in the paper and the order worse, not better. Swapping the numbers of
-#     Supplementary Figures 4 and 5 is the correct fix and is a separate,
-#     repo-wide rename.
-
-# 6 - state the Figure 2 time unit, so the text reconciles with the workbook.
-p = find(lambda t: "A mixed linear model analysis confirmed a significant main effect of time" in t)
-if p is not None:
-    replace(p, "A mixed linear model analysis confirmed a significant main effect of time",
-            "A mixed linear model analysis confirmed a significant main effect of time "
-            "(coefficients expressed per 30 s bin)", label="Figure 2 time unit")
-
-# 7 - legend claims that outrun their own statistics.
+# 4 - legend claims that outrun their own statistics.
 p = find(lambda t: t.startswith("Fig. 4."))
 if p is not None:
     replace(p, "E. Boxplot of the Simpson diversity index (mean ± SEM). ELS reduces "
@@ -144,22 +135,17 @@ if p is not None:
             "E. Boxplot of the Simpson diversity index (mean ± SEM). ELS shows a trend "
             "toward reduced behavioral motif diversity (p = 0.059).", label="Fig 4 legend E")
     replace(p, "U. Boxplot of recurrence rate (mean ± SEM). ELS increases recurrence.",
-            "U. Boxplot of recurrence rate (mean ± SEM). ELS shows a trend toward increased "
-            "recurrence (p = 0.059).", label="Fig 4 legend U")
+            "U. Boxplot of recurrence rate (mean ± SEM). ELS shows a trend toward "
+            "increased recurrence (p = 0.059).", label="Fig 4 legend U")
     replace(p, "W. Boxplot of Markov entropy index (mean ± SEM). ELS reduces Markov entropy.",
-            "W. Boxplot of Markov entropy index (mean ± SEM). Markov entropy does not differ "
-            "significantly between groups (p = 0.106).", label="Fig 4 legend W")
+            "W. Boxplot of Markov entropy index (mean ± SEM). Markov entropy does not "
+            "differ significantly between groups (p = 0.106).", label="Fig 4 legend W")
 
-# 8 - the Results sentence asserts a Markov effect the model does not show.
-p = find(lambda t: "We also quantified entropy by analyzing the transition probabilities" in t)
+# 5 - grammar.
+p = find(lambda t: "gave the similar result" in t)
 if p is not None:
-    replace(p,
-            "We also quantified entropy by analyzing the transition probabilities between "
-            "behavioral states using a first-order Markov chain.",
-            "We also quantified entropy by analyzing the transition probabilities between "
-            "behavioral states using a first-order Markov chain; Markov entropy did not differ "
-            "significantly between groups (β = −0.041, SE = 0.025, z = −1.618, "
-            "p = 0.106; Fig. 4W).", label="Markov entropy sentence")
+    replace(p, "gave the similar result for both feature sets",
+            "gave similar results for both feature sets", label="grammar: similar results")
 
 # 9 - references are NOT renumbered here. They are plain superscript text
 #     rather than Word fields, so a script can rewrite them, but doing so

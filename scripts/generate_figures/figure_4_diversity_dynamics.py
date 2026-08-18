@@ -664,108 +664,12 @@ def export_source_data(metrics: pd.DataFrame, bouts: pd.DataFrame, transitions: 
     PROCESSED_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     transitions.to_csv(PROCESSED_OUTPUT_DIR / "transition_metrics_per_animal.csv", index=False)
 
-    # --- MixedLM for diversity metrics (default optimizer) ---
-    # The plain MixedLM fit is reported. Beta is stable across fits; SE/z/p are
-    # the default-optimizer values.
-    DIVERSITY_METRICS = ["simpson", "shannon", "evenness", "cui"]
-    div_rows: list[dict] = []
-    for metric_name in DIVERSITY_METRICS:
-        if metric_name not in metrics.columns:
-            continue
-        sub = metrics.dropna(subset=[metric_name]).copy()
-        sub["Condition"] = pd.Categorical(sub["group"], categories=["Control", "ELS"])
-        formula = f"{metric_name} ~ Condition + Experiment"
-        try:
-            model = smf.mixedlm(formula, sub, groups=sub["Animal"]).fit(reml=False)
-            pk = "Condition[T.ELS]"
-            conf = model.conf_int()
-            div_rows.append({
-                "metric": metric_name,
-                "parameter": pk,
-                "coef": float(model.params[pk]),
-                "se": float(model.bse[pk]),
-                "z": float(model.tvalues[pk]),
-                "p_value": float(model.pvalues[pk]),
-                "ci_low": float(conf.loc[pk, 0]),
-                "ci_high": float(conf.loc[pk, 1]),
-                "n_obs": int(model.nobs),
-            })
-        except Exception as e:
-            print(f"MixedLM failed for {metric_name}: {e}")
-    if div_rows:
-        STATISTICS_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-        path = STATISTICS_OUTPUT_DIR / "stats_figure4_diversity_MixedLM.csv"
-        pd.DataFrame(div_rows).to_csv(path, index=False)
-        print(f"Saved: {path}")
-
-    # --- MixedLM for bout durations (mean per animal per cluster) ---
-    BOUT_CLUSTERS = ["Freezing", "Sniffing", "Grooming", "Turn", "Locomotion", "Climbing", "Jump"]
-    mean_bouts = (
-        bouts[bouts["cluster"].isin(BOUT_CLUSTERS)]
-        .groupby(["Animal", "group", "Experiment", "cluster"], as_index=False)["bout_duration"]
-        .mean()
-    )
-    mean_bouts["Condition"] = pd.Categorical(mean_bouts["group"], categories=["Control", "ELS"])
-    bout_rows: list[dict] = []
-    for cluster in BOUT_CLUSTERS:
-        sub = mean_bouts[mean_bouts["cluster"] == cluster].dropna(subset=["bout_duration"]).copy()
-        if sub.empty:
-            continue
-        formula = "bout_duration ~ Condition + Experiment"
-        try:
-            model = smf.mixedlm(formula, sub, groups=sub["Animal"]).fit(reml=False)
-            pk = "Condition[T.ELS]"
-            conf = model.conf_int()
-            bout_rows.append({
-                "cluster": cluster,
-                "parameter": pk,
-                "coef": float(model.params[pk]),
-                "se": float(model.bse[pk]),
-                "z": float(model.tvalues[pk]),
-                "p_value": float(model.pvalues[pk]),
-                "ci_low": float(conf.loc[pk, 0]),
-                "ci_high": float(conf.loc[pk, 1]),
-                "n_obs": int(model.nobs),
-            })
-        except Exception as e:
-            print(f"MixedLM failed for {cluster} bouts: {e}")
-    if bout_rows:
-        STATISTICS_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-        path = STATISTICS_OUTPUT_DIR / "stats_figure4_bouts_MixedLM.csv"
-        pd.DataFrame(bout_rows).to_csv(path, index=False)
-        print(f"Saved: {path}")
-
-    # --- MixedLM for transition metrics ---
-    TRANSITION_METRICS = ["lz", "recurrence", "determinism", "markov"]
-    trans_rows: list[dict] = []
-    for metric_name in TRANSITION_METRICS:
-        if metric_name not in transitions.columns:
-            continue
-        sub = transitions.dropna(subset=[metric_name]).copy()
-        sub["Condition"] = pd.Categorical(sub["group"], categories=["Control", "ELS"])
-        formula = f"{metric_name} ~ Condition + Experiment"
-        try:
-            model = smf.mixedlm(formula, sub, groups=sub["Animal"]).fit(reml=False)
-            pk = "Condition[T.ELS]"
-            conf = model.conf_int()
-            trans_rows.append({
-                "metric": metric_name,
-                "parameter": pk,
-                "coef": float(model.params[pk]),
-                "se": float(model.bse[pk]),
-                "z": float(model.tvalues[pk]),
-                "p_value": float(model.pvalues[pk]),
-                "ci_low": float(conf.loc[pk, 0]),
-                "ci_high": float(conf.loc[pk, 1]),
-                "n_obs": int(model.nobs),
-            })
-        except Exception as e:
-            print(f"MixedLM failed for {metric_name}: {e}")
-    if trans_rows:
-        STATISTICS_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-        path = STATISTICS_OUTPUT_DIR / "stats_figure4_transition_MixedLM.csv"
-        pd.DataFrame(trans_rows).to_csv(path, index=False)
-        print(f"Saved: {path}")
+    # The Condition models for Figure 4 are no longer fitted here. They were
+    # fitted a second time in scripts/build_statistical_report.py, and because
+    # these MixedLM fits sit on the random-effect variance boundary the two runs
+    # converged to different standard errors, so the repository reported two
+    # answers for one model. The builder fits once and writes
+    # statistics/stats_figure4_*.csv; this script only draws.
 
 
 def main() -> None:

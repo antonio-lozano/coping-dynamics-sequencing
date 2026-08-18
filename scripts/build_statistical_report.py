@@ -1404,6 +1404,38 @@ def fig4_block(title: str, source: pd.DataFrame, metric: str, dep_var: str) -> d
     }
 
 
+
+def export_condition_stats(blocks: list[dict], path: Path, key: str) -> None:
+    """Write the Condition[T.ELS] row of each block to statistics/.
+
+    These tables used to be fitted a second time inside the figure scripts.
+    Same formula, same estimator, but MixedLM sits on the random-effect variance
+    boundary here, so the two fits converged to different standard errors and the
+    repository reported two answers for one model. The builder now fits once and
+    exports, and the figure scripts consume the result.
+    """
+    rows = []
+    for block in blocks:
+        section = block["sections"][0] if "sections" in block else block
+        params = section["params"]
+        title = section.get("title", "")
+        hit = params[params["Parameter"].astype(str).str.strip() == "Stress"]
+        if hit.empty:
+            continue
+        row = hit.iloc[0]
+        rows.append({
+            key: title.split(" - ")[0].strip(),
+            "parameter": "Condition[T.ELS]",
+            "coef": row["Coef."], "se": row["Std. Err."],
+            "z": row["z"], "p_value": row["P>|z|"],
+            "ci_low": row["[0.025"], "ci_high": row["0.975]"],
+        })
+    if rows:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        pd.DataFrame(rows).to_csv(path, index=False)
+        print(f"Saved: {path}")
+
+
 def add_fig4_sheets(wb: openpyxl.Workbook) -> None:
     fig4 = load_fig4_module()
     _pred, _pred_seq, full_seq, meta = fig4.load_sequences()
@@ -1412,15 +1444,16 @@ def add_fig4_sheets(wb: openpyxl.Workbook) -> None:
     transitions = fig4.transition_metrics(full_seq, meta)
     mean_bouts = bouts.groupby(["Animal", "group", "Experiment", "cluster"], as_index=False)["bout_duration"].mean()
 
+    diversity_blocks = [
+        fig4_block("Simpson Index", metrics, "simpson", "Percentage"),
+        fig4_block("Shannon entropy", metrics, "shannon", "Percentage"),
+        fig4_block("Evenness", metrics, "evenness", "Percentage"),
+        fig4_block("Cumulative usage index", metrics, "cui", "Percentage"),
+    ]
     add_metric_blocks_sheet(
         wb,
         "Fig.4E-H_frequency_metrics",
-        [
-            fig4_block("Simpson Index", metrics, "simpson", "Percentage"),
-            fig4_block("Shannon entropy", metrics, "shannon", "Percentage"),
-            fig4_block("Evenness", metrics, "evenness", "Percentage"),
-            fig4_block("Cumulative usage index", metrics, "cui", "Percentage"),
-        ],
+        diversity_blocks,
         header_gap=2,
     )
 
@@ -1434,15 +1467,21 @@ def add_fig4_sheets(wb: openpyxl.Workbook) -> None:
     apply_bh_fdr(bout_blocks[1:], ["Stress"])
     add_metric_blocks_sheet(wb, "Fig.4J-Q_bout_duration", bout_blocks, header_gap=2)
 
-    add_metric_blocks_sheet(
-        wb,
-        "Fig.4T-W_transition_metrics",
-        [
+    export_condition_stats(diversity_blocks, STATISTICS_DIR / "stats_figure4_diversity_MixedLM.csv", "metric")
+    export_condition_stats(bout_blocks[1:], STATISTICS_DIR / "stats_figure4_bouts_MixedLM.csv", "cluster")
+
+    transition_blocks = [
             fig4_block("Lempel-Ziv complexity", transitions, "lz", "LZ complexity"),
             fig4_block("Determinism", transitions, "determinism", "Determinism"),
             fig4_block("Recurrence rate", transitions, "recurrence", "Recurrence"),
             fig4_block("Markov entropy", transitions, "markov", "Markov entropy"),
-        ],
+    ]
+    export_condition_stats(transition_blocks,
+                           STATISTICS_DIR / "stats_figure4_transition_MixedLM.csv", "metric")
+    add_metric_blocks_sheet(
+        wb,
+        "Fig.4T-W_transition_metrics",
+        transition_blocks,
         header_gap=2,
     )
 
