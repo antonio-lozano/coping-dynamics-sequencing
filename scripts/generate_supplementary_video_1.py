@@ -23,7 +23,8 @@ from typing import Iterable
 
 import imageio_ffmpeg
 import numpy as np
-from PIL import Image, ImageDraw, ImageFont, ImageOps
+from PIL import Image, ImageDraw, ImageFont, ImageOps, ImageSequence
+from scipy import ndimage
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -41,6 +42,14 @@ END_FRAMES = 50
 # three complete archived occurrences for the submission atlas. Values are
 # zero-based occurrence indices in the source's 20-frame concatenation.
 OCCURRENCE_SELECTIONS = {34: (6, 23, 60)}
+
+# Skeleton segmentation in the source atlas.
+SKELETON_SATURATION = 40   # min chroma to count as pose ink, not label text
+SKELETON_MIN_AREA = 150    # px, discards stray anti-aliasing speckles
+SKELETON_COUNT = 35        # syllables 0-34 drawn in the atlas
+SKELETON_ROW_GAP = 60      # px between atlas rows
+SKELETON_PAD = 10          # px of breathing room around each pose
+SKELETON_DILATE = 3        # px, keeps the anti-aliased rim and black outline
 
 CLUSTERS: list[tuple[str, list[int]]] = [
     ("Freeze", [0, 28]),
@@ -113,44 +122,84 @@ def read_video_segment(path: Path, count: int, start_frame: int = 0) -> list[Ima
 
 
 def load_skeleton_cells(path: Path) -> dict[int, list[Image.Image]]:
+    """Cut the atlas into one transparent, tightly-cropped clip per syllable.
+
+    The atlas is a 4x9 grid of matplotlib panels, each with a black text label
+    above a coloured 14-point skeleton. Slicing it on an assumed grid pitch cut
+    the wider skeletons off at the cell edge and let neighbouring labels bleed
+    in. Instead the skeletons are isolated by chroma: the pose is drawn in
+    saturated yellows, oranges and reds, while every label is neutral black, so
+    a saturation threshold segments the 35 skeletons and nothing else.
+
+    Each syllable is then cropped to its own bounding box taken over the whole
+    animation, so the pose never leaves the crop and never jitters between
+    frames, and the white page is returned as alpha rather than as pixels.
+    """
     animation = Image.open(path)
-    frames: list[Image.Image] = []
-    for frame_index in range(animation.n_frames):
-        animation.seek(frame_index)
-        frames.append(animation.convert("RGB").copy())
+    frames = [f.convert("RGB").copy() for f in ImageSequence.Iterator(animation)]
+    stack = np.stack([np.asarray(f).astype(np.int16) for f in frames])
 
-    union = np.zeros((frames[0].height, frames[0].width), dtype=bool)
-    for frame in frames:
-        union |= np.any(np.asarray(frame) < 245, axis=2)
-    ys, xs = np.where(union)
-    if not len(xs):
-        raise RuntimeError(f"No skeleton content detected in {path}")
-    xmin, xmax = int(xs.min()), int(xs.max()) + 1
-    ymin, ymax = int(ys.min()), int(ys.max()) + 1
+    # Chroma mask: coloured ink only. Black labels have saturation ~0.
+    saturation = stack.max(axis=3) - stack.min(axis=3)
+    coloured = (saturation > SKELETON_SATURATION).any(axis=0)
 
-    ncols, nrows = 4, 9
-    cell_width = (xmax - xmin) / ncols
-    cell_height = (ymax - ymin) / nrows
+    labels, count = ndimage.label(coloured, structure=np.ones((3, 3), dtype=int))
+    if count < 1:
+        raise RuntimeError(f"No coloured skeletons found in {path}")
+    areas = ndimage.sum(coloured, labels, range(1, count + 1))
+    slices = ndimage.find_objects(labels)
+    blobs = [slices[i] for i, area in enumerate(areas) if area >= SKELETON_MIN_AREA]
+    if len(blobs) != SKELETON_COUNT:
+        raise RuntimeError(
+            f"Expected {SKELETON_COUNT} skeletons in {path}, segmented {len(blobs)}"
+        )
+
+    # Row-major order matches the atlas's Syllable 0..34 layout. Rows are
+    # quantised before sorting so a few pixels of vertical drift within a row
+    # cannot reorder it.
+    rows = sorted(blobs, key=lambda sl: ((sl[0].start + sl[0].stop) // 2))
+    row_of: dict[int, int] = {}
+    current, last = 0, None
+    for sl in rows:
+        centre = (sl[0].start + sl[0].stop) // 2
+        if last is not None and centre - last > SKELETON_ROW_GAP:
+            current += 1
+        row_of[id(sl)] = current
+        last = centre
+    ordered = sorted(blobs, key=lambda sl: (row_of[id(sl)], sl[1].start))
+
+    # Each syllable keeps only its own connected component. Padding the crop
+    # can pull in a neighbouring pose or label, so the component mask - grown
+    # slightly to keep the anti-aliased rim and the black outline - gates the
+    # alpha channel.
+    own = np.zeros_like(labels, dtype=bool)
     cells: dict[int, list[Image.Image]] = {}
-    for syllable in range(35):
-        row, col = divmod(syllable, ncols)
-        # The source atlas prints labels at the top of each cell. The final
-        # video provides its own larger label, so crop to the pose region and
-        # inset the side boundaries to prevent neighbouring label fragments
-        # from entering the enlarged canonical-skeleton panel.
-        left = max(0, round(xmin + (col + 0.06) * cell_width))
-        right = min(frames[0].width, round(xmin + (col + 0.94) * cell_width))
-        top = max(0, round(ymin + (row + 0.18) * cell_height))
-        bottom = min(frames[0].height, round(ymin + (row + 0.98) * cell_height))
-        cells[syllable] = []
+    for syllable, sl in enumerate(ordered):
+        own[:] = False
+        component = labels[sl]
+        own[sl] = component == np.bincount(component[component > 0].ravel()).argmax()
+        mask = ndimage.binary_dilation(own, iterations=SKELETON_DILATE)
+
+        pad = SKELETON_PAD
+        top = max(0, sl[0].start - pad)
+        bottom = min(stack.shape[1], sl[0].stop + pad)
+        left = max(0, sl[1].start - pad)
+        right = min(stack.shape[2], sl[1].stop + pad)
+        window = mask[top:bottom, left:right]
+
+        clips: list[Image.Image] = []
         for frame in frames:
-            cell = frame.crop((left, top, right, bottom))
-            # Remove the atlas's small embedded label. It is redundant with the
-            # large, accessible label drawn by the final-video layout.
-            ImageDraw.Draw(cell).rectangle(
-                (0, 0, cell.width, round(cell.height * 0.42)), fill="white"
-            )
-            cells[syllable].append(cell)
+            cell = frame.crop((left, top, right, bottom)).convert("RGBA")
+            data = np.asarray(cell).astype(np.int16)
+            # The page is white; turn it into alpha so the panel background of
+            # the finished video shows through instead of a grey-white square.
+            lightness = data[:, :, :3].min(axis=2)
+            alpha = np.clip((250 - lightness) * 6, 0, 255)
+            alpha = np.where(window, alpha, 0).astype(np.uint8)
+            out = data.copy()
+            out[:, :, 3] = alpha
+            clips.append(Image.fromarray(out.astype(np.uint8), "RGBA"))
+        cells[syllable] = clips
     return cells
 
 
@@ -208,10 +257,15 @@ def render_syllable_frame(
     draw.text((552, 147), f"Representative occurrence {occurrence}", font=FONTS["small"], fill="#666666")
 
     if skeleton is not None:
-        skeleton_fit = ImageOps.contain(skeleton, (370, 285), Image.Resampling.LANCZOS)
-        x = 550 + (370 - skeleton_fit.width) // 2
-        y = 180 + (285 - skeleton_fit.height) // 2
-        canvas.paste(skeleton_fit, (x, y))
+        # Fit inside the panel rather than onto a fixed box, and composite
+        # through the alpha built in load_skeleton_cells so the pose sits on the
+        # video background instead of on a white tile.
+        panel = (550, 180, 940, 455)
+        box = (panel[2] - panel[0], panel[3] - panel[1])
+        skeleton_fit = ImageOps.contain(skeleton, box, Image.Resampling.LANCZOS)
+        x = panel[0] + (box[0] - skeleton_fit.width) // 2
+        y = panel[1] + (box[1] - skeleton_fit.height) // 2
+        canvas.paste(skeleton_fit, (x, y), skeleton_fit)
         draw.text((552, 465), "Canonical skeleton trajectory", font=FONTS["small"], fill="#666666")
     else:
         draw.text((552, 245), "Climbing is identified from", font=FONTS["body"], fill="#555555")
