@@ -198,34 +198,56 @@ def litter_variance_components(df: pd.DataFrame) -> pd.DataFrame:
 def sibling_similarity_test(df: pd.DataFrame) -> dict:
     """Are littermates more behaviourally alike than unrelated mice?
 
-    Compares the mean Euclidean distance between behavioural profiles for
-    sibling pairs against a null built by shuffling litter labels, which keeps
-    the litter size distribution intact.
+    Compares the mean profile distance between sibling pairs against a
+    permutation null. The null shuffles litter labels *within* condition and
+    cohort, because no litter spans both conditions: siblings share a dam, a
+    treatment and a cohort, so an unstratified null would credit the family for
+    similarity that the treatment already explains. Both versions are returned
+    so the size of that confound is visible.
     """
     profiles = pd.read_csv(ROOT / "data/processed/cluster_timecourse_per_animal.csv")
     wide = profiles.pivot_table(index="animal_id", columns=["cluster", "time_bin"],
-                                values="pct", aggfunc="mean", fill_value=0.0).sort_index(axis=1)
-    animals = [str(a) for a in wide.index]
-    features = wide.to_numpy(dtype=float)
-    from scipy.spatial.distance import squareform, pdist
-    dist = squareform(pdist(features))
-    litter = np.array([a.split(".")[0] for a in animals])
+                                values="pct", aggfunc="mean",
+                                fill_value=0.0).sort_index(axis=1)
+    freq = pd.read_csv(ROOT / "data/processed/cluster_frequency_per_animal.csv")
+    meta = (freq[["animal_id", "group", "experiment"]].drop_duplicates("animal_id")
+            .set_index("animal_id").loc[wide.index].reset_index())
+    from scipy.spatial.distance import pdist, squareform
+    dist = squareform(pdist(wide.to_numpy(dtype=float)))
+    n = len(meta)
+    litter = np.array([str(a).split(".")[0] for a in wide.index])
+    strata = pd.Series([f"{g}|{e}" for g, e in
+                        zip(meta["group"], meta["experiment"])])
 
-    def mean_sibling_distance(labels: np.ndarray) -> float:
-        vals = [dist[i, j] for i in range(len(labels)) for j in range(i + 1, len(labels))
+    def mean_sibling(labels: np.ndarray) -> float:
+        vals = [dist[i, j] for i in range(n) for j in range(i + 1, n)
                 if labels[i] == labels[j]]
         return float(np.mean(vals)) if vals else np.nan
 
-    observed = mean_sibling_distance(litter)
-    null = np.empty(N_PERM // 4)
-    shuffled = litter.copy()
-    for k in range(len(null)):
-        RNG.shuffle(shuffled)
-        null[k] = mean_sibling_distance(shuffled)
-    p = (np.sum(null <= observed) + 1) / (len(null) + 1)
-    return {"observed_sibling_distance": observed,
-            "null_mean_distance": float(np.nanmean(null)),
-            "p_siblings_more_alike": float(p)}
+    observed = mean_sibling(litter)
+    groups = {key: np.array(list(idx)) for key, idx in strata.groupby(strata).groups.items()}
+
+    def run(stratified: bool) -> np.ndarray:
+        null = np.empty(N_PERM // 4)
+        shuffled = litter.copy()
+        for k in range(len(null)):
+            if stratified:
+                for idx in groups.values():
+                    shuffled[idx] = RNG.permutation(litter[idx])
+            else:
+                shuffled = RNG.permutation(litter)
+            null[k] = mean_sibling(shuffled)
+        return null
+
+    plain, strat = run(False), run(True)
+    return {
+        "observed_sibling_distance": observed,
+        "null_unstratified": float(np.nanmean(plain)),
+        "p_unstratified": float((np.sum(plain <= observed) + 1) / (len(plain) + 1)),
+        "null_within_condition_and_cohort": float(np.nanmean(strat)),
+        "p_within_condition_and_cohort":
+            float((np.sum(strat <= observed) + 1) / (len(strat) + 1)),
+    }
 
 
 def litter_size_effect(df: pd.DataFrame) -> pd.DataFrame:
@@ -275,9 +297,12 @@ def main() -> None:
 
     sib = sibling_similarity_test(df)
     print("\nARE LITTERMATES MORE ALIKE?")
-    print(f"  sibling pairs mean profile distance = {sib['observed_sibling_distance']:.2f}")
-    print(f"  shuffled-litter null                = {sib['null_mean_distance']:.2f}")
-    print(f"  permutation p                       = {sib['p_siblings_more_alike']:.4f}")
+    print(f"  sibling pairs mean profile distance   = {sib['observed_sibling_distance']:.2f}")
+    print(f"  null, litter shuffled freely          = {sib['null_unstratified']:.2f}"
+          f"   p = {sib['p_unstratified']:.4f}")
+    print(f"  null, shuffled within condition+cohort= "
+          f"{sib['null_within_condition_and_cohort']:.2f}"
+          f"   p = {sib['p_within_condition_and_cohort']:.4f}   <- the honest test")
 
     size = litter_size_effect(df)
     print("\nDOES LITTER SIZE PREDICT BEHAVIOUR?")
