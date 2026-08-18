@@ -16,7 +16,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from scipy.spatial.distance import cdist, jensenshannon
-from scipy.stats import ttest_ind
+from scipy.stats import hypergeom, ttest_ind
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LogisticRegression
 from sklearn.manifold import MDS
@@ -117,6 +117,13 @@ for kind in ["row-cond (current)", "row-cond sqrt", "joint", "joint sqrt",
         })
 
 out = pd.DataFrame(rows)
+# Overlap has to be read against chance. A rule that calls n of the 41 ELS
+# animals resilient will, at random, recover 12*n/41 of the Euclidean twelve,
+# so the raw percentage on its own says nothing.
+out["hits"] = (out["overlap_%"] / 100 * 12).round().astype(int)
+out["chance_overlap_%"] = out.n_res / 41 * 100
+out["p_hypergeometric"] = [hypergeom.sf(h - 1, 41, 12, n)
+                           for h, n in zip(out.hits, out.n_res)]
 out.to_csv(
     ROOT / "statistics" / "transition_representation_sweep.csv", index=False)
 pd.set_option("display.width", 220)
