@@ -150,6 +150,104 @@ def refit_with_litter(df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+
+def litter_variance_components(df: pd.DataFrame) -> pd.DataFrame:
+    """How much of each metric's variance sits between litters?
+
+    Fits metric ~ Condition + Experiment with a litter random intercept and
+    reports the intraclass correlation, sigma2_litter / (sigma2_litter +
+    sigma2_residual). This asks whether litter matters at all, rather than
+    merely controlling for it: an ICC near zero means littermates are no more
+    alike than unrelated mice, and the pseudoreplication concern is empirically
+    empty for that measure.
+
+    A likelihood-ratio test against the same model without the random intercept
+    gives a p-value. The null sits on the variance boundary, so the usual chi2
+    reference is conservative - the honest reading is that a significant test is
+    real and a non-significant one is weak evidence either way.
+    """
+    rows = []
+    for column, label in METRICS.items():
+        if column not in df.columns:
+            continue
+        d = df.dropna(subset=[column]).copy()
+        d["Condition"] = pd.Categorical(d["group"], categories=["Control", "ELS"])
+        formula = f"Q('{column}') ~ Condition + Experiment"
+        try:
+            # Both fits must use ML, not REML: REML likelihoods are not comparable
+            # across models with different random-effect structures, which made
+            # the earlier likelihood ratios come out negative.
+            mixed = smf.mixedlm(formula, d, groups=d["litter"]).fit(reml=False)
+            plain = smf.ols(formula, d).fit()
+            var_litter = float(np.asarray(mixed.cov_re)[0, 0])
+            var_resid = float(mixed.scale)
+            icc = var_litter / (var_litter + var_resid) if var_litter + var_resid else np.nan
+            lr = 2 * (mixed.llf - plain.llf)
+            from scipy.stats import chi2
+            p_lr = 0.5 * chi2.sf(max(lr, 0.0), df=1)   # boundary-corrected
+            rows.append({"metric": label, "ICC_litter": icc,
+                         "var_litter": var_litter, "var_residual": var_resid,
+                         "LR_stat": lr, "p_litter_effect": p_lr})
+        except Exception as exc:  # noqa: BLE001
+            rows.append({"metric": label, "ICC_litter": np.nan, "var_litter": np.nan,
+                         "var_residual": np.nan, "LR_stat": np.nan,
+                         "p_litter_effect": np.nan, "note": str(exc)[:50]})
+    return pd.DataFrame(rows)
+
+
+def sibling_similarity_test(df: pd.DataFrame) -> dict:
+    """Are littermates more behaviourally alike than unrelated mice?
+
+    Compares the mean Euclidean distance between behavioural profiles for
+    sibling pairs against a null built by shuffling litter labels, which keeps
+    the litter size distribution intact.
+    """
+    profiles = pd.read_csv(ROOT / "data/processed/cluster_timecourse_per_animal.csv")
+    wide = profiles.pivot_table(index="animal_id", columns=["cluster", "time_bin"],
+                                values="pct", aggfunc="mean", fill_value=0.0).sort_index(axis=1)
+    animals = [str(a) for a in wide.index]
+    features = wide.to_numpy(dtype=float)
+    from scipy.spatial.distance import squareform, pdist
+    dist = squareform(pdist(features))
+    litter = np.array([a.split(".")[0] for a in animals])
+
+    def mean_sibling_distance(labels: np.ndarray) -> float:
+        vals = [dist[i, j] for i in range(len(labels)) for j in range(i + 1, len(labels))
+                if labels[i] == labels[j]]
+        return float(np.mean(vals)) if vals else np.nan
+
+    observed = mean_sibling_distance(litter)
+    null = np.empty(N_PERM // 4)
+    shuffled = litter.copy()
+    for k in range(len(null)):
+        RNG.shuffle(shuffled)
+        null[k] = mean_sibling_distance(shuffled)
+    p = (np.sum(null <= observed) + 1) / (len(null) + 1)
+    return {"observed_sibling_distance": observed,
+            "null_mean_distance": float(np.nanmean(null)),
+            "p_siblings_more_alike": float(p)}
+
+
+def litter_size_effect(df: pd.DataFrame) -> pd.DataFrame:
+    """Does the number of siblings tested predict behaviour?"""
+    d = df.copy()
+    d["litter_n"] = d.groupby("litter")["Animal"].transform("size")
+    d["Condition"] = pd.Categorical(d["group"], categories=["Control", "ELS"])
+    rows = []
+    for column, label in METRICS.items():
+        if column not in d.columns:
+            continue
+        sub = d.dropna(subset=[column])
+        try:
+            res = smf.mixedlm(f"Q('{column}') ~ Condition + Experiment + litter_n",
+                              sub, groups=sub["litter"]).fit(reml=False)
+            rows.append({"metric": label, "beta_litter_n": res.params["litter_n"],
+                         "SE": res.bse["litter_n"], "p": res.pvalues["litter_n"]})
+        except Exception:  # noqa: BLE001
+            continue
+    return pd.DataFrame(rows)
+
+
 def main() -> None:
     df = load_animal_metrics()
     OUT.mkdir(parents=True, exist_ok=True)
@@ -169,6 +267,22 @@ def main() -> None:
           f"(chance expectation {test['expected_litters']:.1f})")
     print(f"  permutation p (more clustered than chance) = "
           f"{test['p_more_clustered_than_chance']:.3f}")
+
+    variance = litter_variance_components(df)
+    variance.to_csv(OUT / "litter_variance_components.csv", index=False)
+    print("\nIS THERE A LITTER EFFECT AT ALL?  (ICC = share of variance between litters)")
+    print(variance.round(4).to_string(index=False))
+
+    sib = sibling_similarity_test(df)
+    print("\nARE LITTERMATES MORE ALIKE?")
+    print(f"  sibling pairs mean profile distance = {sib['observed_sibling_distance']:.2f}")
+    print(f"  shuffled-litter null                = {sib['null_mean_distance']:.2f}")
+    print(f"  permutation p                       = {sib['p_siblings_more_alike']:.4f}")
+
+    size = litter_size_effect(df)
+    print("\nDOES LITTER SIZE PREDICT BEHAVIOUR?")
+    print(size.round(4).to_string(index=False))
+    size.to_csv(OUT / "litter_size_effect.csv", index=False)
 
     fits = refit_with_litter(df)
     fits.to_csv(OUT / "litter_effect_refits.csv", index=False)
