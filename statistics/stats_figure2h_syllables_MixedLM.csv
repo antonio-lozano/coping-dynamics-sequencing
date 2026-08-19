@@ -1,0 +1,27 @@
+section,parameter,coef,se,z,p_value,ci_low,ci_high
+Syllable 0 - Combined full dataset,Intercept,-10.976,1.951,-5.626,0.0,-14.8,-7.153
+Syllable 0 - Combined full dataset,Stress,0.905,1.917,0.472,0.637,-2.852,4.662
+Syllable 0 - Combined full dataset,Time (per minute),7.122,0.232,30.811,0.0,6.67,7.576
+Syllable 0 - Combined full dataset,Stress x time (per minute),-1.194,0.326,-3.654,0.0,-1.836,-0.554
+Syllable 0 - Combined full dataset,Dataset covariate,4.067,0.788,5.16,0.0,2.522,5.612
+Syllable 0 - Sanguino-Gomez & Krugers,Intercept,-4.023,1.566,-2.569,0.01,-7.094,-0.953
+Syllable 0 - Sanguino-Gomez & Krugers,Stress,1.117,2.215,0.504,0.614,-3.225,5.459
+Syllable 0 - Sanguino-Gomez & Krugers,Time (per minute),6.366,0.272,23.368,0.0,5.832,6.902
+Syllable 0 - Sanguino-Gomez & Krugers,Stress x time (per minute),-1.394,0.386,-3.618,0.0,-2.15,-0.638
+Syllable 0 - Sanguino-Gomez et al.,Intercept,-3.284,2.428,-1.353,0.176,-8.042,1.474
+Syllable 0 - Sanguino-Gomez et al.,Stress,0.574,3.433,0.167,0.867,-6.156,7.303
+Syllable 0 - Sanguino-Gomez et al.,Time (per minute),8.302,0.396,20.995,0.0,7.526,9.076
+Syllable 0 - Sanguino-Gomez et al.,Stress x time (per minute),-0.882,0.56,-1.579,0.114,-1.978,0.214
+Syllables 0 and 28 - Combined full dataset,Intercept,-10.814,2.051,-5.273,0.0,-14.833,-6.794
+Syllables 0 and 28 - Combined full dataset,Stress,0.855,1.995,0.429,0.668,-3.056,4.766
+Syllables 0 and 28 - Combined full dataset,Time (per minute),7.576,0.232,32.62,0.0,7.12,8.03
+Syllables 0 and 28 - Combined full dataset,Stress x time (per minute),-1.4,0.328,-4.262,0.0,-2.044,-0.756
+Syllables 0 and 28 - Combined full dataset,Dataset covariate,3.963,0.836,4.741,0.0,2.325,5.601
+Syllables 0 and 28 - Sanguino-Gomez & Krugers,Intercept,-3.89,1.684,-2.309,0.021,-7.191,-0.588
+Syllables 0 and 28 - Sanguino-Gomez & Krugers,Stress,0.765,2.382,0.321,0.748,-3.904,5.434
+Syllables 0 and 28 - Sanguino-Gomez & Krugers,Time (per minute),6.754,0.274,24.578,0.0,6.216,7.294
+Syllables 0 and 28 - Sanguino-Gomez & Krugers,Stress x time (per minute),-1.424,0.388,-3.665,0.0,-2.186,-0.662
+Syllables 0 and 28 - Sanguino-Gomez et al.,Intercept,-3.552,2.447,-1.451,0.147,-8.349,1.245
+Syllables 0 and 28 - Sanguino-Gomez et al.,Stress,0.996,3.461,0.288,0.774,-5.788,7.78
+Syllables 0 and 28 - Sanguino-Gomez et al.,Time (per minute),8.858,0.396,22.332,0.0,8.08,9.634
+Syllables 0 and 28 - Sanguino-Gomez et al.,Stress x time (per minute),-1.36,0.56,-2.426,0.015,-2.46,-0.262

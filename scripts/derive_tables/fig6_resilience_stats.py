@@ -5,7 +5,7 @@ Reproduces the manuscript resilience statistics from the bundled source data.
 Self-contained: reads only repo data.
 
 Model per metric (and per cluster for bout duration):
-  MixedLM(metric ~ C(New_condition, Treatment(reference=R)) + Experiment, groups=Animal, reml=False)
+  OLS(metric ~ C(New_condition, Treatment(reference=R)) + Experiment), SE clustered by litter
   fit twice (R = 'Control' and R = 'ELS') so every pairwise contrast is read off a row:
     vulnerable - control   = Control-ref  [T.ELS]
     resilient  - control   = Control-ref  [T.ELS_resilient]
@@ -20,6 +20,7 @@ Writes statistics/fig6_diversity_resilience_stats.csv
        statistics/fig6_bout_resilience_stats.csv
        statistics/fig6_transition_resilience_stats.csv
 """
+import sys
 import warnings, json
 from pathlib import Path
 warnings.filterwarnings("ignore")
@@ -30,6 +31,8 @@ from statsmodels.stats.multitest import multipletests
 from scipy.stats import entropy
 
 REPO = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO))
+from src.statistics import fit_animal_level  # noqa: E402
 CSV  = REPO / "data" / "raw" / "syllable_usage_per_timebin_250ms.csv"
 OUT_DIR = REPO / "statistics"
 OUT_DIV  = OUT_DIR / "fig6_diversity_resilience_stats.csv"
@@ -192,12 +195,19 @@ def transition_table(df):
 
 
 def contrasts(data, metric):
-    """Return the three pairwise contrasts from dual-reference MixedLM."""
+    """Return the three pairwise contrasts from the dual-reference model.
+
+    One row per animal, so an animal random intercept is not identifiable.
+    Fitted by OLS with standard errors clustered by litter; see
+    ``src.statistics.fit_animal_level``.
+    """
     d = data.dropna(subset=[metric]).copy()
-    mc = smf.mixedlm(f"{metric} ~ C(New_condition, Treatment(reference='Control')) + Experiment",
-                     d, groups=d["Animal"]).fit(reml=False)
-    me = smf.mixedlm(f"{metric} ~ C(New_condition, Treatment(reference='ELS')) + Experiment",
-                     d, groups=d["Animal"]).fit(reml=False)
+    mc, _ = fit_animal_level(
+        f"{metric} ~ C(New_condition, Treatment(reference='Control')) + Experiment",
+        d, d["Animal"])
+    me, _ = fit_animal_level(
+        f"{metric} ~ C(New_condition, Treatment(reference='ELS')) + Experiment",
+        d, d["Animal"])
     kE = "C(New_condition, Treatment(reference='Control'))[T.ELS]"
     kRc = "C(New_condition, Treatment(reference='Control'))[T.ELS_resilient]"
     kRe = "C(New_condition, Treatment(reference='ELS'))[T.ELS_resilient]"
