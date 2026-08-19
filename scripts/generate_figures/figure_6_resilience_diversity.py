@@ -758,8 +758,11 @@ def main() -> None:
     box_scatter(axG, metrics, "simpson", "Simpson index", "G", (0.58, 0.80), [0.60, 0.65, 0.70, 0.75, 0.80], "%.2f", stars=[(0, 1), (1, 2)])
     box_scatter(axH, metrics, "shannon", "Shannon entropy index", "H", (1.20, 1.70), [1.30, 1.40, 1.50, 1.60, 1.70], "%.1f")
     box_scatter(axI, metrics, "evenness", "Evenness index", "I", (0.58, 0.85), [0.60, 0.65, 0.70, 0.75, 0.80, 0.85], "%.2f")
-    # CUI resilient-vs-vulnerable p=0.393 -> not significant; only vuln-vs-control is starred.
-    box_scatter(axJ, metrics, "cui", "Cumulative usage index", "J", (-0.25, 0.80), [-0.2, 0.0, 0.2, 0.4, 0.6, 0.8], "%.1f", stars=[(0, 1)])
+    # No CUI contrast reaches p < 0.05 in statistics/fig6_diversity_resilience_stats.csv
+    # (vulnerable-vs-control p=0.364, resilient-vs-vulnerable p=0.258), so no star.
+    # The previous vulnerable-vs-control star did not match the table even before
+    # the animal random intercept was dropped (p was 0.347).
+    box_scatter(axJ, metrics, "cui", "Cumulative usage index", "J", (-0.25, 0.80), [-0.2, 0.0, 0.2, 0.4, 0.6, 0.8], "%.1f")
 
     axK = fig.add_subplot(gs[3, 4:11])
     plot_cumulative(axK, usage, "K")
@@ -776,10 +779,16 @@ def main() -> None:
     overall = bouts.groupby(["Animal", "group_ext"])["bout_duration"].mean().reset_index()
     cluster_means = bouts[bouts["cluster"].isin(DISPLAY_ORDER)].groupby(["Animal", "group_ext", "cluster"], as_index=False)["bout_duration"].mean()
     bout_specs = [
-        ("Overall", overall, (0, 3.0), [0, 1, 2, 3], "%.0f", [(0, 1)]),
+        # Overall bout duration: no contrast reaches p < 0.05 in the report
+        # (vulnerable-vs-control p=0.185, resilient-vs-vulnerable p=0.140). The
+        # panel has no row in statistics/, so the star went unchecked until
+        # scripts/check_manuscript.py started reading it from the workbook.
+        ("Overall", overall, (0, 3.0), [0, 1, 2, 3], "%.0f", None),
         ("Freeze", cluster_means[cluster_means["cluster"] == "Freezing"], (0, 2.5), [0, 0.5, 1, 1.5, 2, 2.5], "%.1f", [(0, 1), (1, 2)]),
         ("Sniff", cluster_means[cluster_means["cluster"] == "Sniffing"], (0, 4.0), [0, 1, 2, 3, 4], "%.0f", [(0, 1)]),
-        ("Groom", cluster_means[cluster_means["cluster"] == "Grooming"], (0, 0.6), [0, 0.2, 0.4, 0.6], "%.1f", [(0, 1)]),
+        # Groom: no contrast reaches p < 0.05 (vulnerable-vs-control p=0.177); the
+        # previous star did not match the table before this change either (p=0.128).
+        ("Groom", cluster_means[cluster_means["cluster"] == "Grooming"], (0, 0.6), [0, 0.2, 0.4, 0.6], "%.1f", None),
         ("Turn", cluster_means[cluster_means["cluster"] == "Turn"], (0, 3.0), [0, 0.5, 1, 1.5, 2, 2.5, 3], "%.1f", [(0, 1), (1, 2)]),
         ("Locomotion", cluster_means[cluster_means["cluster"] == "Locomotion"], (0, 0.8), [0, 0.2, 0.4, 0.6, 0.8], "%.1f", None),
         ("Climb", cluster_means[cluster_means["cluster"] == "Climbing"], (0, 2.0), [0, 0.5, 1, 1.5, 2], "%.1f", None),
@@ -810,7 +819,10 @@ def main() -> None:
     box_scatter(axW, transitions, "lz", "Lempel-Ziv complexity", "W", (100, 260), list(range(100, 261, 40)), "%.0f")
     box_scatter(axX, transitions, "recurrence", "Recurrence Rate", "X", (0.24, 0.450), [0.250, 0.275, 0.300, 0.325, 0.350, 0.375, 0.400, 0.425, 0.450], "%.3f", stars=[(0, 1), (1, 2)])
     box_scatter(axY, transitions, "determinism", "Determinism", "Y", (0.70, 1.00), [0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 1.00], "%.2f", stars=[(0, 1)])
-    box_scatter(axZ, transitions, "markov", "Markov Entropy", "Z", (0.7, 1.5), np.arange(0.7, 1.51, 0.2).round(1).tolist(), "%.1f", stars=[(0, 1)], sig_y_base=0.930)
+    # Markov entropy lost its star when the unidentifiable animal random intercept
+    # was dropped: vulnerable-vs-control p 0.036 -> 0.092
+    # (statistics/fig6_transition_resilience_stats.csv).
+    box_scatter(axZ, transitions, "markov", "Markov Entropy", "Z", (0.7, 1.5), np.arange(0.7, 1.51, 0.2).round(1).tolist(), "%.1f", sig_y_base=0.930)
 
     equalize_boxplot_heights(box_axes)
     set_boxplot_axis_width(fig, [axG, axH, axI, axJ], FREQUENCY_METRIC_AXIS_WIDTH_IN)

@@ -131,7 +131,11 @@ def refit_with_litter(df: pd.DataFrame) -> pd.DataFrame:
             continue
         d = df.dropna(subset=[column]).copy()
         d["Condition"] = pd.Categorical(d["group"], categories=["Control", "ELS"])
-        for grouping, name in (("Animal", "animal (published)"), ("litter", "litter")):
+        # "Animal" is kept only as the historical reference: with one row per
+        # animal that random intercept is not identifiable (see
+        # src.statistics.fit_grouped_or_ols), so its SEs are not reproducible.
+        # The published models now drop it; "litter" is the identifiable one.
+        for grouping, name in (("Animal", "animal (not identifiable)"), ("litter", "litter")):
             try:
                 res = smf.mixedlm(f"Q('{column}') ~ Condition + Experiment", d,
                                   groups=d[grouping]).fit(reml=False)

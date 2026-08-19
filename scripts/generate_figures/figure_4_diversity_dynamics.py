@@ -732,8 +732,11 @@ def main() -> None:
     )
     for ax_i, (label, data, ylim, yticks, yfmt, star) in enumerate(
         [
+            # Stars follow statistics/stats_figure4_bouts_MixedLM.csv (p < 0.05).
+            # Freeze lost its star when the unidentifiable animal random intercept
+            # was dropped: p 0.014 -> 0.114 (see src.statistics.fit_grouped_or_ols).
             ("Overall", overall, (0, 2.0), [0, 0.5, 1.0, 1.5, 2.0], "%.1f", False),
-            ("Freeze", cluster_means[cluster_means["cluster"] == "Freezing"], (0, 2.0), [0, 0.5, 1.0, 1.5, 2.0], "%.1f", True),
+            ("Freeze", cluster_means[cluster_means["cluster"] == "Freezing"], (0, 2.0), [0, 0.5, 1.0, 1.5, 2.0], "%.1f", False),
             ("Sniff", cluster_means[cluster_means["cluster"] == "Sniffing"], (0, 4.0), [0, 1, 2, 3, 4], "%.0f", True),
             ("Groom", cluster_means[cluster_means["cluster"] == "Grooming"], (0, 0.6), [0, 0.2, 0.4, 0.6], "%.1f", False),
             ("Turn", cluster_means[cluster_means["cluster"] == "Turn"], (0, 2.5), [0, 0.5, 1.0, 1.5, 2.0, 2.5], "%.1f", True),
@@ -760,7 +763,9 @@ def main() -> None:
     axW = fig.add_subplot(metric_grid[1, 1]); box_axes.append(axW)
     box_scatter(axT, transitions, "lz", "Lempel-Ziv complexity", "T", (100, 260), yticks=list(range(100, 261, 20)), yfmt="%.0f")
     box_scatter(axU, transitions, "recurrence", "Recurrence Rate", "U", (0.24, 0.43), yticks=[0.250, 0.275, 0.300, 0.325, 0.350, 0.375, 0.400, 0.430], yfmt="%.3f", star=False)
-    box_scatter(axV, transitions, "determinism", "Determinism", "V", (0.72, 0.90), yticks=np.arange(0.700, 0.901, 0.025).round(3).tolist(), yfmt="%.3f", star=True)
+    # Determinism lost its star once standard errors were clustered by litter:
+    # p 0.038 -> 0.075 (statistics/stats_figure4_transition_MixedLM.csv).
+    box_scatter(axV, transitions, "determinism", "Determinism", "V", (0.72, 0.90), yticks=np.arange(0.700, 0.901, 0.025).round(3).tolist(), yfmt="%.3f", star=False)
     box_scatter(axW, transitions, "markov", "Markov Entropy", "W", (0.7, 1.5), yticks=np.arange(0.7, 1.51, 0.1).round(1).tolist(), yfmt="%.1f", star=False)
 
     equalize_boxplot_heights(box_axes)

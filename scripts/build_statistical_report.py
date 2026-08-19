@@ -25,8 +25,10 @@ from scipy import stats
 from statsmodels.stats.multitest import multipletests
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from save_deterministic import save_workbook  # noqa: E402
+from src.statistics import fit_grouped_or_ols  # noqa: E402
 
 
 warnings.filterwarnings("ignore")
@@ -354,12 +356,16 @@ def model_param_table(res, label_map: dict[str, str] | None = None) -> pd.DataFr
 
 def model_metadata(res, model_label: str, dep_var: str, data: pd.DataFrame, group_col: str | None) -> list[tuple[str, object]]:
     """The Metric/Value metadata column that mirrors the statsmodels summary."""
+    is_ols = str(model_label).startswith("OLS")
     meta: list[tuple[str, object]] = [
         ("Model", model_label),
         ("Dependent Variable", dep_var),
-        ("Method", "ML"),
+        ("Method", "OLS" if is_ols else "ML"),
         ("No. Observations", int(res.nobs) if hasattr(res, "nobs") else len(data)),
     ]
+    if is_ols:
+        # No random effect, so the group-structure rows below would be meaningless.
+        return meta + [("Scale", getattr(res, "scale", "")), ("Log-Likelihood", getattr(res, "llf", ""))]
     if group_col is not None and group_col in data:
         sizes = data.groupby(group_col).size()
         meta += [
@@ -724,7 +730,7 @@ GROUND_TRUTH_LABELS = {
     "condition[T.ELS]": "Stress",
     "time_bin_numeric": "Time",
     "condition[T.ELS]:time_bin_numeric": "Stress x time ",
-    "experiment": "Dataset covariate (coded 1/3)",
+    "experiment": "Dataset covariate",
     "Group Var": "Group Var",
     "experiment Var": "Dataset Var",
 }
@@ -1217,7 +1223,9 @@ def figure2_freezing_syllables() -> pd.DataFrame:
 
 
 def add_figure2_sheets(wb: openpyxl.Workbook) -> None:
-    add_metric_blocks_sheet(wb, "Fig.2A-C_Ground_truth ", figure2_ground_truth_sections(), header_gap=1, pitch=18)
+    ground_truth = figure2_ground_truth_sections()
+    export_block_params(ground_truth, STATISTICS_DIR / "stats_figure2_ground_truth_MixedLM.csv")
+    add_metric_blocks_sheet(wb, "Fig.2A-C_Ground_truth ", ground_truth, header_gap=1, pitch=18)
     add_vertical_tables(
         wb,
         "Fig.2D_Syllable_usage",
@@ -1238,7 +1246,9 @@ def add_figure2_sheets(wb: openpyxl.Workbook) -> None:
         [("Freezing overlap (%)", figure2_overlap_summary())],
         header_gap=2,
     )
-    add_metric_blocks_sheet(wb, "Fig.2H_Freezing_syllables", figure2h_sections(), header_gap=1, pitch=18)
+    syllable_blocks = figure2h_sections()
+    export_block_params(syllable_blocks, STATISTICS_DIR / "stats_figure2h_syllables_MixedLM.csv")
+    add_metric_blocks_sheet(wb, "Fig.2H_Freezing_syllables", syllable_blocks, header_gap=1, pitch=18)
 
 
 def add_grouped_csv_blocks(
@@ -1293,7 +1303,7 @@ def gee_param_table(result) -> pd.DataFrame:
     labels = {
         "Intercept": "Intercept",
         "C(group, Treatment('Control'))[T.ELS]": "Stress",
-        "experiment": "Dataset covariate (coded 1/3)",
+        "experiment": "Dataset covariate",
     }
     for param in result.params.index:
         rows.append(
@@ -1376,11 +1386,8 @@ def fit_condition_model(df: pd.DataFrame, metric: str, *, with_experiment: bool)
     d = df.dropna(subset=[metric]).copy()
     d["Condition"] = pd.Categorical(d["group"], categories=["Control", "ELS"])
     formula = f"{metric} ~ Condition + Experiment" if with_experiment else f"{metric} ~ Condition"
-    try:
-        res = smf.mixedlm(formula, d, groups=d["Animal"]).fit(reml=False)
-        return res, "MixedLM", d
-    except Exception:
-        return smf.ols(formula, d).fit(), "OLS fallback", d
+    res, label = fit_grouped_or_ols(formula, d, d["Animal"])
+    return res, label, d
 
 
 def metric_section(title: str, source: pd.DataFrame, metric: str, dep_var: str, *, with_experiment: bool) -> dict:
@@ -1430,6 +1437,42 @@ def export_condition_stats(blocks: list[dict], path: Path, key: str) -> None:
             "z": row["z"], "p_value": row["P>|z|"],
             "ci_low": row["[0.025"], "ci_high": row["0.975]"],
         })
+    if rows:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        pd.DataFrame(rows).to_csv(path, index=False)
+        print(f"Saved: {path}")
+
+
+def export_block_params(blocks: list[dict], path: Path) -> None:
+    """Write every fitted parameter of ``blocks`` to statistics/.
+
+    ``export_condition_stats`` exports a single row per model because that is all
+    the Figure 4 panels need. The Figure 2 and Figure 5 timecourse models are
+    quoted in the manuscript through several parameters each (the time slope, the
+    stress-by-time interaction, named group contrasts), so those sheets need the
+    whole table. Without it those claims could only ever be checked against the
+    workbook they were written from, which is not an independent source.
+
+    Values are exported in the workbook's unit - per minute for the timecourse
+    models - so the export and the sheet can be compared without rescaling.
+    """
+    rows = []
+    for block in blocks:
+        for section in block.get("sections", [block]):
+            title = str(section.get("title", "")).strip()
+            for _, row in section["params"].iterrows():
+                parameter = str(row["Parameter"]).strip()
+                if not parameter or parameter in {"AIC", "BIC"} or parameter.endswith("Var"):
+                    continue
+                if row["Std. Err."] == "":
+                    continue
+                rows.append({
+                    "section": title,
+                    "parameter": parameter,
+                    "coef": row["Coef."], "se": row["Std. Err."],
+                    "z": row["z"], "p_value": row["P>|z|"],
+                    "ci_low": row["[0.025"], "ci_high": row["0.975]"],
+                })
     if rows:
         path.parent.mkdir(parents=True, exist_ok=True)
         pd.DataFrame(rows).to_csv(path, index=False)
@@ -1500,24 +1543,25 @@ def attach_experiment(df: pd.DataFrame, animal_col: str) -> pd.DataFrame:
 
 
 def score_block(title: str, df: pd.DataFrame, value_col: str, dep_var: str, *, with_experiment: bool) -> dict:
-    """One per-animal distance-score MixedLM block using the documented model."""
+    """One per-animal distance-score block using the documented model.
+
+    One row per animal, so the animal random intercept is not identifiable and
+    ``fit_grouped_or_ols`` drops it; see ``src.statistics.fit_grouped_or_ols``.
+    """
     formula = f"{value_col} ~ C(group, Treatment('Control'))"
     if with_experiment:
         formula += " + experiment"
-    model = smf.mixedlm(formula, df, groups=df["animal_key"])
-    try:
-        res = model.fit(reml=False, method="lbfgs")
-    except Exception:
-        res = model.fit(reml=False)
+    res, estimator = fit_grouped_or_ols(formula, df, df["animal_key"])
     params = model_param_table(
         res,
         {
             "C(group, Treatment('Control'))[T.ELS]": "Stress",
-            "experiment": "Dataset covariate (coded 1/3)",
+            "experiment": "Dataset covariate",
         },
     )
-    metadata = model_metadata(res, "MixedLM", dep_var, df, "animal_key")
-    metadata.append(("Random intercept", "Animal"))
+    metadata = model_metadata(res, estimator, dep_var, df, "animal_key")
+    if estimator == "MixedLM":
+        metadata.append(("Random intercept", "Animal"))
     return {"title": title, "params": params, "metadata": metadata, "descriptive": descriptive_rows(df, value_col)}
 
 
@@ -1533,12 +1577,9 @@ def score_metric_block(title: str, df: pd.DataFrame, value_col: str, dep_var: st
 
 def add_figure5_sheets(wb: openpyxl.Workbook) -> None:
     scores = attach_experiment(pd.read_csv(PROCESSED_DIR / "figure5_dynamics_scores.csv"), "animal")
-    add_metric_blocks_sheet(
-        wb,
-        "Fig.5A-B_Dynamics",
-        [score_metric_block("Euclidean Distance", scores, "dynamics_score", "Euclidean")],
-        header_gap=1,
-    )
+    dynamics_blocks = [score_metric_block("Euclidean Distance", scores, "dynamics_score", "Euclidean")]
+    export_block_params(dynamics_blocks, STATISTICS_DIR / "stats_figure5_dynamics.csv")
+    add_metric_blocks_sheet(wb, "Fig.5A-B_Dynamics", dynamics_blocks, header_gap=1)
     add_figure5_frequency_sheet(
         wb,
     )
@@ -1594,10 +1635,7 @@ def resilience_section(
         formula = f"{metric} ~ C(group_ext, Treatment('{reference}'))"
         if with_experiment:
             formula += " + Experiment"
-        try:
-            return smf.mixedlm(formula, data, groups=data["Animal"]).fit(reml=False), "MixedLM"
-        except Exception:
-            return smf.ols(formula, data).fit(), "OLS fallback"
+        return fit_grouped_or_ols(formula, data, data["Animal"])
 
     control_result, control_label = fit("Control")
     els_result, els_label = fit("ELS")
@@ -1649,7 +1687,7 @@ def resilience_section(
     for name in (["Experiment"] if with_experiment else []):
         rows.append(
             {
-                "Parameter": "Dataset covariate (coded 1/3)",
+                "Parameter": "Dataset covariate",
                 "Coef.": float(result.params[name]),
                 "Std. Err.": float(result.bse[name]),
                 "z": float(result.tvalues[name]),
@@ -1812,7 +1850,7 @@ def figure5_frequency_section(title: str, data: pd.DataFrame, *, with_experiment
     if with_experiment:
         experiment_weights = [0.0] * len(result.params)
         experiment_weights[-1] = 1.0
-        rows.append(linear_contrast_row(result, "Dataset covariate (coded 1/3)", experiment_weights))
+        rows.append(linear_contrast_row(result, "Dataset covariate", experiment_weights))
     params = pd.DataFrame(rows, columns=HEADERS)
     metadata = [
         ("Model", "GEE Negative Binomial"),
@@ -2029,6 +2067,7 @@ def add_figure5_timecourse_sheet(wb: openpyxl.Workbook) -> None:
             }
         )
     apply_bh_fdr(blocks, ["ELS resilient - ELS vulnerable x time (per minute)"])
+    export_block_params(blocks, STATISTICS_DIR / "stats_figure5_timecourse_MixedLM.csv")
     add_metric_blocks_sheet(wb, "Fig.5D-J_Cluster_timecourse", blocks, header_gap=1, pitch=18)
     add_vertical_tables(
         wb,
