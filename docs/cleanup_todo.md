@@ -66,15 +66,21 @@ closed and what genuinely remains. Ordered as in the original.
   `class_names` are object arrays. Saving them as fixed-width strings would let
   the archive load with `allow_pickle=False` and finish the move off pickles.
 
-- **`statistics/fig5_timecourse_mixedlm.csv` has 24 of 56 degenerate rows**
-  (coefficients ~1e-19, standard errors ~5.8e7, p = 1.0) in intercept and
-  main-effect terms; slopes and interactions are well-formed. A "Fix singular
-  MixedLM" commit exists in history, so the singularity is known but not fully
-  resolved. Confirm before quoting any intercept or main-effect term from that
-  file.
+- **Closed: `statistics/fig5_timecourse_mixedlm.csv` is gone.** Nothing
+  regenerated it and its intercept and main-effect rows were degenerate
+  (coefficients ~1e-19, standard errors ~5.8e7, p = 1.0). The Figure 5D-J
+  models are now exported by `build_statistical_report.py` itself as
+  `statistics/stats_figure5_timecourse_MixedLM.csv`, fitted once and shared
+  with the workbook.
 
-- **The audit records one `major_mismatch`.** Figure 6W (Lempel–Ziv, vulnerable
-  ELS vs Control): the manuscript reports p < 0.001, the regenerated model
-  gives p = 0.042 (SE 4.42 vs 2.66). Recorded in
-  `statistics/manuscript_consistency_audit.csv`; the manuscript text or the
-  model choice needs to be reconciled by the authors.
+- **Closed: the two manuscript copies in `report/` are current again.** They
+  quoted the standard errors produced by the unidentifiable animal random
+  intercept that `src.statistics` removed, so every coefficient matched the
+  current statistics but no standard error, z or p did.
+  `scripts/update_bundled_manuscripts.py` (one-time migration, August 2026)
+  rewrote the stale values in place, reworded the claims that lost
+  significance, dropped the Figure 4K and 4W quotes to match the working
+  manuscript, and highlighted every edit bright green.
+  `scripts/check_manuscript.py` now also verifies every quoted BH-FDR value
+  against the workbook's `P_BH_FDR` column and runs in CI on every push, so
+  the copies cannot silently go stale again.
