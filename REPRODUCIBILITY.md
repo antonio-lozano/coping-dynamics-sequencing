@@ -76,9 +76,9 @@ This executes, in order:
 4. Re-render data-derived manuscript figures in `figures/`.
 5. Rebuild `report/raw_data.xlsx`.
 6. Rebuild `report/statistical_report.xlsx`.
-7. Rebuild `statistics/manuscript_consistency_audit.csv`.
-8. Update `MANIFEST.csv`.
-9. Run `scripts/check_reproducibility.py`.
+7. Update `MANIFEST.csv`.
+8. Run `scripts/check_reproducibility.py`.
+9. Run `scripts/check_manuscript.py`.
 
 The command is concise by default. Add `--verbose` to stream child-script
 output. Add `--skip-figures` to rebuild tables, workbooks, the manifest, and
@@ -106,7 +106,6 @@ Reports:
 ```bash
 python scripts/build_raw_data_workbook.py
 python scripts/build_statistical_report.py
-python scripts/audit_manuscript_results.py
 ```
 
 Manifest and checks:
@@ -114,6 +113,7 @@ Manifest and checks:
 ```bash
 python scripts/update_manifest.py
 python scripts/check_reproducibility.py
+python scripts/check_manuscript.py
 ```
 
 ## Byte-Stable Rebuilds

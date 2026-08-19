@@ -64,7 +64,10 @@ remain in `data/raw/`.
 | Path | Description |
 | --- | --- |
 | `statistics/` | Machine-readable statistical model outputs and formal contrast audit tables. |
-| `statistics/manuscript_consistency_audit.csv` | Comparison of selected manuscript Results claims against the regenerated statistical CSVs; rebuilt by `scripts/audit_manuscript_results.py`. |
+| `statistics/stats_figure2_ground_truth_MixedLM.csv` | Every fitted parameter of the Figure 2A-C freezing timecourse models, per minute. |
+| `statistics/stats_figure2h_syllables_MixedLM.csv` | Every fitted parameter of the Figure 2H syllable timecourse models, per minute. |
+| `statistics/stats_figure5_dynamics.csv` | Every fitted parameter of the Figure 5A-B dynamics-score models. |
+| `statistics/stats_figure5_timecourse_MixedLM.csv` | Every fitted parameter of the Figure 5D-J cluster timecourse models, per minute; replaces the degenerate `fig5_timecourse_mixedlm.csv`. |
 | `figures/` | Canonical manuscript figure exports in PDF, SVG, and PNG formats. |
 | `report/raw_data.xlsx` | Manuscript-facing raw-data workbook. |
 | `report/statistical_report.xlsx` | Manuscript-facing statistical report workbook. |

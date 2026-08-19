@@ -24,10 +24,11 @@ TASKS = [
     ("derive Figure 6 resilience statistics", ["scripts/derive_tables/fig6_resilience_stats.py"]),
     ("regenerate data-derived figures", ["scripts/run_all_figures.py"]),
     ("build raw-data workbook", ["scripts/build_raw_data_workbook.py"]),
-    ("audit manuscript results against statistics", ["scripts/audit_manuscript_results.py"]),
     ("build statistical report workbook", ["scripts/build_statistical_report.py"]),
     ("update artifact manifest", ["scripts/update_manifest.py"]),
     ("check reproducibility package", ["scripts/check_reproducibility.py"]),
+    # Verification, so it runs last and against the finished artifacts.
+    ("check manuscript, figures and report agree", ["scripts/check_manuscript.py"]),
 ]
 
 

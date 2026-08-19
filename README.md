@@ -56,9 +56,9 @@ Targeted rebuilds:
 uv run python scripts/run_all_figures.py
 uv run python scripts/build_raw_data_workbook.py
 uv run python scripts/build_statistical_report.py
-uv run python scripts/audit_manuscript_results.py
 uv run python scripts/update_manifest.py
 uv run python scripts/check_reproducibility.py
+uv run python scripts/check_manuscript.py
 ```
 
 ## Repository Contract
@@ -82,9 +82,11 @@ config/               Figure metadata used by the report package
 Two kinds of scripts are not part of a rebuild. `scripts/migrations/` holds the
 one-time utilities that imported the legacy SHAP analysis; they need `--source`
 pointing at the legacy keypoint-MoSeq tree, which is not part of this
-repository. `scripts/prepare_results_differences.py` and
-`scripts/prepare_revised_results.py` rewrite Results text for one specific
-manuscript revision and go stale at the next edit; see their docstrings.
+repository. `scripts/update_bundled_manuscripts.py` rewrote the Results
+statistics of the two manuscript copies in `report/` for one specific model
+change and goes stale at the next edit; see its docstring.
+`scripts/check_manuscript.py`, not that script, is what proves the copies are
+current.
 
 `data/raw/` contains inputs. `data/processed/`, `figure_source_data/`,
 `statistics/`, `figures/`, and `report/` are regenerated products. The term
@@ -165,9 +167,10 @@ See `docs/supplementary_media.md` for scope and provenance.
 
 - `MANIFEST.csv` records byte sizes and SHA-256 hashes for tracked publication
   artifacts.
-- `statistics/manuscript_consistency_audit.csv` compares selected manuscript
-  Results claims against regenerated statistical CSVs and is rebuilt by
-  `scripts/audit_manuscript_results.py`.
+- `scripts/check_manuscript.py` checks every statistic in the manuscript
+  against `statistics/`, `report/statistical_report.xlsx`, and the significance
+  markers drawn on the figures, and fails if any of the four disagree or if the
+  manuscript quotes a statistic the script does not cover.
 - `scripts/check_reproducibility.py` verifies required files, figure exports,
   98 raw freezing prediction CSVs, manifest hashes, retired-path absence,
   absence of local absolute paths in text files, and absence of local tool
