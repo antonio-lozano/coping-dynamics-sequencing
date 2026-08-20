@@ -78,6 +78,7 @@ HULL_FILL = (160, 32, 240, 110)
 HULL_OVERLAP_FILL = (160, 32, 240, 205)
 HULL_OUTLINE = (128, 0, 128)
 SKELETON_RGB = (0, 225, 255)
+ANNOTATION_SATURATION = 60  # min chroma for hand-drawn floor ink on a grey frame
 
 # DeepLabCut bodypart order for this model, and the segments linking them.
 BODYPARTS = ["nose", "H1R", "H2R", "H1L", "H2L", "B1R", "B2R", "B3R",
@@ -305,6 +306,49 @@ def snap_quad_to_edges(grey, quad, search=34, samples=90, smooth=2.0):
     return np.array(corners)
 
 
+def floor_from_annotation(image: Path) -> np.ndarray:
+    """Read a hand-drawn arena floor back out of an annotated frame.
+
+    Automatic segmentation has to infer the floor from brightness, which fails
+    wherever shading, gloss or a visible wall face breaks the assumption. This
+    restores what the legacy pipeline actually did -- a person marking the four
+    floor corners -- by letting that person draw on an exported frame instead.
+
+    Draw the floor in any strongly coloured ink (the frame itself is greyscale,
+    so any saturated colour reads as annotation); outline it or fill it, either
+    works. The marked pixels are taken as the floor and reduced to the
+    quadrilateral that encloses them.
+    """
+    rgb = np.asarray(Image.open(image).convert("RGB"), dtype=int)
+    saturation = rgb.max(axis=2) - rgb.min(axis=2)
+    marked = saturation > ANNOTATION_SATURATION
+    if marked.sum() < 200:
+        raise SystemExit(
+            f"{image.name}: found {int(marked.sum())} coloured pixels. Draw the "
+            f"floor in a saturated colour (red, green, magenta) and save as PNG."
+        )
+    marked = ndimage.binary_closing(marked, np.ones((5, 5)))
+    labels, count = ndimage.label(marked)
+    sizes = ndimage.sum(marked, labels, range(1, count + 1))
+    marked = labels == (int(np.argmax(sizes)) + 1)
+
+    ys, xs = np.nonzero(marked)
+    points = np.stack([xs, ys], axis=1).astype(float)
+    quad = minimum_area_quad(points[ConvexHull(points).vertices])
+    print(f"  floor: read from {image.name} ({int(marked.sum())} marked px)")
+    return quad
+
+
+def parse_corners(text: str) -> np.ndarray:
+    """Parse 'x,y x,y x,y x,y' (or comma-separated) into four corners."""
+    numbers = [float(v) for v in text.replace(",", " ").split()]
+    if len(numbers) != 8:
+        raise SystemExit(
+            f"--floor-corners needs 8 numbers (4 x,y pairs); got {len(numbers)}"
+        )
+    return np.array(numbers, dtype=float).reshape(4, 2)
+
+
 def detect_floor(background: np.ndarray) -> np.ndarray:
     """Locate the arena floor as the bright plateau inside the wall band.
 
@@ -478,6 +522,12 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--video", type=Path, required=True)
     parser.add_argument("--keypoints", type=Path, required=True)
+    parser.add_argument("--floor-image", type=Path,
+                        help="frame with the arena floor drawn on in colour; "
+                             "overrides automatic floor detection")
+    parser.add_argument("--floor-corners", type=str,
+                        help="four floor corners as 'x,y x,y x,y x,y'; "
+                             "overrides automatic floor detection")
     parser.add_argument("--output", type=Path,
                         default=OUTPUT_DIR / "climbing_overlay_clip.mp4")
     parser.add_argument("--floor-threshold", type=float, default=FLOOR_THRESHOLD)
@@ -499,7 +549,13 @@ def main() -> None:
     print(f"keypoints {args.keypoints.name}")
 
     background = median_frame(args.video)
-    floor = detect_floor(background)
+    if args.floor_corners:
+        floor = parse_corners(args.floor_corners)
+        print(f"  floor: taken from --floor-corners {floor.astype(int).tolist()}")
+    elif args.floor_image:
+        floor = floor_from_annotation(args.floor_image)
+    else:
+        floor = detect_floor(background)
     keypoints = load_keypoints(args.keypoints)
     check_alignment(args.video, keypoints)
     print(f"  tracked {len(keypoints)} frames, {len(BODYPARTS)} bodyparts")
