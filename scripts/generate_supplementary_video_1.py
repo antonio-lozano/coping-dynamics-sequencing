@@ -279,6 +279,17 @@ def render_syllable_frame(
         draw.text((552, 336), "Climbing when floor overlap", font=FONTS["body"], fill="#555555")
         draw.text((552, 364), "stays below 0.8 for at least", font=FONTS["body"], fill="#555555")
         draw.text((552, 392), "17 frames (425 ms).", font=FONTS["body"], fill="#555555")
+    elif syllable == 111:
+        # No floor mask is archived for this cohort, and the overlap cannot be
+        # recovered from the clip: it is an egocentric per-frame rotation, so
+        # no static background survives, and the animal covers the very floor
+        # the ratio would measure. The rule is stated rather than illustrated.
+        draw.text((552, 236), "Climbing is identified from", font=FONTS["body"], fill="#555555")
+        draw.text((552, 268), "arena-floor overlap, not by", font=FONTS["body"], fill="#555555")
+        draw.text((552, 300), "keypoint MoSeq, so it has no", font=FONTS["body"], fill="#555555")
+        draw.text((552, 332), "canonical skeleton trajectory.", font=FONTS["body"], fill="#555555")
+        draw.text((552, 384), "Floor overlap below 0.8 for at", font=FONTS["body"], fill="#555555")
+        draw.text((552, 416), "least 17 frames (425 ms).", font=FONTS["body"], fill="#555555")
     return canvas
 
 
