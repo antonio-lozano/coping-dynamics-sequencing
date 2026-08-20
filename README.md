@@ -70,7 +70,7 @@ figure_source_data/   Plotted values and summary values behind Figures 2-7
 statistics/           Machine-readable statistical model outputs
 figures/              Canonical manuscript figure exports
 report/               raw-data workbook and canonical statistical report
-classifier/           Classifier artifact used in Figure 7A-C and Supplementary Figure 5
+classifier/           Classifier artifact used in Figure 7A-C and Supplementary Figure 4
 supplementary_media/  Submission-ready audiovisual supplement and source index
 scripts/              Rebuild, report, figure, and validation entry points
 scripts/migrations/   One-time imports from the legacy tree, kept for provenance
@@ -137,13 +137,13 @@ Raw inputs include:
 | Supplementary Figure 1 | `scripts/generate_figures/supplementary_figure_1_tracking_clusters.py` |
 | Supplementary Figure 2 | Canonical tracked export (analysis workflow schematic) |
 | Supplementary Figure 3 | `scripts/generate_figures/supplementary_figure_3_distances.py` |
-| Supplementary Figure 4 | Canonical tracked export (convex-hull climbing validation) |
-| Supplementary Figure 5 | `scripts/generate_figures/supplementary_figure_5_classifier_shap.py --source DIR` |
+| Supplementary Figure 4 | `scripts/generate_figures/supplementary_figure_4_classifier_shap.py --source DIR` |
+| Supplementary Figure 5 | Canonical tracked export (convex-hull climbing validation) |
 
 Figures 1 and Supplementary Figure 2 are tracked as canonical assembled
 manuscript figures. Figure 7 is regenerated from tracked source tables and the
-prediction analysis. Supplementary Figure 4 is a canonical assembled climbing-validation export.
-Supplementary Figure 5 is a legacy figure: its panels come from the archived
+prediction analysis. Supplementary Figure 5 is a canonical assembled climbing-validation export.
+Supplementary Figure 4 is a legacy figure: its panels come from the archived
 classifier in `classifier/legacy_shap/`, not from
 `classifier/figure7_behavior_classifier.joblib`. See `docs/figure_structure.md`.
 
@@ -187,7 +187,7 @@ See `docs/supplementary_media.md` for scope and provenance.
 - `docs/data_dictionary.md`: file-level description of inputs and outputs.
 - `docs/figure4_coping_provenance.md`: Figure 4 analysis provenance.
 - `docs/figure_structure.md`: canonical main and supplementary panel mapping.
-- `docs/behavior_classifier.md`: classifier and Supplementary Figure 5 usage.
+- `docs/behavior_classifier.md`: classifier and Supplementary Figure 4 usage.
 - `docs/cleanup_todo.md`: known loose ends and pending cleanup decisions.
 
 Use `CITATION.cff` for software citation metadata and `LICENSE` for licensing.

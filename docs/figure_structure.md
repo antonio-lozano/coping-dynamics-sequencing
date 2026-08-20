@@ -27,10 +27,10 @@ exports, Excel reports, and reproducibility checks.
 | Supplementary Figure 1 | A-D | Omitted/mixed behavior dynamics and total frequencies | `data/processed/supplementary_figure1_*` |
 | Supplementary Figure 2 | assembled | Behavioral-dynamics workflow | Canonical tracked export |
 | Supplementary Figure 3 | A-K | Alternative distance metrics and resilient-group overlap | `data/processed/supplementary_figure3_*` |
-| Supplementary Figure 4 | assembled | Convex-hull floor/wall overlap validation for climbing identification | Canonical tracked export |
-| Supplementary Figure 5 | A-H (published as Figure 7 panels D-M) | Class-specific behavior-classifier SHAP panels | `classifier/legacy_shap/shap_values.npz` and `figure_source_data/supplementary_figure5_shap_summary.csv` |
+| Supplementary Figure 4 | A-H (published as Figure 7 panels D-M) | Class-specific behavior-classifier SHAP panels | `classifier/legacy_shap/shap_values.npz` and `figure_source_data/supplementary_figure4_shap_summary.csv` |
+| Supplementary Figure 5 | assembled | Convex-hull floor/wall overlap validation for climbing identification | Canonical tracked export |
 
-### Supplementary Figure 5 comes from the legacy classifier
+### Supplementary Figure 4 comes from the legacy classifier
 
 The published class-specific SHAP panels come from the **legacy** classifier,
 not from the bundled one. Its feature space is pairwise DeepLabCut body-part
@@ -38,7 +38,7 @@ distances and velocities over a 14-marker skeleton (`nose`, `H1R`/`H2R`/`H1L`/
 `H2L`, `B1R`/`B2R`/`B3R`/`B1L`/`B2L`/`B3L`, `tail`, `S1`/`S2`), expanded with
 lags and 5-frame rolling mean/SD/sum into **719 parameters**.
 
-`figure_source_data/supplementary_figure5_shap_summary.csv` holds all 719
+`figure_source_data/supplementary_figure4_shap_summary.csv` holds all 719
 parameters for each of the eight classes (5,752 rows). Each panel plots the top
 10 for its class, flagged by `plotted_top_10`. Alongside the raw legacy
 `parameter` name each row carries a readable `parameter_label`
@@ -57,7 +57,7 @@ sample behind the dot colours (19 MB), and the 179 MB balanced feature matrix
 needed to retrain the legacy model are left outside the repository, in the
 legacy keypoint-MoSeq tree.
 
-`scripts/generate_figures/supplementary_figure_5_classifier_shap.py` redraws the
+`scripts/generate_figures/supplementary_figure_4_classifier_shap.py` redraws the
 eight panels from that archive with `shap.summary_plot`, as the legacy figure
 script did, and needs nothing outside the repository. Both it and
 `scripts/migrations/import_legacy_shap_summary.py` accept `--source` to read
@@ -70,7 +70,7 @@ Each panel's x-axis is limited to the central 99.5% of its own plotted values
 far past the bulk of the distribution and squash every beeswarm against zero -
 `Groom` ran to 3.29 while its central mass sits inside +/-0.9. The clipped
 points are hidden by the axes, not removed from the analysis, and remain in
-`supplementary_figure5_shap_summary.csv`; they are 0.11-0.43% of plotted points
+`supplementary_figure4_shap_summary.csv`; they are 0.11-0.43% of plotted points
 per panel (`Groom` highest at 114 of 26,380).
 
 Behavior names use the short forms shared with every other figure in the set

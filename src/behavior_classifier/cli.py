@@ -1,4 +1,4 @@
-"""CLI for the Figure 7A-C and Supplementary Figure 5 classifier."""
+"""CLI for the Figure 7A-C and Supplementary Figure 4 classifier."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Train and apply the Figure 7A-C/Supplementary Figure 5 classifier."""
+"""Train and apply the Figure 7A-C/Supplementary Figure 4 classifier."""
 
 from __future__ import annotations
 

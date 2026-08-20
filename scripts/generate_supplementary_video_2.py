@@ -5,7 +5,7 @@ Climbing could not be recovered by keypoint MoSeq from top-down video, so it is
 labelled by a floor-overlap rule: the convex hull of the animal's DeepLabCut
 keypoints is intersected with a manually annotated arena-floor mask, and frames
 whose hull falls largely off the floor are grouped into bouts and called
-climbing (Supplementary Figure 4 shows the geometry on still frames).
+climbing (Supplementary Figure 5 shows the geometry on still frames).
 
 This video shows the archived representative occurrences of that class so the
 rule can be judged against the behaviour it selects, which a static figure
@@ -84,7 +84,7 @@ def title_frame() -> Image.Image:
     centered(draw, 172, "Geometry-derived climbing detection", FONTS["title"], "#303030")
     centered(draw, 240, "Climbing is not recoverable from top-down keypoint MoSeq;", FONTS["body"], "#4A4A4A")
     centered(draw, 270, "it is labelled where the convex hull of the tracked points", FONTS["body"], "#4A4A4A")
-    centered(draw, 300, "leaves the annotated arena floor (Supplementary Figure 4).", FONTS["body"], "#4A4A4A")
+    centered(draw, 300, "leaves the annotated arena floor (Supplementary Figure 5).", FONTS["body"], "#4A4A4A")
     centered(draw, 370, "Representative occurrences of the resulting class", FONTS["body"], "#666666")
     centered(draw, 420, "Playback: 25 frames s⁻¹; no audio", FONTS["small"], "#777777")
     return image

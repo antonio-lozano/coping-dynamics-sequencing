@@ -1045,11 +1045,14 @@ def draw_figure7_a(ax: plt.Axes) -> plt.Text:
     ax.set_title("Accuracy versus chance", fontsize=6.4, color=AXIS, pad=8)
     _tidy(ax)
     fit_spines_to_ticks(ax)
-    # Keep the chance key in the open lower-right corner. Two lines allow a
-    # slightly larger type size without crowding the lower bars.
-    ax.text(0.985, 0.035, "Dashed line:\nchance = 0.12",
-            transform=ax.transAxes, ha="right", va="bottom", fontsize=4.2,
-            color=AXIS, linespacing=1.18)
+    # Keep the chance key inside the plotted frame: the axis is padded to 1.30
+    # so the bar labels fit, which puts the axes' own right edge past the 1.0
+    # spine. Anchor against the spine (1.0/1.30 in axes coordinates) in the
+    # open pocket to the right of the Jump and Unassigned bars.
+    ax.legend(handles=[plt.Line2D([0], [0], color=AXIS, linewidth=0.5,
+                                  linestyle=(0, (2.5, 2)), label="Chance = 0.12")],
+              loc="center right", bbox_to_anchor=(1.0 / 1.30 - 0.006, 0.22),
+              frameon=False, fontsize=4.2, handlelength=1.5, handletextpad=0.5)
     return panel_tag(ax, "A", x=-0.20, y=1.15)
 
 
@@ -1366,7 +1369,13 @@ def main() -> None:
     ap.add_argument("--no-report", action="store_true")
     ap.add_argument("--recompute-onset", action="store_true",
                     help="rerun onset permutations instead of reading tracked source data")
+    ap.add_argument("--recompute", action="store_true",
+                    help="rerun every model stage (cross-cohort, LOOCV, bootstrap "
+                         "tests, Shapley, per-metric timecourses) instead of "
+                         "reading the tracked source-data exports; cosmetic "
+                         "figure edits do not need it")
     args = ap.parse_args()
+    use_cache = not args.recompute
 
     root = tier1.repo_root(args.repo)
     labels = tier1.load_labels(root)
@@ -1376,52 +1385,87 @@ def main() -> None:
 
     print("panel A - onset of prediction")
     onset_path = SOURCE_OUT / "figure7_prediction_onset.csv"
-    if onset_path.exists() and not args.recompute_onset:
-        onset = pd.read_csv(onset_path)
+    if onset_path.exists() and use_cache and not args.recompute_onset:
+        # float_precision="round_trip" keeps the cache read lossless: the
+        # default C parser lands on a neighbouring float64, so rewriting a
+        # cached table would drift the tracked export by one trailing digit.
+        onset = pd.read_csv(onset_path, float_precision="round_trip")
         print(f"  [cache] {onset_path}")
     else:
         onset = onset_of_prediction(labels, root, args.perms)
-    onset = onset.drop(columns=["null_95", "beats_null"], errors="ignore")
-    onset["auc_above_null_mean"] = onset["roc_auc"] - onset["null_mean"]
-    onset.to_csv(onset_path, index=False)
-    onset.to_csv(STATISTICS_DIR / "figure7_prediction_permutation.csv", index=False)
+        onset = onset.drop(columns=["null_95", "beats_null"], errors="ignore")
+        onset["auc_above_null_mean"] = onset["roc_auc"] - onset["null_mean"]
+        onset.to_csv(onset_path, index=False)
+        onset.to_csv(STATISTICS_DIR / "figure7_prediction_permutation.csv", index=False)
 
     print("\npanels B/C - held-out cohort and full-session LOOCV")
-    cross = held_out_cohort(labels, root)
-    head, head_test = full_session_loocv(labels, root)
-    pd.concat([
-        cross.assign(panel="B held-out cohort"),
-        head.assign(panel="C full-session LOOCV"),
-    ], ignore_index=True).to_csv(SOURCE_OUT / "figure7_full_session_auc.csv", index=False)
-    cross.to_csv(STATISTICS_DIR / "figure7_cross_cohort_auc.csv", index=False)
-    head.to_csv(STATISTICS_DIR / "figure7_full_session_auc.csv", index=False)
-
-    print("panels D/E - paired AUC significance tests")
-    cross_tests = held_out_cohort_tests(labels, root)
-    panel_tests = pd.concat([cross_tests, head_test], ignore_index=True, sort=False)
-    panel_tests.to_csv(STATISTICS_DIR / "figure7_panel_de_auc_tests.csv", index=False)
-    panel_tests.to_csv(SOURCE_OUT / "figure7_panel_de_auc_tests.csv", index=False)
+    cross_path = STATISTICS_DIR / "figure7_cross_cohort_auc.csv"
+    head_path = STATISTICS_DIR / "figure7_full_session_auc.csv"
+    tests_path = STATISTICS_DIR / "figure7_panel_de_auc_tests.csv"
+    if use_cache and cross_path.exists() and head_path.exists() and tests_path.exists():
+        cross = pd.read_csv(cross_path, float_precision="round_trip")
+        head = pd.read_csv(head_path, float_precision="round_trip")
+        panel_tests = pd.read_csv(tests_path, float_precision="round_trip")
+        cross_tests = panel_tests[panel_tests["panel"] == "D"].reset_index(drop=True)
+        head_test = panel_tests[panel_tests["panel"] == "E"].reset_index(drop=True)
+        print(f"  [cache] {cross_path}\n  [cache] {head_path}\n  [cache] {tests_path}")
+    else:
+        cross = held_out_cohort(labels, root)
+        head, head_test = full_session_loocv(labels, root)
+        print("panels D/E - paired AUC significance tests")
+        cross_tests = held_out_cohort_tests(labels, root)
+        panel_tests = pd.concat([cross_tests, head_test], ignore_index=True, sort=False)
+        pd.concat([
+            cross.assign(panel="B held-out cohort"),
+            head.assign(panel="C full-session LOOCV"),
+        ], ignore_index=True).to_csv(SOURCE_OUT / "figure7_full_session_auc.csv", index=False)
+        cross.to_csv(cross_path, index=False)
+        head.to_csv(head_path, index=False)
+        panel_tests.to_csv(tests_path, index=False)
+        panel_tests.to_csv(SOURCE_OUT / "figure7_panel_de_auc_tests.csv", index=False)
     print(panel_tests.to_string(index=False))
 
     print("panel D - Shapley values")
-    shap = shapley_values(labels, root)
-    shap.to_csv(SOURCE_OUT / "figure7_shapley_contributions.csv", index=False)
+    shap_path = SOURCE_OUT / "figure7_shapley_contributions.csv"
+    if use_cache and shap_path.exists():
+        shap = pd.read_csv(shap_path, float_precision="round_trip")
+        print(f"  [cache] {shap_path}")
+    else:
+        shap = shapley_values(labels, root)
+        shap.to_csv(shap_path, index=False)
     print(shap.to_string(index=False))
 
     print("individual overtime panels")
-    individual_time = individual_overtime_data(labels)
-    individual_time.drop(columns=["color", "linestyle"]).to_csv(
-        SOURCE_OUT / "figure7_individual_timecourse_auc.csv", index=False
-    )
+    individual_path = SOURCE_OUT / "figure7_individual_timecourse_auc.csv"
+    if use_cache and individual_path.exists():
+        individual_time = pd.read_csv(individual_path, float_precision="round_trip")
+        # The export drops the styling columns, so rebuild them from the same
+        # parameter table the compute path uses.
+        styling = {(panel, name): (behaviour, family)
+                   for panel, name, family, col, behaviour in INDIVIDUAL_OVERTIME_PARAMETERS}
+        individual_time["color"] = [
+            colour_for_individual(p, n, styling[(p, n)][0], f)
+            for p, n, f in zip(individual_time["panel"], individual_time["metric"],
+                               individual_time["family"])
+        ]
+        individual_time["linestyle"] = "-"
+        print(f"  [cache] {individual_path}")
+    else:
+        individual_time = individual_overtime_data(labels)
+        individual_time.drop(columns=["color", "linestyle"]).to_csv(
+            individual_path, index=False
+        )
 
-    write_classifier_source_data()
+    if not use_cache:
+        write_classifier_source_data()
     ab_recap, c_recap = recap_tables()
-    ab_recap.drop(columns=["color"], errors="ignore").to_csv(
-        SOURCE_OUT / "figure7_predictor_catalog.csv", index=False
-    )
-    c_recap.drop(columns=["color"], errors="ignore").to_csv(
-        SOURCE_OUT / "figure7_predictor_timecourse.csv", index=False
-    )
+    if not use_cache:
+        ab_recap.drop(columns=["color"], errors="ignore").to_csv(
+            SOURCE_OUT / "figure7_predictor_catalog.csv", index=False
+        )
+        c_recap.drop(columns=["color"], errors="ignore").to_csv(
+            SOURCE_OUT / "figure7_predictor_timecourse.csv", index=False
+        )
 
     summary = pd.concat([
         pd.DataFrame({
@@ -1441,7 +1485,8 @@ def main() -> None:
             ["panel", "measure", "category", "value"]
         ],
     ], ignore_index=True, sort=False)
-    summary.to_csv(SOURCE_OUT / "figure7.csv", index=False)
+    if not use_cache:
+        summary.to_csv(SOURCE_OUT / "figure7.csv", index=False)
 
     complete = build_complete_figure(onset, cross, head, shap, individual_time, labels,
                                      cross_tests=cross_tests, head_test=head_test)

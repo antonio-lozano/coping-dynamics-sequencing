@@ -709,7 +709,7 @@ def build_figure_compact(ab_table: pd.DataFrame, c_table: pd.DataFrame) -> plt.F
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Supplementary Figure 5 recapitulation")
+    parser = argparse.ArgumentParser(description="Supplementary Figure 4 recapitulation")
     parser.add_argument("--fresh", action="store_true",
                         help="recompute every statistic instead of reading the cache")
     args = parser.parse_args()
@@ -726,13 +726,13 @@ def main() -> None:
     print("panel C done")
 
     fig = build_figure(ab_table, c_table)
-    stem = OUT / "supplementary_figure5_recap"
+    stem = OUT / "supplementary_figure4_recap"
     for ext in ("png", "pdf", "svg"):
         fig.savefig(stem.with_suffix(f".{ext}"), dpi=300, bbox_inches="tight")
     plt.close(fig)
 
     fig_compact = build_figure_compact(ab_table, c_table)
-    stem_compact = OUT / "supplementary_figure5_recap_compact"
+    stem_compact = OUT / "supplementary_figure4_recap_compact"
     for ext in ("png", "pdf", "svg"):
         fig_compact.savefig(stem_compact.with_suffix(f".{ext}"), dpi=300, bbox_inches="tight")
     plt.close(fig_compact)

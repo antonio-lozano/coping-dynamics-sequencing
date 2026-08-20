@@ -1014,7 +1014,7 @@ def figure2_freezing_syllables_raw() -> pd.DataFrame:
 
 
 def figure7_source(name: str) -> pd.DataFrame:
-    """Load a tracked Figure 7/Supplementary Figure 5 source table."""
+    """Load a tracked Figure 7/Supplementary Figure 4 source table."""
     path = FIGURE_SOURCE_DIR / name
     if not path.exists():
         raise FileNotFoundError(
@@ -1045,9 +1045,9 @@ def figure7_classifier_shap_raw() -> pd.DataFrame:
     return data[["feature", *behavior_columns]]
 
 
-def supplementary_figure5_shap_raw() -> pd.DataFrame:
+def supplementary_figure4_shap_raw() -> pd.DataFrame:
     """All 719 legacy parameters per class; the published panels plot the top 10."""
-    data = figure7_source("supplementary_figure5_shap_summary.csv")
+    data = figure7_source("supplementary_figure4_shap_summary.csv")
     required = [
         "behavior",
         "rank",
@@ -1065,7 +1065,7 @@ def supplementary_figure5_shap_raw() -> pd.DataFrame:
     missing = [column for column in required if column not in data.columns]
     if missing or len(data) != 719 * 8:
         raise AssertionError(
-            "Supplementary Figure 5 SHAP source must contain all 719 legacy parameters "
+            "Supplementary Figure 4 SHAP source must contain all 719 legacy parameters "
             f"for eight classes; missing={missing}, rows={len(data)}"
         )
     return data[required]
@@ -1226,7 +1226,7 @@ def validate_figure_structure(wb: openpyxl.Workbook) -> None:
         "Fig.7K-N_Metric_timecourse",
         "Suppl.Fig.1A-D",
         "Suppl.Fig.3A-K",
-        "Suppl.Fig.5A-H_SHAP",
+        "Suppl.Fig.4A-H_SHAP",
     ]
     missing = [name for name in required_in_order if name not in wb.sheetnames]
     if missing:
@@ -1250,10 +1250,10 @@ def validate_figure_structure(wb: openpyxl.Workbook) -> None:
     if shap_sheet.max_row - 3 != 20 or shap_sheet.max_column != 9:
         raise AssertionError("Figure 7B must contain all 20 plotted features across eight classes")
 
-    supplementary_shap = wb["Suppl.Fig.5A-H_SHAP"]
+    supplementary_shap = wb["Suppl.Fig.4A-H_SHAP"]
     if supplementary_shap.max_row - 3 != 719 * 8:
         raise AssertionError(
-            "Supplementary Figure 5 must contain all 719 legacy parameters for all eight classes"
+            "Supplementary Figure 4 must contain all 719 legacy parameters for all eight classes"
         )
 
 
@@ -1309,7 +1309,7 @@ def build_raw_data_workbook(output: Path = OUT) -> None:
     write_titled_dataframe(wb, "Fig.7K-N_Metric_timecourse", "Figure 7K-N: individual metric performance across opening-session horizons", figure7_metric_timecourse_raw())
     write_titled_dataframe(wb, "Suppl.Fig.1A-D", "Supplementary Figure 1A-D: omitted behavior time courses and total frequencies", numeric_animal(supplementary_tracking_time()))
     write_titled_dataframe(wb, "Suppl.Fig.3A-K", "Supplementary Figure 3A-K: distance-metric control scores per animal", supplementary_figure3_scores())
-    write_titled_dataframe(wb, "Suppl.Fig.5A-H_SHAP", "Supplementary Figure 5A-H: all 719 legacy classifier parameters per behavior; top 10 plotted per class", supplementary_figure5_shap_raw())
+    write_titled_dataframe(wb, "Suppl.Fig.4A-H_SHAP", "Supplementary Figure 4A-H: all 719 legacy classifier parameters per behavior; top 10 plotted per class", supplementary_figure4_shap_raw())
     validate_figure_structure(wb)
     save_workbook(wb, output)
     print(f"Saved: {output.relative_to(REPO)}")

@@ -5,9 +5,10 @@ Figure 2 - manuscript validation, keypoint-moseq compatible regeneration.
 
 This script keeps the final manuscript A-H layout and mirrors the original
 keypoint-MoSeq processing for the validation panels. In particular, it uses the
-original selected
-syllables for the animal overlap panel, cumulative 95% usage cutoff for panel
-D, and per-animal precision/recall aggregation before plotting panels E/F.
+original selected syllables for the animal overlap panel, the manuscript's
+syllable cutoff for panel D (syllables kept in descending frequency until they
+cover 99.5% of frames, which retains 38 - a per-syllable 0.05% cutoff would
+keep 41), and per-animal precision/recall aggregation before plotting E/F.
 """
 from __future__ import annotations
 
@@ -859,10 +860,11 @@ def plot_figure(
         d_source = agg.sort_values("global_pct", ascending=False).reset_index(drop=True)
     axD.bar(np.arange(len(d_source)), d_source["global_pct"], color="#C77BA5", edgecolor="#FFFFFF", linewidth=0.25)
     cumulative = d_source["global_pct"].cumsum()
-    cut_idx = int(np.argmax(cumulative.to_numpy() >= 95.0))
+    cut_idx = int(np.argmax(cumulative.to_numpy() >= 99.5))
     axD.axvline(cut_idx + 0.5, color="#b0b0b0", linestyle="--", linewidth=0.9)
     axD.legend(
-        handles=[plt.Line2D([0], [0], color="#b0b0b0", linestyle="--", linewidth=0.9, label="Threshold = 0.05")],
+        handles=[plt.Line2D([0], [0], color="#b0b0b0", linestyle="--", linewidth=0.9,
+                            label=f"99.5% coverage ({cut_idx + 1} syllables)")],
         frameon=True, fontsize=5, loc="lower right",
     )
     axD.set_ylabel("Total frames covered by syllable (%)", fontsize=6)
