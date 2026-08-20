@@ -19,7 +19,7 @@ display_order,syllable,behavior_cluster,source_clip,source_clip_sha256,source_oc
 18,19,Locomotion,syllable_19_clip.mp4,3022c7650c781dbbf377e8ce03203f02b82121106073b6dd9ec2465b61b490b2,1;2;3,yes
 19,21,Locomotion,syllable_21_clip.mp4,be494f745a2a054205e5d9b4307b0accd7e61b4c4273e2ba8ddd4bacd04ce63e,1;2;3,yes
 20,25,Locomotion,syllable_25_clip.mp4,05313e9ebdc55ccabcf54bb7eea920c9df6c37b00461519d37e3d8a77976752d,1;2;3,yes
-21,111,Climb,syllable_111_clip.mp4,77d252edab1e96a5c7199f7daee074b35f3dc8fe22ee5b1b15da0d44bedd7cc0,1;2;3;4;5;6,no; derived climbing class
+21,111,Climb,syllable_111_clip.mp4,77d252edab1e96a5c7199f7daee074b35f3dc8fe22ee5b1b15da0d44bedd7cc0,1;2;3,no; derived climbing class
 22,23,Jump,syllable_23_clip.mp4,7ff2654b02771158668e56d596c3dc04063d04e657d24039b71ef4f2549fe55d,1;2;3,yes
 23,29,Jump,syllable_29_clip.mp4,ca8dfcf277a8f9983a5c8cfd0a8ac7790995bd4c82b5430733debea1c6842c11,1;2;3,yes
 24,30,Jump,syllable_30_clip.mp4,95118dadbcf0c7e90f034e68b79a9acc417f6163ac136222ec6a7eeeea1b6ef7,1;2;3,yes
