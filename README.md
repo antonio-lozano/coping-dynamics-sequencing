@@ -77,6 +77,7 @@ scripts/migrations/   One-time imports from the legacy tree, kept for provenance
 src/                  Shared analysis, plotting, statistics, and classifier code
 docs/                 Data dictionary and focused provenance notes
 config/               Figure metadata used by the report package
+tools/                Self-contained companion tools, outside the rebuild and the manifest
 ```
 
 Two kinds of scripts are not part of a rebuild. `scripts/migrations/` holds the
@@ -189,5 +190,9 @@ See `docs/supplementary_media.md` for scope and provenance.
 - `docs/figure_structure.md`: canonical main and supplementary panel mapping.
 - `docs/behavior_classifier.md`: classifier and Supplementary Figure 4 usage.
 - `docs/cleanup_todo.md`: known loose ends and pending cleanup decisions.
+- `tools/behavior_dlc_classifier/GUIDE.md`: standalone DeepLabCut freezing and
+  seven-behavior video classifier with its own environment and lock file,
+  outside the reproducibility contract and unrelated to the Figure 7
+  classifier in `classifier/`.
 
 Use `CITATION.cff` for software citation metadata and `LICENSE` for licensing.

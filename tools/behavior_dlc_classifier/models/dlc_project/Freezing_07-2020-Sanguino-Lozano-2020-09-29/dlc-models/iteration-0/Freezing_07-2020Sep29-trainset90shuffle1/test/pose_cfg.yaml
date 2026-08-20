@@ -1,0 +1,38 @@
+all_joints:
+- - 0
+- - 1
+- - 2
+- - 3
+- - 4
+- - 5
+- - 6
+- - 7
+- - 8
+- - 9
+- - 10
+- - 11
+- - 12
+- - 13
+all_joints_names:
+- nose
+- H1R
+- H2R
+- H1L
+- H2L
+- B1R
+- B2R
+- B3R
+- B1L
+- B2L
+- B3L
+- tail
+- S2
+- S1
+dataset: training-datasets/iteration-0/UnaugmentedDataSet_Freezing_07-2020Sep29/Freezing_07-2020_Sanguino-Lozano90shuffle1.mat
+global_scale: 0.8
+init_weights: dlc-models/iteration-0/Freezing_07-2020Sep29-trainset90shuffle1/train/snapshot-500000
+location_refinement: true
+locref_stdev: 7.2801
+net_type: resnet_50
+num_joints: 14
+scoremap_dir: test

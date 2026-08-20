@@ -1,0 +1,108 @@
+# Project definitions (do not edit)
+Task:
+scorer:
+date:
+
+# Project path (rewritten automatically at run time)
+project_path: .
+
+# Annotation data set configuration (and individual video cropping parameters)
+video_sets:
+bodyparts:
+start:
+stop:
+numframes2pick:
+
+# Plotting configuration
+skeleton: []
+skeleton_color: black
+pcutoff:
+dotsize:
+alphavalue:
+colormap:
+
+# Training,Evaluation and Analysis configuration
+TrainingFraction:
+iteration:
+resnet:
+snapshotindex:
+batch_size: 4
+
+# Cropping Parameters (for analysis and outlier frame detection)
+cropping:
+#if cropping is true for analysis, then set the values here:
+x1:
+x2:
+y1:
+y2:
+
+# Refinement configuration (parameters from annotation dataset configuration also relevant in this stage)
+corner2move2:
+move2corner:
+all_joints:
+- - 0
+- - 1
+- - 2
+- - 3
+- - 4
+- - 5
+- - 6
+- - 7
+- - 8
+- - 9
+- - 10
+- - 11
+- - 12
+- - 13
+all_joints_names:
+- nose
+- H1R
+- H2R
+- H1L
+- H2L
+- B1R
+- B2R
+- B3R
+- B1L
+- B2L
+- B3L
+- tail
+- S2
+- S1
+bottomheight: 400
+crop: true
+cropratio: 0.4
+dataset: training-datasets/iteration-0/UnaugmentedDataSet_Freezing_07-2020Sep29/Freezing_07-2020_Sanguino-Lozano90shuffle1.mat
+dataset_type: imgaug
+display_iters: 1000
+global_scale: 0.8
+init_weights: resnet_v1_50.ckpt
+intermediate_supervision: false
+intermediate_supervision_layer: 12
+leftwidth: 400
+location_refinement: true
+locref_huber_loss: true
+locref_loss_weight: 0.05
+locref_stdev: 7.2801
+max_input_size: 1500
+metadataset: training-datasets/iteration-0/UnaugmentedDataSet_Freezing_07-2020Sep29/Documentation_data-Freezing_07-2020_90shuffle1.pickle
+min_input_size: 64
+minsize: 100
+mirror: false
+multi_step:
+- - 0.005
+  - 10000
+- - 0.02
+  - 430000
+- - 0.002
+  - 730000
+- - 0.001
+  - 1030000
+net_type: resnet_50
+num_joints: 14
+pos_dist_thresh: 17
+rightwidth: 400
+save_iters: 50000
+scale_jitter_lo: 0.5
+scale_jitter_up: 1.25
+topheight: 400
