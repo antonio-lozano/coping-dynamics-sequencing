@@ -19,19 +19,8 @@ display_order,syllable,behavior_cluster,source_clip,source_clip_sha256,source_oc
 18,19,Locomotion,syllable_19_clip.mp4,3022c7650c781dbbf377e8ce03203f02b82121106073b6dd9ec2465b61b490b2,1;2;3,yes
 19,21,Locomotion,syllable_21_clip.mp4,be494f745a2a054205e5d9b4307b0accd7e61b4c4273e2ba8ddd4bacd04ce63e,1;2;3,yes
 20,25,Locomotion,syllable_25_clip.mp4,05313e9ebdc55ccabcf54bb7eea920c9df6c37b00461519d37e3d8a77976752d,1;2;3,yes
-21,111,Climb,syllable_111_clip.mp4,77d252edab1e96a5c7199f7daee074b35f3dc8fe22ee5b1b15da0d44bedd7cc0,1;2;3,no; derived climbing class
+21,111,Climb,syllable_111_clip.mp4,77d252edab1e96a5c7199f7daee074b35f3dc8fe22ee5b1b15da0d44bedd7cc0,1;2;3;4;5;6,no; derived climbing class
 22,23,Jump,syllable_23_clip.mp4,7ff2654b02771158668e56d596c3dc04063d04e657d24039b71ef4f2549fe55d,1;2;3,yes
 23,29,Jump,syllable_29_clip.mp4,ca8dfcf277a8f9983a5c8cfd0a8ac7790995bd4c82b5430733debea1c6842c11,1;2;3,yes
 24,30,Jump,syllable_30_clip.mp4,95118dadbcf0c7e90f034e68b79a9acc417f6163ac136222ec6a7eeeea1b6ef7,1;2;3,yes
 25,34,Jump,syllable_34_clip.mp4,02f354d981641b3fe27296c400d67eb62fa9e925939c41a3504b4904a5dfc340,7;24;61,yes
-26,2,Unassigned,syllable_2_clip.mp4,a353ebd029aff4b639e17a11d1bf6155d9234c07618efe9d498c4d74e1206669,1;2;3,yes
-27,4,Unassigned,syllable_4_clip.mp4,194f41a46e1ead5c92ff1b61d0ae1a3774487a1b9ab42f70f330e5116846c1ef,1;2;3,yes
-28,7,Unassigned,syllable_7_clip.mp4,4caa34f4e7d94c49155f86af969171e12faaaecb16653beecc50ace64960bdcf,1;2;3,yes
-29,8,Unassigned,syllable_8_clip.mp4,4e016ea99bc5075fdf3d1e77f74fa81978bb2573c9c93bdbf8fbae61646b65e5,1;2;3,yes
-30,9,Unassigned,syllable_9_clip.mp4,2a2ab97aeb9a43becc1597922dc77217ec73eb4f472407d3d3ac332de1f6c32a,1;2;3,yes
-31,13,Unassigned,syllable_13_clip.mp4,2051fab730317719c6df9c637b74ebe3b93d02d2e6ea844b59a485bd3ebefa57,1;2;3,yes
-32,17,Unassigned,syllable_17_clip.mp4,873dbb178c8d28b3dfd8a49d344f805058f7d43b3054674ebf6e1cb0c114e7a4,1;2;3,yes
-33,22,Unassigned,syllable_22_clip.mp4,effdbee49000f195203e60629de1e8b927461539602ab06c37791ac7cfdd1f30,1;2;3,yes
-34,31,Unassigned,syllable_31_clip.mp4,ee927e212b264d31651277f9b3397771f8525565f6b4fe57ff6d422fd6090fea,1;2;3,yes
-35,32,Unassigned,syllable_32_clip.mp4,f7ba415a5e5770c6eb8b406865a75dbde6888142f384bac8a0ec6967c9d94f27,1;2;3,yes
-36,33,Unassigned,syllable_33_clip.mp4,a83f32abbf97a13a741493d4a13fb885e2a4b334e45128f880ed04e48657bb29,1;2;3,yes
