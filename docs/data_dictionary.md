@@ -51,9 +51,9 @@ contain the plotted values and summary values exported by the figure scripts.
 Detailed Figure 7 prediction, permutation, SHAP, and time-course tables use the
 `figure7_*.csv` prefix in the same directory.
 `figure7_classifier_global_shap.csv` supports the stacked global summary in
-Figure 7B. `supplementary_figure5_shap_summary.csv` contains all 719 legacy
+Figure 7B. `supplementary_figure4_shap_summary.csv` contains all 719 legacy
 classifier parameters for each of the eight classifier outputs (5,752 rows);
-Supplementary Figure 5 plots the top 10 parameters per output, flagged by
+Supplementary Figure 4 plots the top 10 parameters per output, flagged by
 `plotted_top_10`. Each row carries the raw legacy `parameter` name and a
 readable `parameter_label`.
 These files are generated products for figure transparency; raw analysis inputs
@@ -72,7 +72,7 @@ remain in `data/raw/`.
 | `report/raw_data.xlsx` | Manuscript-facing raw-data workbook. |
 | `report/statistical_report.xlsx` | Manuscript-facing statistical report workbook. |
 | `classifier/figure7_behavior_classifier.joblib` | Reusable classifier artifact for Figure 7A-C (33 centroid-kinematic features). |
-| `classifier/legacy_shap/xgb_model.pkl` | Legacy classifier behind Supplementary Figure 5 (719 body-part features); with `label_encoder.pkl`. |
+| `classifier/legacy_shap/xgb_model.pkl` | Legacy classifier behind Supplementary Figure 4 (719 body-part features); with `label_encoder.pkl`. |
 
 The canonical panel-to-file mapping is documented in
 `docs/figure_structure.md`.

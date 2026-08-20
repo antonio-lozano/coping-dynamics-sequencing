@@ -27,7 +27,7 @@ labels; explicit Figure 4 panel ranges; resilience-stratified Figure 5 and 6
 tables; Supplementary Figure 1 time courses plus total frequencies; and
 animal-level Supplementary Figure 3 distance metrics. Figure 7A-N is split into
 panel-accurate classifier, resilience-prediction, SHAP, predictor-catalog, and
-time-course sheets. Supplementary Figure 5A-H has an explicit class-specific
+time-course sheets. Supplementary Figure 4A-H has an explicit class-specific
 classifier SHAP sheet carrying all 719 legacy parameters per behavior. Archive/helper sheets
 that do not directly correspond to a figure are intentionally excluded.
 

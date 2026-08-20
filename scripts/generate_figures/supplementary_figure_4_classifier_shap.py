@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-"""Assemble Supplementary Figure 5 from the legacy class-specific SHAP analysis.
+"""Assemble Supplementary Figure 4 from the legacy class-specific SHAP analysis.
 
 The published panels come from the legacy behavior classifier (719 pairwise
 DeepLabCut body-part features), not from the bundled reusable classifier.  Their
 SHAP values are tracked at ``classifier/legacy_shap/shap_values.npz``, so the
 figure regenerates from the repository alone::
 
-    python scripts/generate_figures/supplementary_figure_5_classifier_shap.py
+    python scripts/generate_figures/supplementary_figure_4_classifier_shap.py
 
 ``--source`` is only needed to rebuild the panels straight from the legacy
 keypoint-MoSeq working tree; see ``scripts/import_legacy_shap_values.py``.
@@ -14,7 +14,7 @@ keypoint-MoSeq working tree; see ``scripts/import_legacy_shap_values.py``.
 Each panel is a ``shap.summary_plot`` beeswarm of the top 10 parameters for one
 behavior, matching the legacy figure script.  The per-parameter values behind
 the panels are tracked in
-``figure_source_data/supplementary_figure5_shap_summary.csv``.
+``figure_source_data/supplementary_figure4_shap_summary.csv``.
 """
 from __future__ import annotations
 
@@ -44,7 +44,7 @@ from scripts.migrations.import_legacy_shap_summary import (  # noqa: E402
     parameter_label,
 )
 
-OUTPUT_STEM = REPO / "figures" / "supplementary_figure5"
+OUTPUT_STEM = REPO / "figures" / "supplementary_figure4"
 SHAP_ARCHIVE = REPO / "classifier" / "legacy_shap" / "shap_values.npz"
 TOP_FEATURES = 10
 PANEL_LETTERS = "ABCDEFGH"

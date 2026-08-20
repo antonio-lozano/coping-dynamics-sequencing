@@ -1,6 +1,6 @@
-"""Import the legacy class-specific SHAP analysis behind Supplementary Figure 5.
+"""Import the legacy class-specific SHAP analysis behind Supplementary Figure 4.
 
-This is a one-time migration utility.  Supplementary Figure 5 was produced by the
+This is a one-time migration utility.  Supplementary Figure 4 was produced by the
 legacy behavior classifier, whose feature space is pairwise DeepLabCut body-part
 distances and velocities.  That analysis lives outside this repository, in the
 ``code/shapley/results`` directory of the keypoint-MoSeq working tree, which
@@ -35,7 +35,7 @@ import pandas as pd
 
 
 REPO = Path(__file__).resolve().parents[1]
-OUT = REPO / "figure_source_data" / "supplementary_figure5_shap_summary.csv"
+OUT = REPO / "figure_source_data" / "supplementary_figure4_shap_summary.csv"
 LEGACY_DIR = REPO / "classifier" / "legacy_shap"
 SHAP_ARCHIVE = LEGACY_DIR / "shap_values.npz"
 RANKS_CSV = LEGACY_DIR / "legacy_feature_ranks.csv"

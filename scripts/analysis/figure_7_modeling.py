@@ -921,7 +921,7 @@ def write_report(
     first_above = above_null["horizon_min"].min() if len(above_null) else np.nan
 
     lines: list[str] = []
-    lines.append("\n## Direct supplementary figure (`supplementary_figure5_direct.png/.pdf/.svg`)\n")
+    lines.append("\n## Direct supplementary figure (`supplementary_figure4_direct.png/.pdf/.svg`)\n")
     lines.append(
         "Five panels built to answer four questions directly: (a) does the model transfer between "
         "cohorts, (b) which behavioural information transfers, (c) is freezing alone sufficient, "
@@ -1034,7 +1034,7 @@ def write_report(
 
     lines.append("\nOutputs:\n")
     for name in [
-        "supplementary_figure5_direct.png/.pdf/.svg",
+        "supplementary_figure4_direct.png/.pdf/.svg",
         "direct_figure_q1_cross_cohort.csv",
         "direct_figure_q1_per_animal_predictions.csv",
         "direct_figure_q2_feature_families.csv",
@@ -1105,7 +1105,7 @@ def main() -> None:
 
     fig = build_figure(a_rows, b_table, c_table, scatter_data, (b0, b_freeze, b_turn), e_table)
     for ext in ("png", "pdf", "svg"):
-        fig.savefig(OUT / f"supplementary_figure5_direct.{ext}", dpi=300, bbox_inches="tight", facecolor="white")
+        fig.savefig(OUT / f"supplementary_figure4_direct.{ext}", dpi=300, bbox_inches="tight", facecolor="white")
     plt.close(fig)
 
     q1 = pd.DataFrame(
@@ -1133,7 +1133,7 @@ def main() -> None:
     ].to_csv(OUT / "direct_figure_scatter_source_data.csv", index=False)
 
     write_report(a_rows, b_table, c_table, nested, e_table)
-    print("\nWrote supplementary_figure5_direct.* and direct_figure_*.csv; appended REPORT.md")
+    print("\nWrote supplementary_figure4_direct.* and direct_figure_*.csv; appended REPORT.md")
 
 
 if __name__ == "__main__":
