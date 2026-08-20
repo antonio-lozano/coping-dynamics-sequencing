@@ -301,13 +301,20 @@ def parse_args() -> argparse.Namespace:
                         help="frames shown per climbing bout")
     parser.add_argument("--climb-lead", type=int, default=8,
                         help="frames of floor lead-in before each bout starts")
+    parser.add_argument("--climb-floor-image", type=Path,
+                        help="frame with the arena floor drawn on in colour; "
+                             "overrides automatic floor detection")
+    parser.add_argument("--climb-floor-corners", type=str,
+                        help="four floor corners as 'x,y x,y x,y x,y'; "
+                             "overrides automatic floor detection")
     parser.add_argument("--output", type=Path, default=OUTPUT_VIDEO)
     return parser.parse_args()
 
 
 def load_climb_overlay(
     video: Path, keypoints: Path, bout_count: int, frames_per_bout: int,
-    lead_frames: int,
+    lead_frames: int, floor_image: Path | None = None,
+    floor_corners: str | None = None,
 ) -> tuple[list[Image.Image], list[int]]:
     """Render climbing-overlay frames for several separate bouts.
 
@@ -321,11 +328,18 @@ def load_climb_overlay(
     """
     from generate_climbing_overlay_clip import (
         FLOOR_THRESHOLD, MIN_BOUT_FRAMES, check_alignment, compute_floor_ratios,
-        detect_floor, draw_frame, find_bouts, load_keypoints, median_frame,
+        detect_floor, draw_frame, find_bouts, floor_from_annotation,
+        load_keypoints, median_frame, parse_corners,
     )
     from matplotlib.path import Path as MplPath
 
-    floor = detect_floor(median_frame(video))
+    if floor_corners:
+        floor = parse_corners(floor_corners)
+        print(f"  floor: taken from --climb-floor-corners {floor.astype(int).tolist()}")
+    elif floor_image:
+        floor = floor_from_annotation(floor_image)
+    else:
+        floor = detect_floor(median_frame(video))
     points = load_keypoints(keypoints)
     check_alignment(video, points)
     ratios = compute_floor_ratios(points, floor)
@@ -396,6 +410,7 @@ def main() -> None:
         climb_frames, climb_bouts = load_climb_overlay(
             args.climb_video, args.climb_keypoints, args.climb_bouts,
             args.climb_bout_frames, args.climb_lead,
+            args.climb_floor_image, args.climb_floor_corners,
         )
 
     writer = imageio_ffmpeg.write_frames(
