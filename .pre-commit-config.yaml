@@ -14,7 +14,7 @@ repos:
         args: ["--maxkb=70000"]
       - id: check-merge-conflict
       - id: check-yaml
-        exclude: &generated ^(figures/|figure_source_data/|statistics/|data/|report/|classifier/|tools/|MANIFEST\.csv$|uv\.lock$)
+        exclude: &generated ^(figures/|figure_source_data/|statistics/|data/|report/|classifier/|supplementary_media/|tools/|MANIFEST\.csv$|uv\.lock$)
       - id: check-toml
         exclude: *generated
       - id: check-json

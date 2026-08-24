@@ -5,7 +5,7 @@ Reproduces the manuscript resilience statistics from the bundled source data.
 Self-contained: reads only repo data.
 
 Model per metric (and per cluster for bout duration):
-  MixedLM(metric ~ C(New_condition, Treatment(reference=R)) + Experiment, groups=Animal, reml=False)
+  OLS(metric ~ C(New_condition, Treatment(reference=R)) + Experiment), SE clustered by litter
   fit twice (R = 'Control' and R = 'ELS') so every pairwise contrast is read off a row:
     vulnerable - control   = Control-ref  [T.ELS]
     resilient  - control   = Control-ref  [T.ELS_resilient]
@@ -27,7 +27,6 @@ from pathlib import Path
 warnings.filterwarnings("ignore")
 import numpy as np
 import pandas as pd
-import statsmodels.formula.api as smf
 from scipy.stats import entropy
 from statsmodels.stats.multitest import multipletests
 
@@ -35,6 +34,7 @@ REPO = Path(__file__).resolve().parents[2]
 
 from coping_dynamics.statistics import (
     determinism,
+    fit_animal_level,
     markov_entropy,
     recurrence_rate,
 )
@@ -180,7 +180,7 @@ def diversity_table(df):
     )
     div = div.merge(cu, on=["Animal", "Experiment", "New_condition"], how="left")
     # Markov entropy per animal (matches original). Deliberately NOT the shared
-    # src.statistics.markov_entropy: this one uses Laplace smoothing 0.002, the
+    # coping_dynamics.statistics.markov_entropy: this one uses Laplace smoothing 0.002, the
     # published value behind the MarkovEntropy column, while the transition
     # table below uses the shared implementation at 0.01 (MarkovEntropyIdx).
     rows = []
@@ -260,18 +260,23 @@ def transition_table(df):
 
 
 def contrasts(data, metric):
-    """Return the three pairwise contrasts from dual-reference MixedLM."""
+    """Return the three pairwise contrasts from the dual-reference model.
+
+    One row per animal, so an animal random intercept is not identifiable.
+    Fitted by OLS with standard errors clustered by litter; see
+    ``coping_dynamics.statistics.fit_animal_level``.
+    """
     d = data.dropna(subset=[metric]).copy()
-    mc = smf.mixedlm(
+    mc, _ = fit_animal_level(
         f"{metric} ~ C(New_condition, Treatment(reference='Control')) + Experiment",
         d,
-        groups=d["Animal"],
-    ).fit(reml=False)
-    me = smf.mixedlm(
+        d["Animal"],
+    )
+    me, _ = fit_animal_level(
         f"{metric} ~ C(New_condition, Treatment(reference='ELS')) + Experiment",
         d,
-        groups=d["Animal"],
-    ).fit(reml=False)
+        d["Animal"],
+    )
     kE = "C(New_condition, Treatment(reference='Control'))[T.ELS]"
     kRc = "C(New_condition, Treatment(reference='Control'))[T.ELS_resilient]"
     kRe = "C(New_condition, Treatment(reference='ELS'))[T.ELS_resilient]"

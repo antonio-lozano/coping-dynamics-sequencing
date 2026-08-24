@@ -20,7 +20,6 @@ import numpy as np
 import pandas as pd
 
 from coping_dynamics.config import FIGURES_DIR, PROCESSED_DATA_DIR, SUPPLEMENTARY_TRACKING_CSV
-from coping_dynamics.panel_letters import align_panel_letters
 
 SOURCE_CSV = SUPPLEMENTARY_TRACKING_CSV
 
@@ -233,16 +232,14 @@ def plot_frequency_panel(
 def align_letters_to_titles(
     fig: plt.Figure,
     letter_artists: list[tuple[plt.Axes, plt.Text]],
-    gap: float = 0.012,
 ) -> None:
-    """Sit each panel letter just left of its own panel title.
+    """Put each panel letter on the title's line, in the y-axis title column.
 
-    ``align_panel_letters`` anchors letters to the y-axis title column, which on
-    this figure leaves them stranded far to the left of the centred titles
-    ("Mixed behaviors", "Inaccurate tracking").  Horizontally each letter is put
-    next to the title it belongs to; vertically it is anchored to the top of its
-    own y axis rather than to the title, so the letters sit on the axes line
-    they label instead of riding up with the title text.
+    ``align_panel_letters`` already anchors the letters to the left edge of each
+    panel's y-axis title, which is the column we want them in; it only places
+    them vertically relative to the top of the axes.  This re-does the vertical
+    placement so every letter sits on the same horizontal line as its own panel
+    title, centred on the title text rather than floating above or below it.
     """
     fig.canvas.draw()
     renderer = fig.canvas.get_renderer()
@@ -250,14 +247,25 @@ def align_letters_to_titles(
     for ax, text in letter_artists:
         if text is None:
             continue
-        title_box = ax.title.get_window_extent(renderer=renderer)
+        # Horizontal: left edge of the y-axis title (falling back to the tick
+        # labels when the panel has no y-label), matching align_panel_letters.
+        label_box = ax.yaxis.label.get_window_extent(renderer=renderer)
         axes_box = ax.get_window_extent(renderer=renderer)
-        x_fig = fig_inv.transform((title_box.x0, axes_box.y1))[0]
-        y_fig = fig_inv.transform((axes_box.x0, axes_box.y1))[1]
+        if label_box.width <= 0:
+            boxes = [
+                t.get_window_extent(renderer=renderer) for t in ax.get_yticklabels() if t.get_text()
+            ]
+            x_px = min((b.x0 for b in boxes), default=axes_box.x0)
+        else:
+            x_px = label_box.x0
+        # Vertical: the vertical centre of the panel title, so the letter reads
+        # on the same line as the title.
+        title_box = ax.title.get_window_extent(renderer=renderer)
+        x_fig, y_fig = fig_inv.transform((x_px, (title_box.y0 + title_box.y1) / 2.0))
         text.set_transform(fig.transFigure)
-        text.set_position((x_fig - gap, y_fig))
-        text.set_ha("right")
-        text.set_va("bottom")
+        text.set_position((x_fig, y_fig))
+        text.set_ha("left")
+        text.set_va("center")
 
 
 def export_source_tables(summary: pd.DataFrame) -> None:
@@ -302,7 +310,6 @@ def main() -> None:
         (axes[2], plot_time_panel(axes[2], summary, PANEL_SPECS[1])),
         (axes[3], plot_frequency_panel(axes[3], frequency, PANEL_SPECS[1], "D")),
     ]
-    align_panel_letters(fig, letter_artists)
     align_letters_to_titles(fig, letter_artists)
 
     pdf_path = FIGURES_DIR / "supplementary_figure1.pdf"

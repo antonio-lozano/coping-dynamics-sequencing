@@ -184,6 +184,92 @@ def fit_mixed_models(raw_df: pd.DataFrame, response_col: str) -> pd.DataFrame:
     return pd.DataFrame(model_rows)
 
 
+def litter_of(animal) -> str:
+    """Litter identifier for an animal label.
+
+    Animals are labelled ``<litter>.<pup>`` (e.g. "150.3" and "150.5" are
+    littermates), so the litter is the part before the decimal point.
+    """
+    return str(animal).split(".")[0]
+
+
+def fit_animal_level(formula: str, data: pd.DataFrame, animal_ids: pd.Series):
+    """Fit a one-row-per-animal model with standard errors clustered by litter.
+
+    Littermates are not independent: they share a dam, a prenatal environment,
+    and received the stress protocol as a unit. Treating 82 animals as 82
+    independent observations understates the standard errors.
+
+    A litter random intercept is the textbook correction but is not usable
+    here: 25 of the 49 litters contain a single animal, so the litter variance
+    is estimated from 24 informative litters, and in practice it collapses to
+    zero or fails to converge for over half the metrics.
+
+    Clustering the standard errors by litter fixes the same problem without
+    estimating a variance component, so nothing can hit a boundary. Singleton
+    litters simply contribute nothing to the correction. Coefficients are
+    identical to plain OLS; only the standard errors change.
+
+    CR1 small-sample correction with a t reference distribution on
+    ``n_litters - 1`` degrees of freedom (49 litters -> 48 df).
+
+    Returns
+    -------
+    tuple[object, str]
+        Fitted result and a label describing the estimator.
+    """
+    litters = pd.Series(animal_ids).map(litter_of)
+    result = smf.ols(formula, data).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": litters, "use_correction": True, "df_correction": True},
+    )
+    return result, f"OLS (SE clustered by litter, {litters.nunique()} litters)"
+
+
+def fit_grouped_or_ols(formula: str, data: pd.DataFrame, groups: pd.Series, *, reml: bool = False):
+    """Fit ``formula`` with a random intercept for ``groups``, or OLS when that
+    random intercept is not identifiable.
+
+    A random intercept needs more than one observation per group. The per-animal
+    tables behind Figures 4-6 carry exactly one row per animal, so the animal
+    variance and the residual variance are perfectly confounded: every split of
+    the total variance has the same log-likelihood, and the standard errors are
+    read off a singular Hessian.
+
+    statsmodels does not raise in that situation. It warns
+    ("The MLE may be on the boundary", "The Hessian matrix ... is not positive
+    definite"), returns one arbitrary split, and which split it returns moves
+    with incidental details such as the dtype of the ID column - which changes
+    silently when a table is written to CSV and read back. That is why the same
+    model produced different standard errors on different runs.
+
+    Dropping the unidentifiable random effect keeps the same fixed effects and
+    returns the one identified answer.
+
+    Parameters
+    ----------
+    formula : str
+        Patsy formula for the fixed effects.
+    data : pd.DataFrame
+        Model frame.
+    groups : pd.Series
+        Grouping variable for the random intercept.
+    reml : bool, optional
+        Passed to MixedLM when the random effect is identifiable (default False).
+
+    Returns
+    -------
+    tuple[object, str]
+        Fitted result and a label describing the estimator actually used.
+    """
+    sizes = pd.Series(groups).value_counts()
+    if len(sizes) == 0 or int(sizes.max()) <= 1:
+        # One row per group: the random intercept is not identifiable, and the
+        # grouping variable is the animal, so cluster by litter instead.
+        return fit_animal_level(formula, data, groups)
+    return smf.mixedlm(formula, data, groups=groups).fit(reml=reml), "MixedLM"
+
+
 # ============================================================================
 # Diversity and complexity metrics (Figure 4, 6)
 # ============================================================================

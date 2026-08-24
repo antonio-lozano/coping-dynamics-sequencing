@@ -57,9 +57,8 @@ DOT_SIZE = 3.0
 # beyond it are clipped by the axes rather than dropped from the data.
 XLIM_PERCENTILE = 99.5
 
-# Feature-value palette sampled from the colorbar of the published figure
-# (data/raw/legacy_figures/figure7_classifier_original.pdf), listed from low to
-# high.  Note this is the reverse of the SHAP default: low values are red and
+# Feature-value palette sampled from the archived published rendering during
+# migration, listed from low to high. Note this is the reverse of the SHAP default: low values are red and
 # high values are blue, through a warm off-white midpoint.
 LEGACY_COLORS = [
     "#D8474E",
