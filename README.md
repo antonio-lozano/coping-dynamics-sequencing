@@ -9,6 +9,14 @@ stress-coping dynamics analyses. All data required to rebuild the data-derived
 figures, statistical CSVs, Excel reports, and validation manifest are included
 in the repository.
 
+<p align="center">
+  <img src="docs/media/syllable_atlas.gif" alt="Representative pose-overlaid occurrences, one per behavioral cluster" width="870">
+</p>
+<p align="center"><sub>One representative keypoint-MoSeq syllable per behavioral
+cluster, from the same verified sources as
+<a href="supplementary_media/Supplementary_Video_1_MoSeq_syllable_atlas_grid.mp4">Supplementary
+Video 1 (grid view)</a>.</sub></p>
+
 ## Quick Start
 
 The same commands work on Windows and Linux. Use the locked `uv` environment
@@ -130,6 +138,12 @@ Raw inputs include:
 
 ## Figure Scripts
 
+<p align="center">
+  <img src="docs/media/figure_tour.gif" alt="Slideshow of the main data figures" width="560">
+</p>
+<p align="center"><sub>The main data figures, each rebuilt byte-identically by
+<code>scripts/run_all.py</code>.</sub></p>
+
 | Output | Script |
 | --- | --- |
 | Figure 1 | Canonical tracked export (hand-assembled schematic) |
@@ -156,14 +170,20 @@ classifier in `classifier/legacy_shap/`, not from
 
 `supplementary_media/Supplementary_Video_1_MoSeq_syllable_atlas.mp4` is a
 submission-ready H.264 atlas of representative pose-overlaid syllables and
-canonical skeleton trajectories. Its editable submission legend is in
-`report/SIGuide.docx`, and `Supplementary_Video_1_source_index.csv` records the
-source hashes. Regenerate it from the archived keypoint-MoSeq outputs with:
+canonical skeleton trajectories, and
+`Supplementary_Video_1_MoSeq_syllable_atlas_grid.mp4` is its grid view: all 25
+cluster-mapped syllables playing simultaneously, ordered and color-coded by
+behavioral cluster. The editable submission legend is in `report/SIGuide.docx`,
+and `Supplementary_Video_1_source_index.csv` records the source hashes both
+videos are verified against. Regenerate them from the archived keypoint-MoSeq
+outputs with:
 
 ```bash
 python scripts/generate_supplementary_video_1.py \
   --clip-dir PATH/TO/video_clips \
   --skeleton-gif PATH/TO/skeleton_trajectories.gif
+python scripts/generate_supplementary_video_1_grid.py \
+  --clip-dir PATH/TO/video_clips
 ```
 
 See `docs/supplementary_media.md` for scope and provenance.
