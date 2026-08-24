@@ -11,7 +11,15 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "MANIFEST.csv"
-ARTIFACT_DIRS = ("data", "figure_source_data", "figures", "statistics", "report", "classifier")
+ARTIFACT_DIRS = (
+    "data",
+    "figure_source_data",
+    "figures",
+    "statistics",
+    "report",
+    "classifier",
+    "supplementary_media",
+)
 EXCLUDED_DIRS = {"__pycache__", "manuscript_final"}
 
 
@@ -41,6 +49,8 @@ def category(path: Path) -> str:
         return "manuscript_report"
     if parts[0] == "classifier":
         return "trained_model"
+    if parts[0] == "supplementary_media":
+        return "supplementary_media"
     return "artifact"
 
 

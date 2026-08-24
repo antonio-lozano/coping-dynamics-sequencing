@@ -15,6 +15,10 @@ et-xmlfile==2.0.0
     # via openpyxl
 fonttools==4.63.0
     # via matplotlib
+imageio==2.37.4
+    # via coping-dynamics-sequencing
+imageio-ffmpeg==0.6.0
+    # via coping-dynamics-sequencing
 joblib==1.5.3
     # via
     #   coping-dynamics-sequencing
@@ -23,6 +27,8 @@ kiwisolver==1.5.0
     # via matplotlib
 llvmlite==0.49.0
     # via numba
+lxml==6.1.2
+    # via python-docx
 matplotlib==3.10.9 ; python_full_version < '3.11'
     # via
     #   coping-dynamics-sequencing
@@ -43,6 +49,7 @@ numpy==1.26.4
     # via
     #   contourpy
     #   coping-dynamics-sequencing
+    #   imageio
     #   matplotlib
     #   numba
     #   pandas
@@ -71,7 +78,10 @@ pandas==2.3.3
 patsy==1.0.2
     # via statsmodels
 pillow==12.3.0
-    # via matplotlib
+    # via
+    #   coping-dynamics-sequencing
+    #   imageio
+    #   matplotlib
 pymupdf==1.28.0
     # via coping-dynamics-sequencing
 pyparsing==3.3.2
@@ -80,6 +90,8 @@ python-dateutil==2.9.0.post0
     # via
     #   matplotlib
     #   pandas
+python-docx==1.2.0
+    # via coping-dynamics-sequencing
 pytz==2026.2
     # via pandas
 scikit-learn==1.7.2 ; python_full_version < '3.11'
@@ -119,7 +131,9 @@ threadpoolctl==3.6.0
 tqdm==4.70.0
     # via shap
 typing-extensions==4.16.0
-    # via shap
+    # via
+    #   python-docx
+    #   shap
 tzdata==2026.3
     # via pandas
 xgboost==2.1.4

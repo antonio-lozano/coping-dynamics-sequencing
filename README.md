@@ -60,9 +60,9 @@ Targeted rebuilds:
 uv run python scripts/run_all_figures.py
 uv run python scripts/build_raw_data_workbook.py
 uv run python scripts/build_statistical_report.py
-uv run python scripts/audit_manuscript_results.py
 uv run python scripts/update_manifest.py
 uv run python scripts/check_reproducibility.py
+uv run python scripts/check_manuscript.py
 ```
 
 ## Repository Contract
@@ -75,6 +75,7 @@ statistics/           Machine-readable statistical model outputs
 figures/              Canonical manuscript figure exports
 report/               raw-data workbook and canonical statistical report
 classifier/           Classifier artifact used in Figure 7A-C and Supplementary Figure 4
+supplementary_media/  Submission-ready audiovisual supplement and source index
 scripts/              Rebuild, report, figure, and validation entry points
 scripts/migrations/   One-time imports from the legacy tree, kept for provenance
 coping_dynamics/      Shared analysis, plotting, statistics, and classifier code (installed package)
@@ -86,9 +87,11 @@ tools/                Self-contained companion tools, outside the rebuild and th
 Two kinds of scripts are not part of a rebuild. `scripts/migrations/` holds the
 one-time utilities that imported the legacy SHAP analysis; they need `--source`
 pointing at the legacy keypoint-MoSeq tree, which is not part of this
-repository. `scripts/prepare_results_differences.py` and
-`scripts/prepare_revised_results.py` rewrite Results text for one specific
-manuscript revision and go stale at the next edit; see their docstrings.
+repository. `scripts/update_bundled_manuscripts.py` rewrote the Results
+statistics of the two manuscript copies in `report/` for one specific model
+change and goes stale at the next edit; see its docstring.
+`scripts/check_manuscript.py`, not that script, is what proves the copies are
+current.
 
 `data/raw/` contains inputs. `data/processed/`, `figure_source_data/`,
 `statistics/`, `figures/`, and `report/` are regenerated products. The term
@@ -139,21 +142,40 @@ Raw inputs include:
 | Supplementary Figure 1 | `scripts/generate_figures/supplementary_figure_1_tracking_clusters.py` |
 | Supplementary Figure 2 | Canonical tracked export (analysis workflow schematic) |
 | Supplementary Figure 3 | `scripts/generate_figures/supplementary_figure_3_distances.py` |
-| Supplementary Figure 4 | `scripts/generate_figures/supplementary_figure_4_classifier_shap.py` |
+| Supplementary Figure 4 | `scripts/generate_figures/supplementary_figure_4_classifier_shap.py --source DIR` |
+| Supplementary Figure 5 | Canonical tracked export (convex-hull climbing validation) |
 
 Figures 1 and Supplementary Figure 2 are tracked as canonical assembled
 manuscript figures. Figure 7 is regenerated from tracked source tables and the
-prediction analysis. Supplementary Figure 4 is a legacy figure: its panels come from the archived
+prediction analysis. Supplementary Figure 5 is a canonical assembled climbing-validation export.
+Supplementary Figure 4 is a legacy figure: its panels come from the archived
 classifier in `classifier/legacy_shap/`, not from
 `classifier/figure7_behavior_classifier.joblib`. See `docs/figure_structure.md`.
+
+## Supplementary Media
+
+`supplementary_media/Supplementary_Video_1_MoSeq_syllable_atlas.mp4` is a
+submission-ready H.264 atlas of representative pose-overlaid syllables and
+canonical skeleton trajectories. Its editable submission legend is in
+`report/SIGuide.docx`, and `Supplementary_Video_1_source_index.csv` records the
+source hashes. Regenerate it from the archived keypoint-MoSeq outputs with:
+
+```bash
+python scripts/generate_supplementary_video_1.py \
+  --clip-dir PATH/TO/video_clips \
+  --skeleton-gif PATH/TO/skeleton_trajectories.gif
+```
+
+See `docs/supplementary_media.md` for scope and provenance.
 
 ## Quality Controls
 
 - `MANIFEST.csv` records byte sizes and SHA-256 hashes for tracked publication
   artifacts.
-- `statistics/manuscript_consistency_audit.csv` compares selected manuscript
-  Results claims against regenerated statistical CSVs and is rebuilt by
-  `scripts/audit_manuscript_results.py`.
+- `scripts/check_manuscript.py` checks every statistic in the manuscript
+  against `statistics/`, `report/statistical_report.xlsx`, and the significance
+  markers drawn on the figures, and fails if any of the four disagree or if the
+  manuscript quotes a statistic the script does not cover.
 - `scripts/check_reproducibility.py` verifies required files, figure exports,
   98 raw freezing prediction CSVs, manifest hashes, retired-path absence,
   absence of local absolute paths in text files, and absence of local tool

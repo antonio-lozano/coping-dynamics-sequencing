@@ -6,7 +6,7 @@
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>1970-01-01T00:00:00+00:00</dc:date>
+    <dc:date>2026-08-19T22:47:58.701639</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -5031,8 +5031,8 @@ z
 " clip-path="url(#pbff2361afb)" style="fill: #c77ba5; stroke: #ffffff; stroke-width: 0.25; stroke-linejoin: miter"/>
    </g>
    <g id="line2d_163">
-    <path d="M 175.304354 309.109944 
-L 175.304354 203.159028 
+    <path d="M 259.411448 309.109944 
+L 259.411448 203.159028 
 " clip-path="url(#pbff2361afb)" style="fill: none; stroke-dasharray: 3.33,1.44; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-width: 0.9"/>
    </g>
    <g id="patch_114">
@@ -5082,78 +5082,56 @@ z
    </g>
    <g id="legend_4">
     <g id="patch_116">
-     <path d="M 511.484262 306.609944 
+     <path d="M 482.169419 306.609944 
 L 565.1452 306.609944 
 Q 566.1452 306.609944 566.1452 305.609944 
-L 566.1452 298.917561 
-Q 566.1452 297.917561 565.1452 297.917561 
-L 511.484262 297.917561 
-Q 510.484262 297.917561 510.484262 298.917561 
-L 510.484262 305.609944 
-Q 510.484262 306.609944 511.484262 306.609944 
+L 566.1452 298.917463 
+Q 566.1452 297.917463 565.1452 297.917463 
+L 482.169419 297.917463 
+Q 481.169419 297.917463 481.169419 298.917463 
+L 481.169419 305.609944 
+Q 481.169419 306.609944 482.169419 306.609944 
 z
 " style="fill: #ffffff; opacity: 0.8; stroke: #cccccc; stroke-width: 0.8; stroke-linejoin: miter"/>
     </g>
     <g id="line2d_164">
-     <path d="M 512.484262 301.807698 
-L 517.484262 301.807698 
-L 522.484262 301.807698 
+     <path d="M 483.169419 301.8076 
+L 488.169419 301.8076 
+L 493.169419 301.8076 
 " style="fill: none; stroke-dasharray: 3.33,1.44; stroke-dashoffset: 0; stroke: #b0b0b0; stroke-width: 0.9"/>
     </g>
     <g id="text_175">
-     <!-- Threshold = 0.05 -->
-     <g style="fill: #262626" transform="translate(526.484262 303.557698) scale(0.05 -0.05)">
-      <defs>
-       <path id="ArialMT-4b" d="M 422 0 
-L 422 4581 
-L 984 4581 
-L 984 2938 
-Q 1378 3394 1978 3394 
-Q 2347 3394 2619 3248 
-Q 2891 3103 3008 2847 
-Q 3125 2591 3125 2103 
-L 3125 0 
-L 2563 0 
-L 2563 2103 
-Q 2563 2525 2380 2717 
-Q 2197 2909 1863 2909 
-Q 1613 2909 1392 2779 
-Q 1172 2650 1078 2428 
-Q 984 2206 984 1816 
-L 984 0 
-L 422 0 
-z
-" transform="scale(0.015625)"/>
-       <path id="ArialMT-20" d="M 3381 2694 
-L 356 2694 
-L 356 3219 
-L 3381 3219 
-L 3381 2694 
-z
-M 3381 1303 
-L 356 1303 
-L 356 1828 
-L 3381 1828 
-L 3381 1303 
-z
-" transform="scale(0.015625)"/>
-      </defs>
-      <use xlink:href="#ArialMT-37"/>
-      <use xlink:href="#ArialMT-4b" transform="translate(61.078125 0)"/>
-      <use xlink:href="#ArialMT-55" transform="translate(116.6875 0)"/>
-      <use xlink:href="#ArialMT-48" transform="translate(149.984375 0)"/>
-      <use xlink:href="#ArialMT-56" transform="translate(205.59375 0)"/>
-      <use xlink:href="#ArialMT-4b" transform="translate(255.59375 0)"/>
-      <use xlink:href="#ArialMT-52" transform="translate(311.203125 0)"/>
-      <use xlink:href="#ArialMT-4f" transform="translate(366.8125 0)"/>
-      <use xlink:href="#ArialMT-47" transform="translate(389.03125 0)"/>
-      <use xlink:href="#ArialMT-3" transform="translate(444.640625 0)"/>
-      <use xlink:href="#ArialMT-20" transform="translate(472.421875 0)"/>
-      <use xlink:href="#ArialMT-3" transform="translate(530.828125 0)"/>
-      <use xlink:href="#ArialMT-13" transform="translate(558.609375 0)"/>
-      <use xlink:href="#ArialMT-11" transform="translate(614.21875 0)"/>
-      <use xlink:href="#ArialMT-13" transform="translate(642 0)"/>
-      <use xlink:href="#ArialMT-18" transform="translate(697.609375 0)"/>
+     <!-- 99.5% coverage (38 syllables) -->
+     <g style="fill: #262626" transform="translate(497.169419 303.5576) scale(0.05 -0.05)">
+      <use xlink:href="#ArialMT-1c"/>
+      <use xlink:href="#ArialMT-1c" transform="translate(55.609375 0)"/>
+      <use xlink:href="#ArialMT-11" transform="translate(111.21875 0)"/>
+      <use xlink:href="#ArialMT-18" transform="translate(139 0)"/>
+      <use xlink:href="#ArialMT-8" transform="translate(194.609375 0)"/>
+      <use xlink:href="#ArialMT-3" transform="translate(283.53125 0)"/>
+      <use xlink:href="#ArialMT-46" transform="translate(311.3125 0)"/>
+      <use xlink:href="#ArialMT-52" transform="translate(361.3125 0)"/>
+      <use xlink:href="#ArialMT-59" transform="translate(416.921875 0)"/>
+      <use xlink:href="#ArialMT-48" transform="translate(466.921875 0)"/>
+      <use xlink:href="#ArialMT-55" transform="translate(522.53125 0)"/>
+      <use xlink:href="#ArialMT-44" transform="translate(555.828125 0)"/>
+      <use xlink:href="#ArialMT-4a" transform="translate(611.4375 0)"/>
+      <use xlink:href="#ArialMT-48" transform="translate(667.046875 0)"/>
+      <use xlink:href="#ArialMT-3" transform="translate(722.65625 0)"/>
+      <use xlink:href="#ArialMT-b" transform="translate(750.4375 0)"/>
+      <use xlink:href="#ArialMT-16" transform="translate(783.734375 0)"/>
+      <use xlink:href="#ArialMT-1b" transform="translate(839.34375 0)"/>
+      <use xlink:href="#ArialMT-3" transform="translate(894.953125 0)"/>
+      <use xlink:href="#ArialMT-56" transform="translate(922.734375 0)"/>
+      <use xlink:href="#ArialMT-5c" transform="translate(972.734375 0)"/>
+      <use xlink:href="#ArialMT-4f" transform="translate(1022.734375 0)"/>
+      <use xlink:href="#ArialMT-4f" transform="translate(1044.953125 0)"/>
+      <use xlink:href="#ArialMT-44" transform="translate(1067.171875 0)"/>
+      <use xlink:href="#ArialMT-45" transform="translate(1122.78125 0)"/>
+      <use xlink:href="#ArialMT-4f" transform="translate(1178.390625 0)"/>
+      <use xlink:href="#ArialMT-48" transform="translate(1200.609375 0)"/>
+      <use xlink:href="#ArialMT-56" transform="translate(1256.21875 0)"/>
+      <use xlink:href="#ArialMT-c" transform="translate(1306.21875 0)"/>
      </g>
     </g>
    </g>

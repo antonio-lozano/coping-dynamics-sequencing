@@ -46,8 +46,8 @@ BOX_TOP_LIMITS = {
 METRICS = [
     ("Correlation", correlation, "A", "B"),
     ("Cosine", cosine, "C", "D"),
-    ("Minkowski", lambda a, b: float(np.sum(np.abs(a - b) ** 2.5) ** (1.0 / 2.5)), "F", "G"),
-    ("Manhattan", cityblock, "H", "I"),
+    ("Minkowski", lambda a, b: float(np.sum(np.abs(a - b) ** 2.5) ** (1.0 / 2.5)), "E", "F"),
+    ("Manhattan", cityblock, "G", "H"),
 ]
 FIG5_RESILIENT = {
     "2.4",
@@ -519,7 +519,11 @@ def main() -> None:
     meta, features = load_feature_matrix()
     profiles, summary = metric_profiles(meta, features)
 
-    # Transition-probability MDS (panels J-K): von Ziegler-style behavioural flow.
+    # Transition-probability MDS: von Ziegler-style behavioural flow. Computed
+    # but not plotted. The score does not separate Control from ELS (LOOCV
+    # 45.1%), and its overlap with the Figure 5 resilient set is at chance,
+    # so the panel was dropped; the number stays available in
+    # supplementary_figure3_distance_summary.csv.
     tmeta, tfeatures = load_transition_features()
     tprof, tsummary = profile_from_distance(tmeta, pairwise_euclidean(tfeatures), "Transition")
     trans_res = set(tprof.loc[tprof["resilient_by_zero"], "animal"])
@@ -545,7 +549,7 @@ def main() -> None:
         left=0.075,
         right=0.955,
         top=0.965,
-        bottom=0.66,
+        bottom=0.60,
         wspace=0.78,
         hspace=0.30,
         width_ratios=[2.02, 0.74, 2.02, 0.74],
@@ -559,26 +563,6 @@ def main() -> None:
         letter_artists.append((mds_ax, plot_mds(mds_ax, sub, metric_name, mds_letter)))
         letter_artists.append((box_ax, plot_box(box_ax, sub, metric_name, box_letter)))
         align_box_to_mds(mds_ax, box_ax)
-
-    # Transition-probability panels (J, K) on a new row below.
-    gs_trans = fig.add_gridspec(
-        nrows=1,
-        ncols=4,
-        left=0.075,
-        right=0.955,
-        top=0.625,
-        bottom=0.47,
-        wspace=0.78,
-        width_ratios=[2.02, 0.74, 2.02, 0.74],
-    )
-    trans_sub = profiles[profiles["metric"] == "Transition"].copy()
-    trans_mds_ax = fig.add_subplot(gs_trans[0, 0])
-    trans_box_ax = fig.add_subplot(gs_trans[0, 1])
-    letter_artists.append(
-        (trans_mds_ax, plot_mds(trans_mds_ax, trans_sub, "Transition Prob., Euclidean", "J"))
-    )
-    letter_artists.append((trans_box_ax, plot_box(trans_box_ax, trans_sub, "Transition", "K")))
-    align_box_to_mds(trans_mds_ax, trans_box_ax)
 
     # After align_box_to_mds, so the letters follow the repositioned box axes.
     align_panel_letters(fig, letter_artists)

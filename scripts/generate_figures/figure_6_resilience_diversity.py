@@ -926,7 +926,10 @@ def main() -> None:
         [0.60, 0.65, 0.70, 0.75, 0.80, 0.85],
         "%.2f",
     )
-    # CUI resilient-vs-vulnerable p=0.393 -> not significant; only vuln-vs-control is starred.
+    # No CUI contrast reaches p < 0.05 in statistics/fig6_diversity_resilience_stats.csv
+    # (vulnerable-vs-control p=0.364, resilient-vs-vulnerable p=0.258), so no star.
+    # The previous vulnerable-vs-control star did not match the table even before
+    # the animal random intercept was dropped (p was 0.347).
     box_scatter(
         axJ,
         metrics,
@@ -936,7 +939,6 @@ def main() -> None:
         (-0.25, 0.80),
         [-0.2, 0.0, 0.2, 0.4, 0.6, 0.8],
         "%.1f",
-        stars=[(0, 1)],
     )
 
     axK = fig.add_subplot(gs[3, 4:11])
@@ -957,7 +959,11 @@ def main() -> None:
         .mean()
     )
     bout_specs = [
-        ("Overall", overall, (0, 3.0), [0, 1, 2, 3], "%.0f", [(0, 1)]),
+        # Overall bout duration: no contrast reaches p < 0.05 in the report
+        # (vulnerable-vs-control p=0.185, resilient-vs-vulnerable p=0.140). The
+        # panel has no row in statistics/, so the star went unchecked until
+        # scripts/check_manuscript.py started reading it from the workbook.
+        ("Overall", overall, (0, 3.0), [0, 1, 2, 3], "%.0f", None),
         (
             "Freeze",
             cluster_means[cluster_means["cluster"] == "Freezing"],
@@ -974,13 +980,15 @@ def main() -> None:
             "%.0f",
             [(0, 1)],
         ),
+        # Groom: no contrast reaches p < 0.05 (vulnerable-vs-control p=0.177); the
+        # previous star did not match the table before this change either (p=0.128).
         (
             "Groom",
             cluster_means[cluster_means["cluster"] == "Grooming"],
             (0, 0.6),
             [0, 0.2, 0.4, 0.6],
             "%.1f",
-            [(0, 1)],
+            None,
         ),
         (
             "Turn",
@@ -1083,6 +1091,9 @@ def main() -> None:
         "%.2f",
         stars=[(0, 1)],
     )
+    # Markov entropy lost its star when the unidentifiable animal random intercept
+    # was dropped: vulnerable-vs-control p 0.036 -> 0.092
+    # (statistics/fig6_transition_resilience_stats.csv).
     box_scatter(
         axZ,
         transitions,
@@ -1092,7 +1103,6 @@ def main() -> None:
         (0.7, 1.5),
         np.arange(0.7, 1.51, 0.2).round(1).tolist(),
         "%.1f",
-        stars=[(0, 1)],
         sig_y_base=0.930,
     )
 

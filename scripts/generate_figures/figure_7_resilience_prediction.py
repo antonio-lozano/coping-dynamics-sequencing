@@ -36,11 +36,9 @@ import pandas as pd
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.gridspec import GridSpec
 
-# The scripts.* helper modules are not part of the installed package, so their
-# imports still need the repository root on sys.path.
-REPO_ROOT = Path(__file__).resolve().parents[2]
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
+REPO = Path(__file__).resolve().parents[2]
+if str(REPO) not in sys.path:
+    sys.path.insert(0, str(REPO))
 
 from coping_dynamics.config import (  # noqa: E402
     FIGURE_SOURCE_DATA_DIR,
@@ -448,7 +446,9 @@ def panel_tag(ax: plt.Axes, letter: str, x: float = -0.12, y: float = 1.12) -> p
     )
 
 
-def line_legend(ax: plt.Axes, *, ncol: int = 1, fontsize: float = 4.6) -> None:
+def line_legend(
+    ax: plt.Axes, *, ncol: int = 1, fontsize: float = 4.6, columnspacing: float = 0.7
+) -> None:
     leg = ax.legend(
         frameon=False,
         fontsize=fontsize,
@@ -456,7 +456,7 @@ def line_legend(ax: plt.Axes, *, ncol: int = 1, fontsize: float = 4.6) -> None:
         ncol=ncol,
         handlelength=1.15,
         handletextpad=0.35,
-        columnspacing=0.7,
+        columnspacing=columnspacing,
         labelspacing=0.22,
         borderaxespad=0.15,
     )
@@ -557,6 +557,12 @@ def remap_family_name(name: str) -> str:
     return remap.get(name, name)
 
 
+# Panels I and J sit side by side and should use the same legend type size.
+# Four points is large enough to remain legible at final figure size while the
+# four-column legend in I still clears the trajectories beneath it.
+IJ_LEGEND_FONTSIZE = 4.0
+
+
 def plot_panel_a(ax: plt.Axes, onset: pd.DataFrame, letter: str = "A") -> plt.Text:
     combined = onset.loc[onset["feature_set"] == COMBINED].sort_values("horizon_min")
 
@@ -595,6 +601,8 @@ def plot_panel_a(ax: plt.Axes, onset: pd.DataFrame, letter: str = "A") -> plt.Te
     ax.set_xlabel(HORIZON_XLABEL)
     ax.set_ylabel("ROC AUC")
     ax.set_title("Behaviour dynamics over time", fontsize=6.4, color=AXIS, pad=3)
+    # Same 0-1 axis as panel J beside it: the legend sits inside the plot, in
+    # the clear band above the curves on the left half.
     ax.set_ylim(0.0, 1.0)
     ax.set_xlim(HORIZON_XLIM)
     ax.set_xticks(HORIZON_XTICKS)
@@ -610,14 +618,15 @@ def plot_panel_a(ax: plt.Axes, onset: pd.DataFrame, letter: str = "A") -> plt.Te
     leg = ax.legend(
         [handle_map[label] for label in legend_order],
         legend_order,
-        loc="lower right",
-        bbox_to_anchor=(0.985, 0.02),
-        ncol=1,
+        loc="upper left",
+        bbox_to_anchor=(0.005, 1.0),
+        ncol=4,
         frameon=False,
-        handlelength=0.85,
-        handletextpad=0.3,
-        labelspacing=0.10,
-        fontsize=3.65,
+        handlelength=0.7,
+        handletextpad=0.25,
+        labelspacing=0.12,
+        columnspacing=0.55,
+        fontsize=IJ_LEGEND_FONTSIZE,
         borderaxespad=0.0,
     )
     for text in leg.get_texts():
@@ -629,8 +638,10 @@ def plot_panel_b(
     ax: plt.Axes, cross: pd.DataFrame, letter: str = "B", tests: pd.DataFrame | None = None
 ) -> plt.Text:
     directions = [("Exp3", "Exp1"), ("Exp1", "Exp3")]
-    width = 0.18
-    xs = np.arange(len(directions)) * 0.70
+    # The two groups sit close together near the middle of the panel; the
+    # three-line labels below are narrow enough not to collide at this pitch.
+    width = 0.15
+    xs = np.arange(len(directions)) * 0.60
     bar_tops: dict[str, list[float]] = {}
     for k, (name, colour) in enumerate(
         [("Behaviour dynamics", DYNAMICS_COLOR), ("Freeze only", FREEZE_ONLY_COLOR)]
@@ -651,46 +662,38 @@ def plot_panel_b(
             label=display_feature_set(name),
             zorder=2,
         )
-        for p, v in zip(pos, vals):
-            ax.text(p, v + 0.025, f"{v:.2f}", ha="center", va="bottom", fontsize=6)
 
-    if tests is not None:
-        for i, (test_exp, _) in enumerate(directions):
-            row = tests.loc[tests["test_experiment"] == test_exp]
-            if row.empty:
-                continue
-            # Clear both bars and the value labels printed just above them.
-            top = max(bar_tops["Behaviour dynamics"][i], bar_tops["Freeze only"][i])
-            sig_bracket(
-                ax, xs[i] - 0.5 * width, xs[i] + 0.5 * width, top + 0.165, str(row["stars"].iloc[0])
-            )
+    # The paired AUC tests are all non-significant and are reported in
+    # statistics/figure7_panel_de_auc_tests.csv; the brackets and the per-bar
+    # value labels are left off the panel to keep it readable at print size.
 
     ax.axhline(0.5, color=CHANCE_GREY, linewidth=0.5, linestyle=(0, (2.5, 2)), zorder=1)
     ax.set_xticks(xs)
-    # Keep the cohort names on their own lines rather than flattening each to a
-    # single long line: since C moved onto this row there is no longer width for
-    # the one-line form, which ran into the neighbouring panel.
+    # Both cohort names keep their own break, with the arrow leading the test
+    # cohort. At the same type size as panel E, and with the groups this close
+    # together, no line may be wider than a half cohort name.
     ax.set_xticklabels(
         [
             f"{tier1.COHORT_LABELS[train]}\n\u2192 {tier1.COHORT_LABELS[test]}"
             for test, train in directions
         ],
-        fontsize=3.6,
+        fontsize=4.0,
         ha="center",
         multialignment="center",
     )
     ax.set_ylabel("ROC AUC")
-    # Headroom for the significance brackets above the value labels.
-    ax.set_ylim(0, 1.32)
+    # Headroom for the legend, which sits inside the axes so the strip above
+    # them stays clear for the panel letter. Ticks still stop at 1.
+    ax.set_ylim(0, 1.20)
     ax.set_yticks([0, 0.2, 0.4, 0.6, 0.8, 1.0])
     ax.set_xlim(xs[0] - 0.30, xs[-1] + 0.30)
-    ax.set_title("Held-out cohort", fontsize=6.4, color=AXIS, pad=3)
+    ax.set_title("Held-out cohort", fontsize=6.0, color=AXIS, pad=3)
     ax.legend(
         loc="upper center",
         bbox_to_anchor=(0.5, 1.02),
         frameon=False,
         handlelength=1.0,
-        fontsize=4.8,
+        fontsize=4.4,
         labelspacing=0.2,
         borderpad=0.0,
         ncol=2,
@@ -698,6 +701,9 @@ def plot_panel_b(
         handletextpad=0.35,
     )
     _tidy(ax)
+    # After _tidy: it sets one tick label size for both axes, which would undo
+    # the smaller size the two-line cohort names need to stay inside the panel.
+    ax.tick_params(axis="x", labelsize=4.0)
     fit_spines_to_ticks(ax)
     full_x_spine(ax)
     return panel_tag(ax, letter, x=-0.12, y=1.12)
@@ -724,25 +730,26 @@ def plot_panel_c(
             capsize=2.2,
             zorder=3,
         )
-        ax.text(
-            x, row["ci_high"] + 0.03, f"{row['roc_auc']:.2f}", ha="center", va="bottom", fontsize=6
-        )
         tops.append(float(row["ci_high"]))
 
-    if tests is not None and not tests.empty:
-        # Clear the taller error bar and its value label.
-        sig_bracket(ax, xs[0], xs[-1], max(tops) + 0.105, str(tests["stars"].iloc[0]))
+    # As in panel D: the paired test is non-significant and lives in the
+    # statistics table, so no bracket and no value labels are drawn here.
 
     ax.axhline(0.5, color=CHANCE_GREY, linewidth=0.5, linestyle=(0, (2.5, 2)), zorder=1)
     ax.set_xticks(xs)
-    ax.set_xticklabels(["Behaviour\ndynamics", "Freeze\ndynamics\nonly"], fontsize=4.4)
+    # Three lines here, unlike D: this panel is the narrowest on the row, and
+    # "Freeze dynamics" on one line is wider than the gap between its two bars.
+    ax.set_xticklabels(["Behaviour\ndynamics\n ", "Freeze\ndynamics\nonly"], fontsize=4.0)
     ax.set_ylabel("ROC AUC")
-    # Headroom for the significance bracket above the taller CI whisker.
-    ax.set_ylim(0, 1.25)
+    # No bracket above the CI whiskers any more, so the axis stops at 1.
+    ax.set_ylim(0, 1.0)
     ax.set_yticks([0, 0.2, 0.4, 0.6, 0.8, 1.0])
     ax.set_xlim(xs[0] - 0.30, xs[-1] + 0.30)
-    ax.set_title("Full-session cross-validation", fontsize=6.4, color=AXIS, pad=4)
+    ax.set_title("Full-session\ncross-validation", fontsize=6.0, color=AXIS, pad=3)
     _tidy(ax)
+    # After _tidy, as in panel D: keep the two-line condition names small enough
+    # that they do not run into each other or into panel F.
+    ax.tick_params(axis="x", labelsize=4.0)
     fit_spines_to_ticks(ax)
     full_x_spine(ax)
     return panel_tag(ax, letter, x=-0.12, y=1.12)
@@ -960,7 +967,7 @@ def draw_family_overtime(ax: plt.Axes, table: pd.DataFrame, letter: str) -> plt.
     _tidy(ax)
     fit_spines_to_ticks(ax)
     mark_final_horizon(ax)
-    line_legend(ax, ncol=1, fontsize=4.7)
+    line_legend(ax, ncol=1, fontsize=IJ_LEGEND_FONTSIZE)
     return panel_tag(ax, letter, x=-0.105, y=1.12)
 
 
@@ -1096,24 +1103,52 @@ def draw_family_mini_pair(top_ax: plt.Axes, bottom_ax: plt.Axes, table: pd.DataF
     )
 
 
+def behaviour_legend_label(metric: str) -> str:
+    """Shorten a per-behaviour legend to the behaviour name alone.
+
+    Every entry in the Frequency and Bout panels is respectively a frequency or
+    a bout duration, so repeating that on all seven or eight lines only costs
+    width. The Bout panel's one non-behaviour entry is the average across
+    behaviours, which is named explicitly instead.
+    """
+    if metric == "Mean bout duration":
+        return "Mean all behaviours"
+    return metric.replace(" bout duration", "").replace(" frequency", "")
+
+
 def draw_individual_overtime(
-    ax: plt.Axes, table: pd.DataFrame, panel: str, letter: str, title: str, ncol: int = 2
+    ax: plt.Axes,
+    table: pd.DataFrame,
+    panel: str,
+    letter: str,
+    title: str,
+    ncol: int = 2,
+    columnspacing: float = 0.7,
 ) -> plt.Text:
     subtab = table.loc[table["panel"] == panel]
     add_event_spans(ax)
     for name, sub in subtab.groupby("metric", sort=False):
         sub = sub.sort_values("horizon_min")
+        label = behaviour_legend_label(name) if panel in ("Bout", "Frequency") else name
+        # The mean-across-behaviours line has no behaviour colour of its own;
+        # draw it grey so it reads as the summary rather than as an eighth
+        # behaviour.
+        color = (
+            COMBINED_COLOR
+            if panel == "Bout" and name == "Mean bout duration"
+            else sub["color"].iloc[0]
+        )
         ax.plot(
             sub["horizon_min"],
             sub["cv_auc"],
-            color=sub["color"].iloc[0],
+            color=color,
             lw=0.8,
             marker="o",
             ms=2.0,
             mec="white",
             mew=0.2,
             linestyle=sub["linestyle"].iloc[0],
-            label=name,
+            label=label,
             alpha=0.95,
         )
     ax.axhline(0.5, color=CHANCE_GREY, lw=0.45, ls=(0, (2.5, 2)), zorder=1)
@@ -1128,7 +1163,7 @@ def draw_individual_overtime(
     _tidy(ax)
     fit_spines_to_ticks(ax)
     mark_final_horizon(ax)
-    line_legend(ax, ncol=ncol, fontsize=3.9)
+    line_legend(ax, ncol=ncol, fontsize=3.9, columnspacing=columnspacing)
     return panel_tag(ax, letter, x=-0.12, y=1.12)
 
 
@@ -1254,7 +1289,7 @@ def draw_figure7_a(ax: plt.Axes) -> plt.Text:
             f"{value:.2f}\n({note})",
             ha="left",
             va="center",
-            fontsize=5.6,
+            fontsize=4.4,
             color=AXIS,
             linespacing=1.05,
         )
@@ -1262,7 +1297,9 @@ def draw_figure7_a(ax: plt.Axes) -> plt.Text:
     ax.axvline(0.12, color=AXIS, linewidth=0.5, linestyle=(0, (2.5, 2)), zorder=3)
     ax.set_yticks(ys)
     ax.set_yticklabels(labels, fontsize=4.2)
-    ax.invert_yaxis()
+    # Pin the category limits with half a bar of padding at each end. The default
+    # margins clipped the top bar (Freeze) against the axes edge.
+    ax.set_ylim(len(labels) - 0.5, -0.5)
     # The value annotations sit to the right of each bar; at the enlarged label
     # size the longest one ("0.86 (+0.74, 6.9x)") runs past 1.0, so the axis is
     # padded beyond the last tick to keep it inside the panel.
@@ -1274,8 +1311,22 @@ def draw_figure7_a(ax: plt.Axes) -> plt.Text:
     ax.set_title("Accuracy versus chance", fontsize=6.4, color=AXIS, pad=8)
     _tidy(ax)
     fit_spines_to_ticks(ax)
-    ax.text(
-        1.28, 7.0, "Dashed line: chance = 0.12", ha="right", va="center", fontsize=3.45, color=AXIS
+    # Keep the chance key inside the plotted frame: the axis is padded to 1.30
+    # so the bar labels fit, which puts the axes' own right edge past the 1.0
+    # spine. Anchor against the spine (1.0/1.30 in axes coordinates) in the
+    # open pocket to the right of the Jump and Unassigned bars.
+    ax.legend(
+        handles=[
+            plt.Line2D(
+                [0], [0], color=AXIS, linewidth=0.5, linestyle=(0, (2.5, 2)), label="Chance = 0.12"
+            )
+        ],
+        loc="center right",
+        bbox_to_anchor=(1.0 / 1.30 - 0.006, 0.22),
+        frameon=False,
+        fontsize=4.2,
+        handlelength=1.5,
+        handletextpad=0.5,
     )
     return panel_tag(ax, "A", x=-0.20, y=1.15)
 
@@ -1318,11 +1369,11 @@ def draw_figure7_b(ax: plt.Axes, shap_values: pd.DataFrame) -> plt.Text:
         loc="lower right",
         bbox_to_anchor=(0.99, 0.03),
         frameon=False,
-        fontsize=3.6,
+        fontsize=5.2,
         ncol=1,
-        handlelength=1.5,
-        handletextpad=0.35,
-        labelspacing=0.10,
+        handlelength=1.4,
+        handletextpad=0.4,
+        labelspacing=0.22,
         borderaxespad=0.0,
     )
     for text in leg.get_texts():
@@ -1342,8 +1393,8 @@ def draw_figure7_c(ax: plt.Axes, cax: plt.Axes) -> plt.Text:
     )
     ax.set_yticks(ticks)
     ax.set_yticklabels(FIGURE7_CLASSES, fontsize=4.0)
-    ax.set_xlabel("Predicted label", labelpad=1.5)
-    ax.set_ylabel("True label", labelpad=2)
+    ax.set_xlabel("Predicted label", labelpad=1.5, fontsize=5.0)
+    ax.set_ylabel("True label", labelpad=2, fontsize=5.0)
     ax.set_title("Cross-validated confusion matrix", fontsize=6.4, color=AXIS, pad=3)
     ax.tick_params(axis="both", length=0, pad=1.5, colors=AXIS)
     for spine in ax.spines.values():
@@ -1426,8 +1477,12 @@ def build_complete_figure(
 
     # C is square (imshow with aspect="equal"), so it needs a narrower cell than
     # its neighbours; D is trimmed to make room for it.
-    def_panels = gs[1, :].subgridspec(1, 4, width_ratios=[0.90, 0.92, 0.62, 1.16], wspace=0.66)
-    c_grid = def_panels[0, 0].subgridspec(1, 2, width_ratios=[1.0, 0.045], wspace=0.22)
+    # C is drawn with aspect="equal", so width past its square is dead space:
+    # its cell is trimmed and the room goes to D and E (whose multi-line cohort
+    # labels need it) and to F, which now runs out to the same right margin as
+    # B, G and H.
+    def_panels = gs[1, :].subgridspec(1, 4, width_ratios=[0.72, 0.92, 0.66, 1.52], wspace=0.52)
+    c_grid = def_panels[0, 0].subgridspec(1, 2, width_ratios=[1.0, 0.045], wspace=0.06)
     ax_c_source = fig.add_subplot(c_grid[0, 0])
     letter_c = draw_figure7_c(ax_c_source, fig.add_subplot(c_grid[0, 1]))
 
@@ -1476,15 +1531,23 @@ def build_complete_figure(
     letter_artists.append((ax_j, draw_family_overtime(ax_j, c_recap, letter="J")))
     draw_family_mini_pair(fig.add_subplot(ij[0, 10]), fig.add_subplot(ij[1, 10]), c_recap)
 
-    for columns, panel, letter, title, ncol in [
-        ((0, 2), "Frequency", "K", "Individual frequencies", 2),
-        ((2, 4), "Diversity", "L", "Individual diversity indices", 1),
-        ((4, 6), "Transition", "M", "Transition metrics", 1),
-        ((6, 8), "Bout", "N", "Bout durations", 2),
+    # K's behaviour names are shorter than N's, so its four columns would pack
+    # into a narrower block; the wider column spacing makes the two legends span
+    # the same width.
+    for columns, panel, letter, title, ncol, colspace in [
+        ((0, 2), "Frequency", "K", "Individual frequencies", 4, 2.4),
+        ((2, 4), "Diversity", "L", "Individual diversity indices", 1, 0.7),
+        ((4, 6), "Transition", "M", "Transition metrics", 1, 0.7),
+        ((6, 8), "Bout", "N", "Bout durations", 4, 0.7),
     ]:
         ax = fig.add_subplot(gs[5, columns[0] : columns[1]])
         letter_artists.append(
-            (ax, draw_individual_overtime(ax, individual_time, panel, letter, title, ncol=ncol))
+            (
+                ax,
+                draw_individual_overtime(
+                    ax, individual_time, panel, letter, title, ncol=ncol, columnspacing=colspace
+                ),
+            )
         )
 
     align_panel_letters(fig, letter_artists)
@@ -1620,7 +1683,16 @@ def main() -> None:
         action="store_true",
         help="rerun onset permutations instead of reading tracked source data",
     )
+    ap.add_argument(
+        "--recompute",
+        action="store_true",
+        help="rerun every model stage (cross-cohort, LOOCV, bootstrap "
+        "tests, Shapley, per-metric timecourses) instead of "
+        "reading the tracked source-data exports; cosmetic "
+        "figure edits do not need it",
+    )
     args = ap.parse_args()
+    use_cache = not args.recompute
 
     root = tier1.repo_root(args.repo)
     labels = tier1.load_labels(root)
@@ -1632,55 +1704,91 @@ def main() -> None:
 
     print("panel A - onset of prediction")
     onset_path = SOURCE_OUT / "figure7_prediction_onset.csv"
-    if onset_path.exists() and not args.recompute_onset:
-        onset = pd.read_csv(onset_path)
+    if onset_path.exists() and use_cache and not args.recompute_onset:
+        # float_precision="round_trip" keeps the cache read lossless: the
+        # default C parser lands on a neighbouring float64, so rewriting a
+        # cached table would drift the tracked export by one trailing digit.
+        onset = pd.read_csv(onset_path, float_precision="round_trip")
         print(f"  [cache] {onset_path}")
     else:
         onset = onset_of_prediction(labels, root, args.perms)
-    onset = onset.drop(columns=["null_95", "beats_null"], errors="ignore")
-    onset["auc_above_null_mean"] = onset["roc_auc"] - onset["null_mean"]
-    onset.to_csv(onset_path, index=False)
-    onset.to_csv(STATISTICS_DIR / "figure7_prediction_permutation.csv", index=False)
+        onset = onset.drop(columns=["null_95", "beats_null"], errors="ignore")
+        onset["auc_above_null_mean"] = onset["roc_auc"] - onset["null_mean"]
+        onset.to_csv(onset_path, index=False)
+        onset.to_csv(STATISTICS_DIR / "figure7_prediction_permutation.csv", index=False)
 
     print("\npanels B/C - held-out cohort and full-session LOOCV")
-    cross = held_out_cohort(labels, root)
-    head, head_test = full_session_loocv(labels, root)
-    pd.concat(
-        [
-            cross.assign(panel="B held-out cohort"),
-            head.assign(panel="C full-session LOOCV"),
-        ],
-        ignore_index=True,
-    ).to_csv(SOURCE_OUT / "figure7_full_session_auc.csv", index=False)
-    cross.to_csv(STATISTICS_DIR / "figure7_cross_cohort_auc.csv", index=False)
-    head.to_csv(STATISTICS_DIR / "figure7_full_session_auc.csv", index=False)
-
-    print("panels D/E - paired AUC significance tests")
-    cross_tests = held_out_cohort_tests(labels, root)
-    panel_tests = pd.concat([cross_tests, head_test], ignore_index=True, sort=False)
-    panel_tests.to_csv(STATISTICS_DIR / "figure7_panel_de_auc_tests.csv", index=False)
-    panel_tests.to_csv(SOURCE_OUT / "figure7_panel_de_auc_tests.csv", index=False)
+    cross_path = STATISTICS_DIR / "figure7_cross_cohort_auc.csv"
+    head_path = STATISTICS_DIR / "figure7_full_session_auc.csv"
+    tests_path = STATISTICS_DIR / "figure7_panel_de_auc_tests.csv"
+    if use_cache and cross_path.exists() and head_path.exists() and tests_path.exists():
+        cross = pd.read_csv(cross_path, float_precision="round_trip")
+        head = pd.read_csv(head_path, float_precision="round_trip")
+        panel_tests = pd.read_csv(tests_path, float_precision="round_trip")
+        cross_tests = panel_tests[panel_tests["panel"] == "D"].reset_index(drop=True)
+        head_test = panel_tests[panel_tests["panel"] == "E"].reset_index(drop=True)
+        print(f"  [cache] {cross_path}\n  [cache] {head_path}\n  [cache] {tests_path}")
+    else:
+        cross = held_out_cohort(labels, root)
+        head, head_test = full_session_loocv(labels, root)
+        print("panels D/E - paired AUC significance tests")
+        cross_tests = held_out_cohort_tests(labels, root)
+        panel_tests = pd.concat([cross_tests, head_test], ignore_index=True, sort=False)
+        pd.concat(
+            [
+                cross.assign(panel="B held-out cohort"),
+                head.assign(panel="C full-session LOOCV"),
+            ],
+            ignore_index=True,
+        ).to_csv(SOURCE_OUT / "figure7_full_session_auc.csv", index=False)
+        cross.to_csv(cross_path, index=False)
+        head.to_csv(head_path, index=False)
+        panel_tests.to_csv(tests_path, index=False)
+        panel_tests.to_csv(SOURCE_OUT / "figure7_panel_de_auc_tests.csv", index=False)
     print(panel_tests.to_string(index=False))
 
     print("panel D - Shapley values")
-    shap = shapley_values(labels, root)
-    shap.to_csv(SOURCE_OUT / "figure7_shapley_contributions.csv", index=False)
+    shap_path = SOURCE_OUT / "figure7_shapley_contributions.csv"
+    if use_cache and shap_path.exists():
+        shap = pd.read_csv(shap_path, float_precision="round_trip")
+        print(f"  [cache] {shap_path}")
+    else:
+        shap = shapley_values(labels, root)
+        shap.to_csv(shap_path, index=False)
     print(shap.to_string(index=False))
 
     print("individual overtime panels")
-    individual_time = individual_overtime_data(labels)
-    individual_time.drop(columns=["color", "linestyle"]).to_csv(
-        SOURCE_OUT / "figure7_individual_timecourse_auc.csv", index=False
-    )
+    individual_path = SOURCE_OUT / "figure7_individual_timecourse_auc.csv"
+    if use_cache and individual_path.exists():
+        individual_time = pd.read_csv(individual_path, float_precision="round_trip")
+        # The export drops the styling columns, so rebuild them from the same
+        # parameter table the compute path uses.
+        styling = {
+            (panel, name): (behaviour, family)
+            for panel, name, family, col, behaviour in INDIVIDUAL_OVERTIME_PARAMETERS
+        }
+        individual_time["color"] = [
+            colour_for_individual(p, n, styling[(p, n)][0], f)
+            for p, n, f in zip(
+                individual_time["panel"], individual_time["metric"], individual_time["family"]
+            )
+        ]
+        individual_time["linestyle"] = "-"
+        print(f"  [cache] {individual_path}")
+    else:
+        individual_time = individual_overtime_data(labels)
+        individual_time.drop(columns=["color", "linestyle"]).to_csv(individual_path, index=False)
 
-    write_classifier_source_data()
+    if not use_cache:
+        write_classifier_source_data()
     ab_recap, c_recap = recap_tables()
-    ab_recap.drop(columns=["color"], errors="ignore").to_csv(
-        SOURCE_OUT / "figure7_predictor_catalog.csv", index=False
-    )
-    c_recap.drop(columns=["color"], errors="ignore").to_csv(
-        SOURCE_OUT / "figure7_predictor_timecourse.csv", index=False
-    )
+    if not use_cache:
+        ab_recap.drop(columns=["color"], errors="ignore").to_csv(
+            SOURCE_OUT / "figure7_predictor_catalog.csv", index=False
+        )
+        c_recap.drop(columns=["color"], errors="ignore").to_csv(
+            SOURCE_OUT / "figure7_predictor_timecourse.csv", index=False
+        )
 
     summary = pd.concat(
         [
@@ -1706,7 +1814,8 @@ def main() -> None:
         ignore_index=True,
         sort=False,
     )
-    summary.to_csv(SOURCE_OUT / "figure7.csv", index=False)
+    if not use_cache:
+        summary.to_csv(SOURCE_OUT / "figure7.csv", index=False)
 
     complete = build_complete_figure(
         onset,

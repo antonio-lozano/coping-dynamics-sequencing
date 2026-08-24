@@ -67,15 +67,21 @@
   },
 
   "supplementary_figure_4": {
+    "panels": "Twenty-five convex-hull floor/wall overlap examples for climbing identification",
+    "figure_source": "figures/supplementary_figure4.svg",
+    "classification_rule": "Potential climbing frames have floor-overlap ratio below 0.8; retained bouts contain at least 17 consecutive frames."
+  },
+
+  "supplementary_figure_5": {
     "panels": "Class-specific classifier SHAP, published as Figure 7 panels D-M",
-    "figure_source": "data/raw/legacy_figures/figure7_classifier_original.pdf",
+    "figure_source": "classifier/legacy_shap/shap_values.npz",
     "classifier": "Legacy XGBoost, archived at classifier/legacy_shap/xgb_model.pkl",
     "features": 719,
     "feature_space": "Pairwise DeepLabCut body-part distances and velocities over a 14-marker skeleton (nose, H1R/H2R/H1L/H2L, B1R/B2R/B3R/B1L/B2L/B3L, tail, S1/S2), with lags and 5-frame rolling mean/SD/sum.",
     "cv": {"folds": 3, "stratified": true, "split_level": "frame", "random_state": 42,
            "WARNING": "frame-level split leaks temporal autocorrelation; animal-level split is the leakage-free option"},
     "shap": {"explainer": "shap.TreeExplainer", "sample": "10% of the balanced frame matrix, random_state=42", "n_frames": 2638, "plotted_per_class": 10},
-    "source_data": "figure_source_data/supplementary_figure4_shap_summary.csv (719 parameters x 8 classes)",
+    "source_data": "figure_source_data/supplementary_figure5_shap_summary.csv (719 parameters x 8 classes)",
     "IMPORTANT": "This is NOT the bundled classifier/figure7_behavior_classifier.joblib, which is a different model on a different 33-feature centroid-kinematic set and does not regenerate these panels. The 179 MB feature matrix and 58 MB SHAP pickles are not bundled; see scripts/import_legacy_shap_summary.py for their location and the import procedure."
   },
 
