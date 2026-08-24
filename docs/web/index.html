@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coping Dynamics Sequencing</title>
+<meta name="description" content="Byte-reproducible manuscript repository: keypoint-MoSeq behavioral motif dynamics of stress coping in mice.">
+<style>
+  :root {
+    --bg: #0C0E10; --panel: #14171A; --panel-2: #191D21; --rule: #262B30;
+    --ink: #E8EAED; --muted: #98A0A8; --accent: #F5C12D;
+    --freeze: #BE7AA5; --sniff: #5A9DAE; --groom: #8BC2D9; --turn: #AFD93D;
+    --loco: #F5C12D; --climb: #F6A65A; --jump: #E85655;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font: 17px/1.6 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code, pre { font-family: ui-monospace, Consolas, "Cascadia Mono", monospace; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+  .eyebrow { font-size: 13px; font-weight: 700; letter-spacing: .14em; color: var(--muted); text-transform: uppercase; }
+
+  header { padding: 88px 0 48px; }
+  header h1 { font-size: clamp(38px, 6vw, 58px); line-height: 1.08; margin: 14px 0 18px; text-wrap: balance; }
+  header p.tag { max-width: 640px; color: var(--muted); font-size: 19px; }
+  .cta { margin-top: 28px; display: flex; gap: 14px; flex-wrap: wrap; }
+  .btn {
+    display: inline-block; padding: 11px 22px; border-radius: 8px; font-weight: 600;
+    border: 1px solid var(--rule); color: var(--ink); background: var(--panel);
+  }
+  .btn.primary { background: var(--accent); color: #14171A; border-color: var(--accent); }
+  .btn:hover { text-decoration: none; filter: brightness(1.1); }
+
+  .hero-media { margin: 40px 0 8px; }
+  .hero-media img { width: 100%; border-radius: 10px; border: 1px solid var(--rule); display: block; }
+  .caption { font-size: 14px; color: var(--muted); margin-top: 10px; }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin: 40px 0; }
+  .stat { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 20px 22px; }
+  .stat b { display: block; font-size: 26px; margin-bottom: 4px; }
+  .stat span { color: var(--muted); font-size: 15px; }
+
+  section { padding: 56px 0; border-top: 1px solid var(--rule); }
+  section h2 { font-size: 30px; margin: 10px 0 14px; }
+  section > .wrap > p { max-width: 720px; color: var(--muted); }
+
+  video { width: 100%; border-radius: 10px; border: 1px solid var(--rule); display: block; background: #000; }
+
+  .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; margin-top: 30px; }
+  .card { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+  .card img { width: 100%; display: block; background: #fff; }
+  .card figcaption { padding: 12px 16px; font-size: 15px; color: var(--muted); }
+  .card figcaption b { color: var(--ink); }
+
+  pre {
+    background: var(--panel); border: 1px solid var(--rule); border-radius: 10px;
+    padding: 18px 20px; overflow-x: auto; font-size: 15px; line-height: 1.7; margin: 18px 0;
+  }
+  pre .c { color: var(--muted); }
+
+  .contract { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; margin-top: 30px; }
+  .tile { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 22px 24px; }
+  .tile h3 { font-size: 18px; margin-bottom: 8px; }
+  .tile p { color: var(--muted); font-size: 15px; }
+  .tile code { color: var(--ink); font-size: 14px; }
+
+  .chips { display: flex; gap: 10px 18px; flex-wrap: wrap; margin-top: 18px; }
+  .chip { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; color: var(--muted); }
+  .chip i { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+
+  footer { border-top: 1px solid var(--rule); padding: 40px 0 60px; color: var(--muted); font-size: 15px; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <span class="eyebrow">Manuscript repository · Byte-reproducible</span>
+    <h1>Coping Dynamics Sequencing</h1>
+    <p class="tag">Behavioral motif dynamics of stress coping in mice: keypoint-MoSeq
+    syllables, litter-clustered statistics, and a pipeline whose every artifact
+    rebuilds byte-identically on Windows and Linux.</p>
+    <div class="cta">
+      <a class="btn primary" href="https://github.com/antonio-lozano/coping-dynamics-sequencing">View on GitHub</a>
+      <a class="btn" href="#reproduce">Reproduce in three commands</a>
+    </div>
+    <div class="hero-media">
+      <img src="media/syllable_atlas.gif" alt="Representative pose-overlaid occurrences, one per behavioral cluster">
+      <p class="caption">One representative keypoint-MoSeq syllable per behavioral cluster,
+      egocentrically aligned, from SHA-256-verified archived clips.</p>
+    </div>
+    <div class="chips">
+      <span class="chip"><i style="background:var(--freeze)"></i>Freeze</span>
+      <span class="chip"><i style="background:var(--sniff)"></i>Sniff</span>
+      <span class="chip"><i style="background:var(--groom)"></i>Groom</span>
+      <span class="chip"><i style="background:var(--turn)"></i>Turn</span>
+      <span class="chip"><i style="background:var(--loco)"></i>Locomotion</span>
+      <span class="chip"><i style="background:var(--climb)"></i>Climb</span>
+      <span class="chip"><i style="background:var(--jump)"></i>Jump</span>
+    </div>
+    <div class="stats">
+      <div class="stat"><b>558</b><span>artifacts hashed in MANIFEST.csv</span></div>
+      <div class="stat"><b>1 command</b><span>rebuilds every figure, table and report</span></div>
+      <div class="stat"><b>2 platforms</b><span>identical bytes on Windows and Linux CI</span></div>
+      <div class="stat"><b>0 hidden inputs</b><span>all data required for a rebuild ships in-repo</span></div>
+    </div>
+  </div>
+</header>
+
+<section id="video">
+  <div class="wrap">
+    <span class="eyebrow">Supplementary Video 1 · Grid view</span>
+    <h2>The whole repertoire at a glance</h2>
+    <p>All 25 cluster-mapped syllables playing simultaneously, ordered and
+    color-coded by behavioral cluster. Each tile loops three representative
+    pose-overlaid occurrences; sources and SHA-256 hashes are recorded in the
+    shipped index.</p>
+    <div style="margin-top:28px">
+      <video controls loop muted playsinline preload="metadata"
+        src="media/Supplementary_Video_1_MoSeq_syllable_atlas_grid.mp4"></video>
+    </div>
+  </div>
+</section>
+
+<section id="figures">
+  <div class="wrap">
+    <span class="eyebrow">Figures</span>
+    <h2>Every data figure, rebuilt from source</h2>
+    <p>Figures 2&ndash;7 are regenerated by <code>scripts/run_all.py</code> from
+    the bundled data; the values behind every panel are exported to
+    <code>figure_source_data/</code> and the fitted models to
+    <code>statistics/</code>.</p>
+    <div class="gallery">
+      <figure class="card"><img src="assets/figure2_thumb.png" alt="Figure 2">
+        <figcaption><b>Figure 2</b> · Pipeline validation</figcaption></figure>
+      <figure class="card"><img src="assets/figure3_thumb.png" alt="Figure 3">
+        <figcaption><b>Figure 3</b> · Behavior clusters</figcaption></figure>
+      <figure class="card"><img src="assets/figure4_thumb.png" alt="Figure 4">
+        <figcaption><b>Figure 4</b> · Diversity dynamics</figcaption></figure>
+      <figure class="card"><img src="assets/figure5_thumb.png" alt="Figure 5">
+        <figcaption><b>Figure 5</b> · Resilience dynamics</figcaption></figure>
+      <figure class="card"><img src="assets/figure6_thumb.png" alt="Figure 6">
+        <figcaption><b>Figure 6</b> · Resilience and diversity</figcaption></figure>
+      <figure class="card"><img src="assets/figure7_thumb.png" alt="Figure 7">
+        <figcaption><b>Figure 7</b> · Predicting resilience</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section id="reproduce">
+  <div class="wrap">
+    <span class="eyebrow">Reproduce</span>
+    <h2>Three commands, identical bytes</h2>
+    <p>The locked <code>uv</code> environment installs the recorded Python and
+    exact dependency versions; conda and pip routes ship too.</p>
+    <pre><span class="c"># install the locked environment</span>
+uv sync --locked
+
+<span class="c"># verify the shipped artifacts against MANIFEST.csv</span>
+uv run python scripts/check_reproducibility.py
+
+<span class="c"># rebuild every figure, table, report and the manifest — the tree ends clean</span>
+uv run python scripts/run_all.py</pre>
+    <div class="contract">
+      <div class="tile"><h3>Hash manifest</h3>
+        <p><code>MANIFEST.csv</code> records a SHA-256 for all 558 artifacts. A
+        rebuild that changes any byte fails the check; the repository referees
+        itself.</p></div>
+      <div class="tile"><h3>Statistics fitted once</h3>
+        <p>Every model is fitted in one place and exported;
+        <code>scripts/check_manuscript.py</code> pins each statistic quoted in
+        the manuscript to the shipped report.</p></div>
+      <div class="tile"><h3>Continuous verification</h3>
+        <p>CI executes the science: locked installs, the full checker and test
+        suite on Ubuntu and Windows, plus the companion tool's own tests.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="tool">
+  <div class="wrap">
+    <span class="eyebrow">Companion tool</span>
+    <h2>Behavior classifier</h2>
+    <p>A self-contained DeepLabCut-based freezing and seven-behavior classifier
+    ships under <code>tools/behavior_dlc_classifier/</code> with the trained
+    tracking networks — including the iteration behind every published
+    prediction — demo videos, its own test suite, and a step-by-step guide, so
+    new videos can be tracked and classified without training anything.</p>
+  </div>
+</section>
+
+<section id="cite">
+  <div class="wrap">
+    <span class="eyebrow">Cite &amp; availability</span>
+    <h2>Citation</h2>
+    <p>Citation metadata lives in <code>CITATION.cff</code> (use GitHub's
+    &ldquo;Cite this repository&rdquo;). Code is MIT-licensed; an archived,
+    DOI-minted release accompanies the manuscript at submission.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Coping Dynamics Sequencing ·
+    <a href="https://github.com/antonio-lozano/coping-dynamics-sequencing">github.com/antonio-lozano/coping-dynamics-sequencing</a>
+  </div>
+</footer>
+
+</body>
+</html>
