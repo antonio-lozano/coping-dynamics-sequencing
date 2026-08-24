@@ -108,6 +108,7 @@ REQUIRED_FILES = [
     "statistics/figure7_prediction_permutation.csv",
     "classifier/figure7_behavior_classifier.joblib",
     "supplementary_media/Supplementary_Video_1_MoSeq_syllable_atlas.mp4",
+    "supplementary_media/Supplementary_Video_1_MoSeq_syllable_atlas_grid.mp4",
     "supplementary_media/Supplementary_Video_1_source_index.csv",
     "report/raw_data.xlsx",
     "report/statistical_report.xlsx",
@@ -129,6 +130,7 @@ REQUIRED_FILES = [
     "scripts/generate_figures/figure_7_resilience_prediction.py",
     "scripts/generate_figures/supplementary_figure_4_classifier_shap.py",
     "scripts/generate_supplementary_video_1.py",
+    "scripts/generate_supplementary_video_1_grid.py",
     "scripts/migrations/import_legacy_shap_summary.py",
     "scripts/migrations/import_legacy_shap_values.py",
 ]
@@ -325,25 +327,34 @@ def check_manifest(errors: list[str]) -> None:
 
 def check_supplementary_video(errors: list[str]) -> None:
     video = ROOT / "supplementary_media/Supplementary_Video_1_MoSeq_syllable_atlas.mp4"
+    grid = ROOT / "supplementary_media/Supplementary_Video_1_MoSeq_syllable_atlas_grid.mp4"
     index = ROOT / "supplementary_media/Supplementary_Video_1_source_index.csv"
     if not video.is_file() or not index.is_file():
         return
 
-    if video.stat().st_size > 30 * 1024 * 1024:
-        fail("Supplementary Video 1 exceeds 30 MB", errors)
-    reader = imageio_ffmpeg.read_frames(str(video), pix_fmt="rgb24")
-    try:
-        metadata = next(reader)
-    finally:
-        reader.close()
-    if metadata.get("codec") != "h264":
-        fail(f"Supplementary Video 1 codec is {metadata.get('codec')}, not h264", errors)
-    if not str(metadata.get("pix_fmt", "")).startswith("yuv420p"):
-        fail(f"Supplementary Video 1 pixel format is {metadata.get('pix_fmt')}", errors)
-    if tuple(metadata.get("size", ())) != (960, 540):
-        fail(f"Supplementary Video 1 frame size is {metadata.get('size')}", errors)
-    if float(metadata.get("fps", 0)) != 25.0:
-        fail(f"Supplementary Video 1 frame rate is {metadata.get('fps')}", errors)
+    # The sequential atlas and its grid view share sources and provenance; both
+    # must satisfy Nature's per-file rules (H.264/yuv420p, 25 fps, <= 30 MB).
+    for path, expected_size, label in (
+        (video, (960, 540), "Supplementary Video 1"),
+        (grid, (1920, 1080), "Supplementary Video 1 grid view"),
+    ):
+        if not path.is_file():
+            continue
+        if path.stat().st_size > 30 * 1024 * 1024:
+            fail(f"{label} exceeds 30 MB", errors)
+        reader = imageio_ffmpeg.read_frames(str(path), pix_fmt="rgb24")
+        try:
+            metadata = next(reader)
+        finally:
+            reader.close()
+        if metadata.get("codec") != "h264":
+            fail(f"{label} codec is {metadata.get('codec')}, not h264", errors)
+        if not str(metadata.get("pix_fmt", "")).startswith("yuv420p"):
+            fail(f"{label} pixel format is {metadata.get('pix_fmt')}", errors)
+        if tuple(metadata.get("size", ())) != expected_size:
+            fail(f"{label} frame size is {metadata.get('size')}", errors)
+        if float(metadata.get("fps", 0)) != 25.0:
+            fail(f"{label} frame rate is {metadata.get('fps')}", errors)
 
     with index.open(newline="", encoding="utf-8") as handle:
         rows = list(csv.DictReader(handle))

@@ -15,6 +15,19 @@ and below Nature's 30 MB per-video limit. Its editable title and legend are in
 `report/SIGuide.docx`. Source paths, sizes and SHA-256 hashes are recorded in
 `supplementary_media/Supplementary_Video_1_source_index.csv`.
 
+## Grid view
+
+`supplementary_media/Supplementary_Video_1_MoSeq_syllable_atlas_grid.mp4` shows
+the same 25 cluster-mapped syllables playing simultaneously in a 5 × 5 grid
+(1920 × 1080 pixels, H.264/yuv420p, 25 frames s⁻¹, silent, below 30 MB), so the
+whole repertoire can be compared at a glance: tiles are ordered and
+color-coded by behavioral cluster, and each tile loops the same three
+representative occurrences the sequential atlas uses. It is built by
+`scripts/generate_supplementary_video_1_grid.py` from the identical archived
+clips, each verified against the SHA-256 recorded in
+`Supplementary_Video_1_source_index.csv`, which therefore remains the single
+provenance record for both videos.
+
 ## Scope decision
 
 The fitted label space contained 96 syllables, 87 of which were observed in the
