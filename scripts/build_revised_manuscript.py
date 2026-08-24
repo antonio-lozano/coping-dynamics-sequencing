@@ -123,9 +123,11 @@ if p is not None:
         label="Markov entropy statistic",
     )
 
-# 3 - Supplementary Figure 5 and Video 2 are cited here, between the first
-#     mentions of Supplementary Figures 3 and 5, so the supplementary figures
-#     are finally numbered in order of appearance (they currently run 1,2,3,5,4).
+# 3 - Supplementary Figure 5 is cited here, between the first mentions of
+#     Supplementary Figures 3 and 5, so the supplementary figures are finally
+#     numbered in order of appearance (they currently run 1,2,3,5,4). The
+#     climbing-detection footage is folded into Supplementary Video 1 rather
+#     than shipped as a separate Video 2.
 p = find(lambda t: "misclassifications occurring predominantly among movement-rich motifs" in t)
 if p is not None:
     replace(
@@ -133,9 +135,8 @@ if p is not None:
         "(e.g. groom is often mistaken for unlabeled behavior or turn for locomotion).",
         "(e.g. groom is often mistaken for unlabeled behavior or turn for locomotion). "
         "Climbing was the one class not recovered by keypoint MoSeq itself but defined "
-        "geometrically from arena-floor overlap (Supplementary Fig. 5 and Supplementary "
-        "Video 2).",
-        label="cite Supplementary Fig. 5 and Video 2",
+        "geometrically from arena-floor overlap (Supplementary Fig. 5).",
+        label="cite Supplementary Fig. 5",
     )
 
 # 3b - statistics that disagree with report/statistical_report.xlsx, now the
