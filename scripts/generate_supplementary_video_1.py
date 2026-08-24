@@ -224,21 +224,12 @@ def render_syllable_frame(
     cluster: str,
     syllable: int,
     frame_index: int,
-    climb: Image.Image | None = None,
-    occurrence_override: int | None = None,
 ) -> Image.Image:
     canvas = Image.new("RGB", SIZE, "#F7F7F7")
     draw = ImageDraw.Draw(canvas)
 
-    # Climbing is defined geometrically, so its representative overlay is the
-    # geometry itself: floor/wall segmentation, keypoint hull and tracked
-    # skeleton, with the floor-overlap ratio the rule thresholds.
-    panel_source = climb if (climb is not None and syllable == 111) else source
-    caption = (
-        "Representative pose overlay - floor/wall overlap"
-        if panel_source is climb
-        else "Representative pose overlay"
-    )
+    panel_source = source
+    caption = "Representative pose overlay"
 
     source_fit = ImageOps.contain(panel_source, (500, 500), Image.Resampling.LANCZOS)
     canvas.paste(
@@ -255,18 +246,13 @@ def render_syllable_frame(
     label = "Derived class 111" if syllable == 111 else f"MoSeq syllable {syllable}"
     draw.text((550, 95), label, font=FONTS["syllable"], fill="#303030")
 
-    if occurrence_override is not None:
-        draw.text(
-            (552, 147), f"Climbing bout {occurrence_override}", font=FONTS["small"], fill="#666666"
-        )
-    else:
-        occurrence = frame_index // 20 + 1
-        draw.text(
-            (552, 147),
-            f"Representative occurrence {occurrence}",
-            font=FONTS["small"],
-            fill="#666666",
-        )
+    occurrence = frame_index // 20 + 1
+    draw.text(
+        (552, 147),
+        f"Representative occurrence {occurrence}",
+        font=FONTS["small"],
+        fill="#666666",
+    )
 
     if skeleton is not None:
         # Fit inside the panel rather than onto a fixed box, and composite
@@ -279,16 +265,6 @@ def render_syllable_frame(
         y = panel[1] + (box[1] - skeleton_fit.height) // 2
         canvas.paste(skeleton_fit, (x, y), skeleton_fit)
         draw.text((552, 465), "Canonical skeleton trajectory", font=FONTS["small"], fill="#666666")
-    elif panel_source is climb:
-        # The overlay itself carries the geometry, so the right-hand column
-        # states the rule rather than repeating the footage.
-        draw.text((552, 200), "Yellow: annotated arena floor", font=FONTS["body"], fill="#555555")
-        draw.text((552, 232), "Pink: wall band", font=FONTS["body"], fill="#555555")
-        draw.text((552, 264), "Purple: convex hull of the", font=FONTS["body"], fill="#555555")
-        draw.text((552, 292), "tracked keypoints", font=FONTS["body"], fill="#555555")
-        draw.text((552, 336), "Climbing when floor overlap", font=FONTS["body"], fill="#555555")
-        draw.text((552, 364), "stays below 0.8 for at least", font=FONTS["body"], fill="#555555")
-        draw.text((552, 392), "17 frames (425 ms).", font=FONTS["body"], fill="#555555")
     elif syllable == 111:
         # No floor mask is archived for this cohort, and the overlap cannot be
         # recovered from the clip: it is an egocentric per-frame rotation, so
@@ -312,141 +288,8 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--clip-dir", type=Path, required=True)
     parser.add_argument("--skeleton-gif", type=Path, required=True)
-    parser.add_argument(
-        "--climb-video", type=Path, help="tracked session used for the climbing geometry panel"
-    )
-    parser.add_argument(
-        "--climb-keypoints", type=Path, help="DeepLabCut keypoints matching --climb-video"
-    )
-    parser.add_argument(
-        "--climb-bouts",
-        type=int,
-        default=6,
-        help="separate climbing bouts to show in the 111 panel",
-    )
-    parser.add_argument(
-        "--climb-bout-frames", type=int, default=45, help="frames shown per climbing bout"
-    )
-    parser.add_argument(
-        "--climb-lead", type=int, default=8, help="frames of floor lead-in before each bout starts"
-    )
-    parser.add_argument(
-        "--climb-floor-image",
-        type=Path,
-        help="frame with the arena floor drawn on in colour; overrides automatic floor detection",
-    )
-    parser.add_argument(
-        "--climb-floor-corners",
-        type=str,
-        help="four floor corners as 'x,y x,y x,y x,y'; overrides automatic floor detection",
-    )
     parser.add_argument("--output", type=Path, default=OUTPUT_VIDEO)
     return parser.parse_args()
-
-
-def load_climb_overlay(
-    video: Path,
-    keypoints: Path,
-    bout_count: int,
-    frames_per_bout: int,
-    lead_frames: int,
-    floor_image: Path | None = None,
-    floor_corners: str | None = None,
-) -> tuple[list[Image.Image], list[int]]:
-    """Render climbing-overlay frames for several separate bouts.
-
-    One continuous bout reads as a single event, so the panel samples bouts
-    spread across the session. Each excerpt opens with a few frames of lead-in
-    taken from before the bout starts, so the animal is first seen on the floor
-    with a high overlap ratio and the transition onto the wall is visible
-    rather than assumed.
-
-    Returns the frames and, for each, the 1-based index of the bout it shows.
-    """
-    from generate_climbing_overlay_clip import (
-        FLOOR_THRESHOLD,
-        MIN_BOUT_FRAMES,
-        check_alignment,
-        compute_floor_ratios,
-        detect_floor,
-        draw_frame,
-        find_bouts,
-        floor_from_annotation,
-        load_keypoints,
-        median_frame,
-        parse_corners,
-    )
-    from matplotlib.path import Path as MplPath
-
-    if floor_corners:
-        floor = parse_corners(floor_corners)
-        print(f"  floor: taken from --climb-floor-corners {floor.astype(int).tolist()}")
-    elif floor_image:
-        floor = floor_from_annotation(floor_image)
-    else:
-        floor = detect_floor(median_frame(video))
-    points = load_keypoints(keypoints)
-    check_alignment(video, points)
-    ratios = compute_floor_ratios(points, floor)
-    valid = ~np.isnan(ratios)
-    bouts = find_bouts((ratios < FLOOR_THRESHOLD) & valid, MIN_BOUT_FRAMES)
-    if not bouts:
-        raise RuntimeError(f"No climbing bouts detected in {keypoints.name}")
-
-    # Spread the excerpts over the whole session rather than taking the first
-    # few, which tend to cluster in the first minute.
-    if len(bouts) > bout_count:
-        step = len(bouts) / bout_count
-        bouts = [bouts[int(i * step)] for i in range(bout_count)]
-
-    wanted: list[int] = []
-    bout_of: list[int] = []
-    for number, (start, end) in enumerate(bouts, start=1):
-        first = max(0, start - lead_frames)
-        excerpt = list(range(first, min(end, first + frames_per_bout - 1) + 1))
-        wanted.extend(excerpt)
-        bout_of.extend([number] * len(excerpt))
-
-    reader = imageio_ffmpeg.read_frames(str(video), pix_fmt="rgb24")
-    metadata = next(reader)
-    width, height = metadata["size"]
-    raw_frames: dict[int, np.ndarray] = {}
-    limit, needed = max(wanted), set(wanted)
-    try:
-        for i, raw in enumerate(reader):
-            if i in needed:
-                raw_frames[i] = np.frombuffer(raw, np.uint8).reshape(height, width, 3).copy()
-            if i >= limit:
-                break
-    finally:
-        reader.close()
-
-    yy, xx = np.mgrid[0:height, 0:width]
-    inside = (
-        MplPath(floor)
-        .contains_points(np.stack([xx.ravel(), yy.ravel()], axis=1))
-        .reshape(height, width)
-    )
-
-    climbing = {i for start, end in bouts for i in range(start, end + 1)}
-    images, numbers = [], []
-    for frame, number in zip(wanted, bout_of):
-        if frame not in raw_frames:
-            continue
-        images.append(
-            draw_frame(
-                raw_frames[frame],
-                inside,
-                floor,
-                points[frame, :, :2],
-                points[frame, :, 2],
-                frame,
-                frame in climbing,
-            )
-        )
-        numbers.append(number)
-    print(f"climbing overlay: {len(images)} frames from {len(bouts)} bouts")
-    return images, numbers
 
 
 def main() -> None:
@@ -458,19 +301,6 @@ def main() -> None:
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     skeleton_cells = load_skeleton_cells(args.skeleton_gif)
-
-    climb_frames: list[Image.Image] = []
-    climb_bouts: list[int] = []
-    if args.climb_video and args.climb_keypoints:
-        climb_frames, climb_bouts = load_climb_overlay(
-            args.climb_video,
-            args.climb_keypoints,
-            args.climb_bouts,
-            args.climb_bout_frames,
-            args.climb_lead,
-            args.climb_floor_image,
-            args.climb_floor_corners,
-        )
 
     writer = imageio_ffmpeg.write_frames(
         str(args.output),
@@ -505,11 +335,7 @@ def main() -> None:
                 source_frames = read_video_segment(clip, FRAMES_PER_SYLLABLE)
                 occurrence_record = "1;2;3"
             skeleton_frames = skeleton_cells.get(syllable)
-            # The climbing panel is driven by its own excerpts, so it runs for
-            # as many frames as those excerpts provide rather than reusing the
-            # archived clip's length.
-            uses_climb = syllable == 111 and bool(climb_frames)
-            total_frames = len(climb_frames) if uses_climb else len(source_frames)
+            total_frames = len(source_frames)
 
             for frame_index in range(total_frames):
                 source = source_frames[frame_index % len(source_frames)]
@@ -518,18 +344,12 @@ def main() -> None:
                     skeleton = skeleton_frames[
                         (frame_index * len(skeleton_frames) // FPS) % len(skeleton_frames)
                     ]
-                climb = climb_frames[frame_index] if uses_climb else None
-                occurrence = climb_bouts[frame_index] if uses_climb else None
                 writer.send(
                     np.asarray(
-                        render_syllable_frame(
-                            source, skeleton, cluster, syllable, frame_index, climb, occurrence
-                        ),
+                        render_syllable_frame(source, skeleton, cluster, syllable, frame_index),
                         dtype=np.uint8,
                     ).tobytes()
                 )
-            if uses_climb:
-                occurrence_record = ";".join(str(n) for n in sorted(set(climb_bouts)))
             index_rows.append(
                 {
                     "display_order": len(index_rows) + 1,
