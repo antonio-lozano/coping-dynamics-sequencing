@@ -1,5 +1,26 @@
 # Changelog
 
+## 2026-08-24 -- The tracking network the paper used is now the one that ships
+
+The bundle carried iteration 0 of the DeepLabCut project (`snapshot-500000`),
+while every published freezing and behaviour prediction came from iteration 1
+(`snapshot-100000`): the refined network trained on 2,704 labelled frames from
+100 videos, 368 frames and 14 videos more than iteration 0, all of them resized
+25 fps recordings. Held-out error is 4.64 px against iteration 0's 6.38 px.
+
+- **Iteration 1 added and made the default.** `models/dlc_project/.../dlc-models/iteration-1/`
+  holds the snapshot, its `test/pose_cfg.yaml` and a trimmed training config;
+  the project `config.yaml` now reads `iteration: 1`. Tracking a new video
+  produces `DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000` files, the same
+  scorer name as every prediction in the manuscript pipeline.
+- **Iteration 0 kept.** It is still in `dlc-models/iteration-0/` and still the
+  network behind the demo tracking files in `data/raw/`, which are named
+  `..._500000`. Set `iteration: 0` to reproduce those exactly. Predictions from
+  the two networks should not be pooled.
+- **No machine-specific paths travelled with it.** The copied configs carry
+  relative dataset paths, as iteration 0's already did, so the bundle stays
+  portable and passes `scripts/check_portability.py`.
+
 ## 2026-08-17 -- A bug-hunt pass over every module, held down by 18 new tests
 
 The whole tool was reviewed for correctness, duplication and speed. Every fix
