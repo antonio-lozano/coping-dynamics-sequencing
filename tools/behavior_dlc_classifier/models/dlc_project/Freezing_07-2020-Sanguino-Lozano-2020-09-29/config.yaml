@@ -61,7 +61,11 @@ colormap: jet
 # Training,Evaluation and Analysis configuration
 TrainingFraction:
 - 0.9
-iteration: 0
+# Iteration 1 is the network behind the published freezing and behaviour
+# analyses (DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000). Iteration 0
+# (snapshot-500000) is kept in dlc-models/ and produced the bundled demo
+# tracking files; set this back to 0 to reproduce those.
+iteration: 1
 resnet:
 snapshotindex: -1
 batch_size: 32

@@ -57,14 +57,32 @@ Everything needed for a complete run ships with the tool:
 | --- | --- | --- |
 | Freezing model (fallback) | `models/freezing_model.sav` | 16 MB |
 | Seven-behavior model | `models/behavior/xgb_model.pkl` (+ `.json`) | 3 MB |
-| DeepLabCut network | `models/dlc_project/Freezing_07-2020-Sanguino-Lozano-2020-09-29/` | 95 MB |
+| DeepLabCut networks | `models/dlc_project/Freezing_07-2020-Sanguino-Lozano-2020-09-29/` | 190 MB |
 | Demo videos and tracking | `data/raw/original_videos/` | 50 MB |
 | Manual freezing labels | `data/raw/manual_labels/` | 3 files |
 
-The bundled DeepLabCut network is a ResNet-50 snapshot trained on this
-behavioral setup, and it is the network that produced the demo tracking files.
-A fresh checkout can therefore track new videos without downloading or training
-anything first.
+The bundled DeepLabCut project holds two ResNet-50 snapshots of the same
+network, so a fresh checkout can track new videos without downloading or
+training anything first.
+
+| Iteration | Snapshot | Test error | Used for |
+| --- | --- | --- | --- |
+| 1 (default) | `snapshot-100000` | 4.64 px | the published freezing and behaviour analyses |
+| 0 | `snapshot-500000` | 6.38 px | the demo tracking files bundled here |
+
+Iteration 1 was refined from iteration 0 on 2,704 labelled frames from 100
+videos, 368 frames and 14 videos more than iteration 0, and those additions are
+the resized 25 fps recordings. It tracks held-out frames closer and, more
+importantly, it is the network every published prediction came from: its
+tracking files carry the scorer name
+`DLC_resnet50_Freezing_07-2020Sep29shuffle1_100000`. New tracking therefore
+matches the manuscript by default.
+
+The demo tracking files shipped in `data/raw/` are named `..._500000` and came
+from iteration 0. Re-tracking those same videos now produces `..._100000` files
+instead; both work with everything downstream, but do not pool the two. Set
+`iteration: 0` in the project `config.yaml` to reproduce the demo tracking
+exactly.
 
 **One thing is not bundled: the freezing model predictions are made with.**
 `models/freezing_model_full.sav` is about 1 GB — far past what a git host
@@ -703,7 +721,7 @@ models/
     freezing_model_full.sav  the model predictions use (~1 GB, downloaded)
     freezing_model.sav  committed fallback if the above is absent (16 MB)
     behavior/           the seven-behavior model
-    dlc_project/        the DeepLabCut network that produced the demo tracking
+    dlc_project/        the DeepLabCut networks: iteration 1 (default), iteration 0
     archive/            retired models, ignored by version control
 
 data/raw/               demo videos, their tracking, and manual labels
