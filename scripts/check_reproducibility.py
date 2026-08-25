@@ -108,8 +108,8 @@ REQUIRED_FILES = [
     "statistics/figure7_prediction_permutation.csv",
     "classifier/figure7_behavior_classifier.joblib",
     "supplementary_media/Supplementary_Video_1_MoSeq_syllable_atlas.mp4",
-    "supplementary_media/Supplementary_Video_1_MoSeq_syllable_atlas_grid.mp4",
-    "supplementary_media/Supplementary_Video_1_source_index.csv",
+    "supplementary_media/Supplementary_Video_2_MoSeq_syllable_grid.mp4",
+    "supplementary_media/Supplementary_Video_source_index.csv",
     "report/raw_data.xlsx",
     "report/statistical_report.xlsx",
     "report/SIGuide.docx",
@@ -130,7 +130,7 @@ REQUIRED_FILES = [
     "scripts/generate_figures/figure_7_resilience_prediction.py",
     "scripts/generate_figures/supplementary_figure_4_classifier_shap.py",
     "scripts/generate_supplementary_video_1.py",
-    "scripts/generate_supplementary_video_1_grid.py",
+    "scripts/generate_supplementary_video_2_grid.py",
     "scripts/migrations/import_legacy_shap_summary.py",
     "scripts/migrations/import_legacy_shap_values.py",
 ]
@@ -327,8 +327,8 @@ def check_manifest(errors: list[str]) -> None:
 
 def check_supplementary_video(errors: list[str]) -> None:
     video = ROOT / "supplementary_media/Supplementary_Video_1_MoSeq_syllable_atlas.mp4"
-    grid = ROOT / "supplementary_media/Supplementary_Video_1_MoSeq_syllable_atlas_grid.mp4"
-    index = ROOT / "supplementary_media/Supplementary_Video_1_source_index.csv"
+    grid = ROOT / "supplementary_media/Supplementary_Video_2_MoSeq_syllable_grid.mp4"
+    index = ROOT / "supplementary_media/Supplementary_Video_source_index.csv"
     if not video.is_file() or not index.is_file():
         return
 
@@ -336,7 +336,7 @@ def check_supplementary_video(errors: list[str]) -> None:
     # must satisfy Nature's per-file rules (H.264/yuv420p, 25 fps, <= 30 MB).
     for path, expected_size, label in (
         (video, (960, 540), "Supplementary Video 1"),
-        (grid, (1920, 1080), "Supplementary Video 1 grid view"),
+        (grid, (1920, 1080), "Supplementary Video 2"),
     ):
         if not path.is_file():
             continue
@@ -391,11 +391,11 @@ def check_supplementary_video(errors: list[str]) -> None:
     }
     if len(rows) != len(expected) or set(labels) != expected or len(labels) != len(set(labels)):
         fail(
-            "Supplementary Video 1 source index does not uniquely cover the 25 cluster-mapped syllables",
+            "supplementary video source index does not uniquely cover the 25 cluster-mapped syllables",
             errors,
         )
     if any(len(row.get("source_clip_sha256", "")) != 64 for row in rows):
-        fail("Supplementary Video 1 source index contains an invalid SHA-256", errors)
+        fail("supplementary video source index contains an invalid SHA-256", errors)
 
 
 def check_submission_manuscript(errors: list[str]) -> None:

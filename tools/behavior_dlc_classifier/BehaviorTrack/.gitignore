@@ -1,0 +1,5 @@
+Data/
+Results/
+__pycache__/
+*.pyc
+

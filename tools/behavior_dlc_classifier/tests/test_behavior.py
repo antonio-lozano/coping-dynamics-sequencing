@@ -10,6 +10,7 @@ from freezing_dlc.behavior import (
     confidence_for_labels,
     egocentric_align,
     refine_behavior_labels,
+    training_coordinate_frame,
 )
 
 
@@ -25,7 +26,33 @@ def _synthetic_flat(n=100, speed=4.0, likelihood=1.0):
     return pd.DataFrame(data)
 
 
-def test_egocentric_align_centres_and_rotates():
+def test_training_coordinate_frame_centres_without_rotating_or_scaling():
+    flat = _synthetic_flat()
+    centred = training_coordinate_frame(flat)
+    xs = np.column_stack([centred[f"{bp}_x"] for bp in BEHAVIOR_BODYPARTS])
+    ys = np.column_stack([centred[f"{bp}_y"] for bp in BEHAVIOR_BODYPARTS])
+
+    assert np.allclose(xs.mean(axis=1), 0.0, atol=1e-6)
+    assert np.allclose(ys.mean(axis=1), 0.0, atol=1e-6)
+    before_angle = np.arctan2(
+        flat["nose_y"] - flat["tail_y"], flat["nose_x"] - flat["tail_x"]
+    )
+    after_angle = np.arctan2(
+        centred["nose_y"] - centred["tail_y"],
+        centred["nose_x"] - centred["tail_x"],
+    )
+    assert np.allclose(before_angle, after_angle, atol=1e-6)
+    before_length = np.hypot(
+        flat["nose_x"] - flat["tail_x"], flat["nose_y"] - flat["tail_y"]
+    )
+    after_length = np.hypot(
+        centred["nose_x"] - centred["tail_x"],
+        centred["nose_y"] - centred["tail_y"],
+    )
+    assert np.allclose(before_length, after_length, atol=1e-6)
+
+
+def test_experimental_egocentric_align_centres_and_rotates():
     aligned = egocentric_align(_synthetic_flat())
     xs = np.column_stack([aligned[f"{bp}_x"] for bp in BEHAVIOR_BODYPARTS])
     ys = np.column_stack([aligned[f"{bp}_y"] for bp in BEHAVIOR_BODYPARTS])
@@ -37,7 +64,7 @@ def test_egocentric_align_centres_and_rotates():
     assert (aligned["nose_x"] > aligned["tail_x"]).all()
 
 
-def test_egocentric_align_preserves_shape():
+def test_experimental_egocentric_align_preserves_shape():
     """Alignment may rescale the animal, but never distorts it."""
     flat = _synthetic_flat()
     aligned = egocentric_align(flat)
@@ -50,7 +77,7 @@ def test_egocentric_align_preserves_shape():
 
 
 @pytest.mark.parametrize("camera_zoom", [0.25, 1.0, 4.0])
-def test_alignment_removes_camera_scale(camera_zoom):
+def test_experimental_alignment_removes_camera_scale(camera_zoom):
     """Two cameras at different distances must present the model with the same animal."""
     flat = _synthetic_flat()
     zoomed = flat.copy()

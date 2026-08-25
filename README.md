@@ -14,7 +14,7 @@ in the repository.
 </p>
 <p align="center"><sub>One representative keypoint-MoSeq syllable per behavioral
 cluster, from the same verified sources as
-<a href="supplementary_media/Supplementary_Video_1_MoSeq_syllable_atlas_grid.mp4">Supplementary
+<a href="supplementary_media/Supplementary_Video_2_MoSeq_syllable_grid.mp4">Supplementary
 Video 1 (grid view)</a>.</sub></p>
 
 ## Quick Start
@@ -171,10 +171,11 @@ classifier in `classifier/legacy_shap/`, not from
 `supplementary_media/Supplementary_Video_1_MoSeq_syllable_atlas.mp4` is a
 submission-ready H.264 atlas of representative pose-overlaid syllables and
 canonical skeleton trajectories, and
-`Supplementary_Video_1_MoSeq_syllable_atlas_grid.mp4` is its grid view: all 25
+`Supplementary_Video_2_MoSeq_syllable_grid.mp4` is Supplementary Video 2,
+its grid view: all 25
 cluster-mapped syllables playing simultaneously, ordered and color-coded by
 behavioral cluster. The editable submission legend is in `report/SIGuide.docx`,
-and `Supplementary_Video_1_source_index.csv` records the source hashes both
+and `Supplementary_Video_source_index.csv` records the source hashes both
 videos are verified against. Regenerate them from the archived keypoint-MoSeq
 outputs with:
 
@@ -182,7 +183,7 @@ outputs with:
 python scripts/generate_supplementary_video_1.py \
   --clip-dir PATH/TO/video_clips \
   --skeleton-gif PATH/TO/skeleton_trajectories.gif
-python scripts/generate_supplementary_video_1_grid.py \
+python scripts/generate_supplementary_video_2_grid.py \
   --clip-dir PATH/TO/video_clips
 ```
 

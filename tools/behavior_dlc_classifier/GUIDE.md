@@ -499,9 +499,10 @@ Training on your own labeled data usually beats both.
 
 ## What the seven-behavior labels are worth
 
-Everything above concerns freezing. The seven-behavior classifier is a different
-model with a different history, and it is the weaker half of the tool. Use it to
-look at a recording; do not use it to make a measurement.
+Everything above concerns the legacy binary-freezing workflow. The seven-behavior
+classifier is a different model: it learns hand-curated MoSeq behavior labels
+from engineered DeepLabCut keypoint features. It is a supervised DLC
+approximation of that taxonomy, not a rerun of MoSeq on a new video.
 
 **It has never been validated on an animal it did not train on.** The reported
 cross-validated accuracy is 0.627 across eight classes, but the folds were drawn
@@ -516,10 +517,10 @@ against roughly 4,000 for every other class, and the model does not predict it
 on any bundled recording. A recording with no Grooming in the output is not
 evidence that the animal did not groom.
 
-**Freezing is over-called.** On the three demo videos with manual scoring, the
-behavior model calls freezing on 31%, 80% and 95% of frames where a human scored
-9%, 48% and 86%. This is why the freezing model, not this one, decides Freezing
-in the final output.
+**Freezing was over-called on the three old demo videos.** The unified model
+called it on 31%, 80% and 95% of frames where a human scored 9%, 48% and 86%.
+Those videos are also far outside the archived camera scale, so this is a domain
+failure warning, not a calibrated estimate of target performance.
 
 **`Unassigned` is not an uncertainty flag.** At training it covered MoSeq
 syllables outside the seven curated clusters; at inference it marks frames where
@@ -527,16 +528,16 @@ too few body parts were tracked well enough to judge. A confident wrong answer
 is reported as a behavior, not as `Unassigned`. Those frames are left blank in
 the ethograms.
 
-Two rules make the labels honest to read:
+BehaviorTrack keeps the labels mechanically auditable:
 
-- The number beside a behavior is that behavior's own probability. Where the
-  freezing model overrode the label, it is the freezing model's probability;
-  where tracking failed, it is blank.
-- Every behavior in the output is there because the model predicted it. Earlier
-  versions layered hand-tuned rules on top — a jump rule, a climbing rule, and a
+- The number beside a behavior is that behavior's own probability. Where
+  tracking failed it is blank.
+- One model decides all seven behaviors, including Freezing. Earlier versions
+  layered hand-tuned rules on top — a jump rule, a climbing rule, and a
   fallback that called anything left over Locomotion. The rules used
   per-recording percentiles, so they labelled a fixed fraction of every video as
-  Jump whether or not a jump occurred. They are gone.
+  Jump whether or not a jump occurred. Those rules, the separate freezing
+  override, and canonical smoothing are absent from BehaviorTrack.
 
 The tool now refuses tracking files whose body parts differ from the bundled
 network's, rather than filling the missing ones with zeros and predicting anyway.
@@ -569,23 +570,24 @@ What is not shared, and should not be presented as if it were:
   trained on manual scoring of the demo videos. The two agree on what freezing
   is; they are not the same instrument.
 
-Because the coordinates are rescaled to the training body size (below), a camera
-mounted differently from ours will still work. A genuinely different arena,
-species or tracking network will not, and the tool cannot tell you that it has
-stopped working.
+Because the model uses raw pixel distances and velocities, camera scale is part
+of its domain. BehaviorTrack compares median nose-tail length with the archived
+training rows and writes the warning into provenance, but only manual target
+labels can establish that a new camera works.
 
 ### The coordinate frame
 
-The behavior model was trained on coordinates that had been centred on the animal
-and rotated so the tail-to-nose axis pointed the same way in every frame, which
-removes where the animal was in the arena and which way it was facing. The tool
-applies exactly that transform before predicting.
+The archived SHAP input matrix makes this testable rather than inferred. For each
+frame, training subtracted the mean x/y position of all 14 body parts. It retained
+the nose-tail orientation angle and raw pixel scale: it did not rotate the animal
+onto a common heading and did not normalize body length. BehaviorTrack now uses
+that exact transform. Lagged and five-frame rolling columns are reconstructed
+from the same centered coordinates, while pairwise distances, angles, velocities,
+accelerations, and PCA-derived body geometry retain their archived definitions.
 
-It adds one step the training did not have. The training recordings were all from
-one camera, in which a mouse measured about 244 pixels nose to tail; in the demo
-videos the same animal is about 54. Coordinates are therefore rescaled so the
-animal is the size the model was trained on. On a camera matching the original
-setup the factor is 1 and nothing changes.
+The central 90% of archived nose-tail lengths is about 162--333 px (median
+243 px). A recording outside that range is not rescaled silently; it is marked
+out of domain so it can be reshot, calibrated, or validated explicitly.
 
 ---
 
