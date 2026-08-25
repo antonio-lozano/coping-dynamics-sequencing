@@ -38,7 +38,7 @@ jobs:
           mkdir -p _site/media
           cp -r docs/web/. _site/
           cp docs/media/*.gif _site/media/
-          cp supplementary_media/Supplementary_Video_1_MoSeq_syllable_atlas_grid.mp4 _site/media/
+          cp supplementary_media/Supplementary_Video_2_MoSeq_syllable_grid.mp4 _site/media/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

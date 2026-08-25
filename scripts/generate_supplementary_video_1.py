@@ -24,7 +24,7 @@ from typing import Iterable
 
 import imageio_ffmpeg
 import numpy as np
-from PIL import Image, ImageDraw, ImageFont, ImageOps, ImageSequence
+from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps, ImageSequence
 from scipy import ndimage
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -32,11 +32,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = ROOT / "supplementary_media"
 OUTPUT_VIDEO = OUTPUT_DIR / "Supplementary_Video_1_MoSeq_syllable_atlas.mp4"
-OUTPUT_INDEX = OUTPUT_DIR / "Supplementary_Video_1_source_index.csv"
+OUTPUT_INDEX = OUTPUT_DIR / "Supplementary_Video_source_index.csv"
 
 FPS = 25
 SIZE = (960, 540)
-FRAMES_PER_SYLLABLE = 60  # Three complete 20-frame representative occurrences.
+FRAMES_PER_OCCURRENCE = 20  # length of one archived representative occurrence
+OCCURRENCES_PER_SYLLABLE = 3
+FRAMES_PER_SYLLABLE = OCCURRENCES_PER_SYLLABLE * FRAMES_PER_OCCURRENCE
 TITLE_FRAMES = 75
 
 # The earliest S34 examples include the animal leaving the camera field. Use
@@ -51,6 +53,14 @@ SKELETON_COUNT = 35  # syllables 0-34 drawn in the atlas
 SKELETON_ROW_GAP = 60  # px between atlas rows
 SKELETON_PAD = 10  # px of breathing room around each pose
 SKELETON_DILATE = 3  # px, keeps the anti-aliased rim and black outline
+
+# Skeleton rendering. The atlas cells are small, so the panel upscales them;
+# these control how much of the source's anti-aliasing survives that upscale.
+SKELETON_PAGE_WHITE = 246  # atlas page level that must come out fully clear
+SKELETON_INK_BLACK = 40  # level at or below which a pixel is fully opaque ink
+SKELETON_FEATHER = 0.7  # px, softens the component gate so it is not stepped
+SKELETON_SUPERSAMPLE = 2  # sharpen above target size, then average back down
+SKELETON_UNSHARP = (1.6, 110)  # (radius px, percent) line-art edge restoration
 
 CLUSTERS: list[tuple[str, list[int]]] = [
     ("Freeze", [0, 28]),
@@ -183,20 +193,67 @@ def load_skeleton_cells(path: Path) -> dict[int, list[Image.Image]]:
         right = min(stack.shape[2], sl[1].stop + pad)
         window = mask[top:bottom, left:right]
 
+        # A hard gate stair-steps the cell edge, which the panel upscale then
+        # magnifies. Blurring the dilated mask by under a pixel softens it; the
+        # dilation keeps that soft boundary out over blank page, so no real ink
+        # loses opacity.
+        gate = ndimage.gaussian_filter(window.astype(np.float32), sigma=SKELETON_FEATHER)
+        gate = np.clip(gate, 0.0, 1.0)[:, :, None]
+
         clips: list[Image.Image] = []
         for frame in frames:
             cell = frame.crop((left, top, right, bottom)).convert("RGBA")
-            data = np.asarray(cell).astype(np.int16)
+            data = np.asarray(cell).astype(np.float32)
             # The page is white; turn it into alpha so the panel background of
             # the finished video shows through instead of a grey-white square.
+            # The ramp spans the atlas's full page-to-ink range rather than
+            # multiplying the difference up: the old x6 gain saturated every
+            # pixel above lightness 208, throwing away the anti-aliased rim
+            # that the upscale needs in order to draw a smooth limb.
             lightness = data[:, :, :3].min(axis=2)
-            alpha = np.clip((250 - lightness) * 6, 0, 255)
-            alpha = np.where(window, alpha, 0).astype(np.uint8)
+            span = SKELETON_PAGE_WHITE - SKELETON_INK_BLACK
+            alpha = np.clip((SKELETON_PAGE_WHITE - lightness) / span, 0.0, 1.0)
             out = data.copy()
-            out[:, :, 3] = alpha
-            clips.append(Image.fromarray(out.astype(np.uint8), "RGBA"))
+            out[:, :, 3] = (alpha[:, :, None] * gate)[:, :, 0] * 255.0
+            clips.append(Image.fromarray(np.clip(out, 0, 255).astype(np.uint8), "RGBA"))
         cells[syllable] = clips
     return cells
+
+
+def scale_skeleton(skeleton: Image.Image, box: tuple[int, int]) -> Image.Image:
+    """Fit an atlas cell to the panel without haloing or smearing it.
+
+    Two things went wrong with a plain ``ImageOps.contain``. Pillow resizes the
+    colour channels independently of alpha, so the white page still sitting
+    under every transparent pixel bled into the rim of each limb as a pale
+    halo; premultiplying first stops transparent pixels from contributing any
+    colour. And the cells are smaller than the panel, so fitting them is an
+    upscale, which softens line art. Sharpening above the target size and
+    averaging back down restores the edges while keeping the unsharp pass's
+    ringing below the final pixel grid.
+    """
+    data = np.asarray(skeleton, dtype=np.float32)
+    alpha = data[:, :, 3:4] / 255.0
+    premultiplied = np.concatenate([data[:, :, :3] * alpha, data[:, :, 3:4]], axis=2)
+    source = Image.fromarray(np.clip(premultiplied, 0, 255).astype(np.uint8), "RGBA")
+
+    oversized = (box[0] * SKELETON_SUPERSAMPLE, box[1] * SKELETON_SUPERSAMPLE)
+    fitted = ImageOps.contain(source, oversized, Image.Resampling.LANCZOS)
+    radius, percent = SKELETON_UNSHARP
+    fitted = fitted.filter(ImageFilter.UnsharpMask(radius=radius, percent=percent, threshold=0))
+    fitted = fitted.resize(
+        (
+            max(1, fitted.width // SKELETON_SUPERSAMPLE),
+            max(1, fitted.height // SKELETON_SUPERSAMPLE),
+        ),
+        Image.Resampling.LANCZOS,
+    )
+
+    out = np.asarray(fitted, dtype=np.float32)
+    opacity = np.clip(out[:, :, 3:4], 0.0, 255.0)
+    colour = np.where(opacity > 0.0, out[:, :, :3] / np.maximum(opacity / 255.0, 1e-6), 0.0)
+    recovered = np.concatenate([colour, opacity], axis=2)
+    return Image.fromarray(np.clip(recovered, 0, 255).astype(np.uint8), "RGBA")
 
 
 def centered_text(draw: ImageDraw.ImageDraw, y: int, text: str, text_font, fill: str) -> None:
@@ -205,16 +262,17 @@ def centered_text(draw: ImageDraw.ImageDraw, y: int, text: str, text_font, fill:
 
 
 def title_frame() -> Image.Image:
+    """Number and title only, optically centred on the card.
+
+    The card used to carry two further lines naming what the panels show. Every
+    syllable frame already captions its own panels, so the lines only delayed
+    the atlas; dropping them leaves the standing head, and the remaining pair is
+    re-centred rather than left hanging in the upper third.
+    """
     image = Image.new("RGB", SIZE, "#FAFAFA")
     draw = ImageDraw.Draw(image)
-    centered_text(draw, 112, "Supplementary Video 1", FONTS["subtitle"], "#555555")
-    centered_text(draw, 168, "MoSeq syllable atlas", FONTS["title"], "#303030")
-    centered_text(
-        draw, 225, "Representative pose-overlaid occurrences and", FONTS["subtitle"], "#4A4A4A"
-    )
-    centered_text(
-        draw, 259, "canonical 14-point skeleton trajectories", FONTS["subtitle"], "#4A4A4A"
-    )
+    centered_text(draw, 218, "Supplementary Video 1", FONTS["subtitle"], "#555555")
+    centered_text(draw, 274, "MoSeq syllable atlas", FONTS["title"], "#303030")
     return image
 
 
@@ -246,10 +304,13 @@ def render_syllable_frame(
     label = "Derived class 111" if syllable == 111 else f"MoSeq syllable {syllable}"
     draw.text((550, 95), label, font=FONTS["syllable"], fill="#303030")
 
-    occurrence = frame_index // 20 + 1
+    # "Representative occurrence 1" read as though each occurrence were its own
+    # syllable. Counting them out against the total says what they are: three
+    # instances of the single syllable named directly above.
+    occurrence = frame_index // FRAMES_PER_OCCURRENCE + 1
     draw.text(
         (552, 147),
-        f"Representative occurrence {occurrence}",
+        f"Representative occurrence {occurrence} of {OCCURRENCES_PER_SYLLABLE}",
         font=FONTS["small"],
         fill="#666666",
     )
@@ -260,7 +321,7 @@ def render_syllable_frame(
         # video background instead of on a white tile.
         panel = (550, 180, 940, 455)
         box = (panel[2] - panel[0], panel[3] - panel[1])
-        skeleton_fit = ImageOps.contain(skeleton, box, Image.Resampling.LANCZOS)
+        skeleton_fit = scale_skeleton(skeleton, box)
         x = panel[0] + (box[0] - skeleton_fit.width) // 2
         y = panel[1] + (box[1] - skeleton_fit.height) // 2
         canvas.paste(skeleton_fit, (x, y), skeleton_fit)
@@ -328,7 +389,11 @@ def main() -> None:
                 source_frames = []
                 for occurrence_index in selected_occurrences:
                     source_frames.extend(
-                        read_video_segment(clip, 20, start_frame=occurrence_index * 20)
+                        read_video_segment(
+                            clip,
+                            FRAMES_PER_OCCURRENCE,
+                            start_frame=occurrence_index * FRAMES_PER_OCCURRENCE,
+                        )
                     )
                 occurrence_record = ";".join(str(index + 1) for index in selected_occurrences)
             else:
@@ -341,8 +406,15 @@ def main() -> None:
                 source = source_frames[frame_index % len(source_frames)]
                 skeleton = None
                 if skeleton_frames:
+                    # One complete pass through the canonical trajectory per
+                    # occurrence, restarted on the occurrence boundary. Pacing
+                    # the loop off FPS instead ran it over 25 frames against a
+                    # 20-frame occurrence, so occurrences 2 and 3 opened part
+                    # way through the cycle and read as different syllables
+                    # from occurrence 1.
+                    phase = frame_index % FRAMES_PER_OCCURRENCE
                     skeleton = skeleton_frames[
-                        (frame_index * len(skeleton_frames) // FPS) % len(skeleton_frames)
+                        phase * len(skeleton_frames) // FRAMES_PER_OCCURRENCE
                     ]
                 writer.send(
                     np.asarray(

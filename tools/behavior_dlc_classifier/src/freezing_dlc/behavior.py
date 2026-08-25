@@ -113,22 +113,63 @@ def load_behavior_model(model_path: Path, label_encoder_path: Path) -> LoadedBeh
     return LoadedBehaviorModel(classifier, label_encoder, classes, feature_names)
 
 
-#: Median nose-to-tail distance, in pixels, of the recordings the behavior model
-#: was trained on (n = 26,380 frames). Coordinates are rescaled to this so that a
-#: camera mounted at a different height or distance still presents the model with
-#: an animal the size it was trained on.
+#: Median nose-to-tail distance in the archived training-feature sample.  This is
+#: a domain-QC reference, not a licence to silently rescale a new recording.  The
+#: model was trained on raw pixel scale and any scale transfer must be validated
+#: on labelled target recordings.
 TRAINING_BODY_LENGTH_PX = 243.63
 
 
+def training_coordinate_frame(df_flat: pd.DataFrame) -> pd.DataFrame:
+    """Reproduce the coordinate transform present in the archived training rows.
+
+    The 2,638 original feature rows stored in
+    ``classifier/legacy_shap/shap_values.npz`` provide a numerical record of the
+    model input.  In every row (and in each of its five lags), the mean x and y
+    coordinate across the 14 markers is zero.  Nose-to-tail orientation remains
+    unconstrained and nose-to-tail length remains in pixels.  Training therefore
+    centred each frame, but did not rotate or scale it.
+
+    Keeping this transform small is important: orientation and raw pixel
+    distances are themselves model features.  Rotating or normalising them after
+    training changes the meaning of the existing model rather than making it
+    invariant.
+    """
+    coords = [
+        bp
+        for bp in BEHAVIOR_BODYPARTS
+        if f"{bp}_x" in df_flat.columns and f"{bp}_y" in df_flat.columns
+    ]
+    if not coords:
+        return df_flat.copy()
+
+    x = np.column_stack(
+        [pd.to_numeric(df_flat[f"{bp}_x"], errors="coerce") for bp in coords]
+    ).astype(float)
+    y = np.column_stack(
+        [pd.to_numeric(df_flat[f"{bp}_y"], errors="coerce") for bp in coords]
+    ).astype(float)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        centroid_x = np.nanmean(x, axis=1)
+        centroid_y = np.nanmean(y, axis=1)
+
+    out = df_flat.copy()
+    for i, bp in enumerate(coords):
+        out[f"{bp}_x"] = x[:, i] - centroid_x
+        out[f"{bp}_y"] = y[:, i] - centroid_y
+    return out
+
+
 def egocentric_align(df_flat: pd.DataFrame) -> pd.DataFrame:
-    """Put the tracking into the coordinate frame the bundled model was trained in.
+    """Experimental rotation/scale transfer transform.
 
     Each frame is centred on the animal, rotated so the tail-to-nose axis lies on
-    +x, and scaled so the animal is the size the training recordings had. The
-    first two steps reproduce the training preprocessing exactly; the third
-    compensates for the camera setup, which the training data never varied.
-    Frames without a usable nose or tail cannot be oriented and are left as NaN
-    for the caller to interpolate.
+    +x, and scaled to the median training nose-to-tail length.  This can be useful
+    when developing a *new model trained with the same transform*, but it does not
+    reproduce the bundled model's archived inputs.  It is retained only for
+    explicit transfer experiments; normal inference uses
+    :func:`training_coordinate_frame`.
     """
     coords = [bp for bp in BEHAVIOR_BODYPARTS if f"{bp}_x" in df_flat.columns and f"{bp}_y" in df_flat.columns]
     if not {"nose", "tail"}.issubset(coords):
@@ -164,8 +205,21 @@ def egocentric_align(df_flat: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def build_behavior_feature_set(df_flat: pd.DataFrame, feature_names: Iterable[str] | None = None, fps: float = 25.0, window: int = 5) -> pd.DataFrame:
-    """Generate the 719-frame behavior feature set used by the SHAP/XGBoost model."""
+def build_behavior_feature_set(
+    df_flat: pd.DataFrame,
+    feature_names: Iterable[str] | None = None,
+    fps: float = 25.0,
+    window: int = 5,
+    *,
+    coordinate_mode: str = "training_center",
+) -> pd.DataFrame:
+    """Generate the 719-frame behavior feature set used by the SHAP/XGBoost model.
+
+    ``training_center`` is the only mode that reproduces the archived model
+    inputs. ``experimental_egocentric_scaled`` is available for controlled
+    transfer experiments and must not be presented as validated inference with
+    the bundled model.
+    """
     missing = [bp for bp in BEHAVIOR_BODYPARTS if f"{bp}_x" not in df_flat.columns or f"{bp}_y" not in df_flat.columns]
     if missing:
         raise ValueError(
@@ -174,7 +228,15 @@ def build_behavior_feature_set(df_flat: pd.DataFrame, feature_names: Iterable[st
             f"Expected all of: {', '.join(BEHAVIOR_BODYPARTS)}."
         )
 
-    df_flat = egocentric_align(df_flat)
+    if coordinate_mode == "training_center":
+        df_flat = training_coordinate_frame(df_flat)
+    elif coordinate_mode == "experimental_egocentric_scaled":
+        df_flat = egocentric_align(df_flat)
+    else:
+        raise ValueError(
+            "coordinate_mode must be 'training_center' or "
+            "'experimental_egocentric_scaled'."
+        )
     index = df_flat.index
     data: dict[str, np.ndarray] = {}
 
@@ -302,13 +364,12 @@ def refine_behavior_labels(
     freezing_pred: np.ndarray | None = None,
     freezing_prob: np.ndarray | None = None,
 ) -> tuple[np.ndarray, np.ndarray, pd.DataFrame]:
-    """Apply the two overrides that outrank the behavior model's own prediction.
+    """Apply tracking QC and, only when supplied, a legacy freezing override.
 
-    The model's label stands on its own everywhere except two cases: the
-    separately validated freezing classifier decides Freezing, and frames whose
-    tracking is too poor to judge become `Unassigned`. Nothing else is
-    second-guessed, so a behavior is only ever reported because the model
-    predicted it.
+    BehaviorTrack passes no freezing arrays: one model therefore decides all
+    seven behaviors and only unusable tracking becomes ``Unassigned``. The
+    optional arrays remain for the older binary-freezing front end, whose output
+    policy is intentionally separate from BehaviorTrack's unified classifier.
     """
     n = min(len(raw_labels), len(prob_df), len(df_flat))
     raw = np.asarray(raw_labels[:n], dtype=str)

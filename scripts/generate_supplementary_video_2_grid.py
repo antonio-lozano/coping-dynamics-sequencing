@@ -1,15 +1,15 @@
-"""Build the grid version of Supplementary Video 1.
+"""Build Supplementary Video 2, the grid view of the syllable atlas.
 
 All 25 cluster-mapped syllables play simultaneously in a 5 x 5 grid so the
 whole behavioral repertoire can be compared at a glance, complementing the
 sequential atlas. The sources are the same archived clips as the sequential
 video, and every clip is verified against the SHA-256 recorded in
-``supplementary_media/Supplementary_Video_1_source_index.csv`` before use, so
+``supplementary_media/Supplementary_Video_source_index.csv`` before use, so
 the shipped index stays the single provenance record for both videos.
 
 Run with the archived clip directory::
 
-    python scripts/generate_supplementary_video_1_grid.py --clip-dir PATH/TO/video_clips
+    python scripts/generate_supplementary_video_2_grid.py --clip-dir PATH/TO/video_clips
 """
 
 from __future__ import annotations
@@ -29,6 +29,7 @@ from generate_supplementary_video_1 import (  # noqa: E402
     CLUSTERS,
     COLORS,
     FPS,
+    FRAMES_PER_OCCURRENCE,
     FRAMES_PER_SYLLABLE,
     OCCURRENCE_SELECTIONS,
     OUTPUT_INDEX,
@@ -38,7 +39,7 @@ from generate_supplementary_video_1 import (  # noqa: E402
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT_VIDEO = ROOT / "supplementary_media/Supplementary_Video_1_MoSeq_syllable_atlas_grid.mp4"
+OUTPUT_VIDEO = ROOT / "supplementary_media/Supplementary_Video_2_MoSeq_syllable_grid.mp4"
 
 SIZE = (1920, 1080)
 BG = "#0C0E10"
@@ -69,6 +70,7 @@ F = {
     "body": font(21),
     "legend": font(22, True),
     "count": font(20),
+    "members": font(18),
     "label": font(18, True),
     "small": font(17),
 }
@@ -91,7 +93,13 @@ def load_tiles(clip_dir: Path) -> list[list[Image.Image]]:
         if selections:
             frames: list[Image.Image] = []
             for occurrence in selections:
-                frames.extend(read_video_segment(clip, 20, start_frame=occurrence * 20))
+                frames.extend(
+                    read_video_segment(
+                        clip,
+                        FRAMES_PER_OCCURRENCE,
+                        start_frame=occurrence * FRAMES_PER_OCCURRENCE,
+                    )
+                )
         else:
             frames = read_video_segment(clip, FRAMES_PER_SYLLABLE)
         tiles.append([f.resize((CELL, CELL), Image.Resampling.LANCZOS) for f in frames])
@@ -102,27 +110,25 @@ def build_background() -> Image.Image:
     image = Image.new("RGB", SIZE, BG)
     draw = ImageDraw.Draw(image)
     x = 48
-    draw.text((x, 64), "SUPPLEMENTARY VIDEO 1  ·  GRID VIEW", font=F["eyebrow"], fill=MUTED)
+    draw.text((x, 64), "SUPPLEMENTARY VIDEO 2", font=F["eyebrow"], fill=MUTED)
     draw.text((x, 106), "Keypoint-MoSeq", font=F["title"], fill=INK)
     draw.text((x, 158), "syllable atlas", font=F["title"], fill=INK)
     draw.line((x, 236, PANEL_W - 48, 236), fill=RULE, width=2)
-    for i, line in enumerate(
-        (
-            "All 25 cluster-mapped syllables playing",
-            "simultaneously; each tile loops three",
-            "representative pose-overlaid occurrences.",
-        )
-    ):
-        draw.text((x, 258 + i * 29), line, font=F["body"], fill=MUTED)
 
-    y = 380
+    # The three-line description of what the grid shows was dropped; the title
+    # above and the labelled tiles beside it already say it. The legend moves
+    # up into the space rather than leaving the rule stranded.
+    #
+    # Each cluster now names its member syllables instead of counting them.
+    # "n = 8" said how many tiles carried the colour but not which, so the
+    # legend could not be read against the grid; the bracketed list can.
+    y = 286
     for cluster, syllables in CLUSTERS:
         draw.rounded_rectangle((x, y + 3, x + 22, y + 25), radius=5, fill=COLORS[cluster])
         draw.text((x + 36, y), cluster, font=F["legend"], fill=INK)
-        count = f"n = {len(syllables)}"
-        box = draw.textbbox((0, 0), count, font=F["count"])
-        draw.text((PANEL_W - 48 - (box[2] - box[0]), y + 2), count, font=F["count"], fill=MUTED)
-        y += 46
+        members = "[" + ", ".join(str(syllable) for syllable in syllables) + "]"
+        draw.text((x + 36, y + 26), members, font=F["members"], fill=MUTED)
+        y += 64
 
     y = 920
     for line in (
@@ -130,7 +136,7 @@ def build_background() -> Image.Image:
         "overlap rather than fitted by keypoint-MoSeq.",
         "",
         "Sources and SHA-256 provenance:",
-        "Supplementary_Video_1_source_index.csv",
+        "Supplementary_Video_source_index.csv",
     ):
         draw.text((x, y), line, font=F["small"], fill=MUTED)
         y += 26
@@ -172,14 +178,11 @@ def title_card() -> Image.Image:
         box = draw.textbbox((0, 0), text, font=text_font)
         draw.text(((SIZE[0] - (box[2] - box[0])) / 2, y), text, font=text_font, fill=fill)
 
-    centered(380, "SUPPLEMENTARY VIDEO 1  ·  GRID VIEW", F["eyebrow"], MUTED)
-    centered(424, "Keypoint-MoSeq syllable atlas", F["hero"], INK)
-    centered(
-        508,
-        "25 cluster-mapped syllables · three representative occurrences each",
-        F["body"],
-        MUTED,
-    )
+    # Number and title only, matching the sequential atlas's card: the line
+    # describing the contents was dropped, and the block re-centred so the
+    # cluster key does not sit adrift below it.
+    centered(448, "SUPPLEMENTARY VIDEO 2", F["eyebrow"], MUTED)
+    centered(492, "Keypoint-MoSeq syllable atlas", F["hero"], INK)
 
     widths = []
     for cluster, _ in CLUSTERS:
@@ -187,8 +190,8 @@ def title_card() -> Image.Image:
         widths.append(30 + (box[2] - box[0]))
     x = (SIZE[0] - (sum(widths) + 36 * (len(CLUSTERS) - 1))) / 2
     for (cluster, _), width in zip(CLUSTERS, widths):
-        draw.rounded_rectangle((x, 586, x + 20, 606), radius=5, fill=COLORS[cluster])
-        draw.text((x + 30, 584), cluster, font=F["count"], fill=INK)
+        draw.rounded_rectangle((x, 614, x + 20, 634), radius=5, fill=COLORS[cluster])
+        draw.text((x + 30, 612), cluster, font=F["count"], fill=INK)
         x += width + 36
     return image
 

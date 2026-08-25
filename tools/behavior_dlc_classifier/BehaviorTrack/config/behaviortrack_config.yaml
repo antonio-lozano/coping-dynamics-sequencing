@@ -1,0 +1,77 @@
+# BehaviorTrack configuration
+#
+# Drives the GUI and analysis layer. The tracking engine (freezing_dlc) keeps its
+# own defaults in src/freezing_dlc/config.py; where a value below is left blank,
+# the engine's default is used and the GUI shows which file it resolved to.
+#
+# Paths may be absolute, or relative to the workspace root.
+
+project:
+  name: BehaviorTrack
+  # Blank means the BehaviorTrack folder itself. Point this at a cohort folder to
+  # keep videos and results outside the tool.
+  workspace_root: ""
+  # Where DeepLabCut lives: a folder made by "uv venv", a path to an interpreter,
+  # or a bare conda environment name. Blank means the bundled .venv-dlc beside
+  # the tool.
+  dlc_env: ""
+
+paths:
+  raw_videos: Data/Raw_Videos
+  results: Results
+
+video:
+  videotype: .mp4
+  fps: 25
+
+onboarding:
+  # Regex pulling the animal ID out of a filename, e.g. C5121 from
+  # "Trial 2_C5121.mp4". Blank disables ID parsing and every video is its own
+  # session.
+  # Single-quoted on purpose: YAML processes backslash escapes inside double
+  # quotes but not single ones, so '\d' survives as a regex either way.
+  animal_id_pattern: '[A-Za-z]\d{3,5}'
+  # Tokens marking a session type. A filename matching none of them is still
+  # analysed; it is just left without a session label.
+  filename_patterns:
+    - Hab
+    - Cond
+    - Test
+    - Ext
+
+tracking:
+  # Blank means the network bundled at models/dlc_project/. As of the
+  # iteration-1 install this resolves to snapshot-100000.
+  dlc_config: ""
+  # CLAHE contrast-equalises frames before tracking. On by default because the
+  # bundled network was trained on equalised frames.
+  run_clahe: true
+  # Applied when reading pose files back. The engine already filters at its own
+  # cutoff when it writes them; at 0.6 the engine's filtering governs. Pick one
+  # value and keep it fixed for a whole dataset.
+  likelihood_cutoff: 0.6
+
+features:
+  # The archived model contract fixes this at 5. Changing it requires retraining
+  # and a new feature-schema version, not merely changing inference settings.
+  behavior_window: 5
+
+models:
+  # The freezing model remains available only to the optional legacy retraining
+  # screen. Canonical seven-behavior inference does not use it.
+  freezing: ""
+  # Blank selects the archived MoSeq/DLC XGBoost artifact and its paired encoder.
+  behavior: ""
+  behavior_label_encoder: ""
+  # null means use the threshold stored in the model file.
+  threshold: null
+
+behaviors:
+  # Summary bin width, in seconds.
+  bin_sec: 30
+
+outputs:
+  make_annotated_videos: true
+  write_full_pose_csv: true
+  # Write one ethogram PNG per video alongside the CSVs.
+  write_ethograms: true

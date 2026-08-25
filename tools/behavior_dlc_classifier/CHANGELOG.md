@@ -1,5 +1,32 @@
 # Changelog
 
+## 2026-08-25 -- archived 719-feature contract recovered and target validation separated
+
+The archived SHAP bundle contains the exact 2,638 rows and 719 columns supplied
+to the seven-behavior XGBoost model. Numerical reconstruction showed that the
+2026-08-16 interpretation of its coordinate frame was wrong: training subtracted
+the per-frame pose centroid, but did **not** rotate the nose-tail axis and did
+**not** rescale body length. Seven-behavior results made with the rotation/scale
+transfer should be discarded.
+
+- The default feature builder now reproduces the archived coordinate, geometry,
+  lag, and five-frame rolling columns. Contract tests compare formulas directly
+  with the stored training rows.
+- BehaviorTrack uses one frozen 719-feature model for Jump, Climbing,
+  Locomotion, Turn, Grooming, Sniffing, and Freezing. It applies no percentile
+  rules, separate freezing override, or smoothing. Tracking failures alone become
+  `Unassigned`.
+- Every prediction records the model and encoder hashes, feature schema, policy,
+  and a camera-scale/domain audit. The demo pose is about 54 px nose-tail versus
+  243 px in training, so its behavior calls are explicitly marked out of domain.
+- Historical accuracy 0.627 came from pooled frame folds and is not an
+  animal/session-held-out result. BehaviorTrack now creates blinded annotation
+  templates and produces per-class and per-recording target-validation reports;
+  it does not silently promote agreement to independent validation.
+- DeepLabCut execution resumes analysis, filtering, and filtered tracked-video
+  creation independently. External videos remain in place, while results are
+  organized under an optional session level.
+
 ## 2026-08-24 -- The tracking network the paper used is now the one that ships
 
 The bundle carried iteration 0 of the DeepLabCut project (`snapshot-500000`),

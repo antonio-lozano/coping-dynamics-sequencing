@@ -355,21 +355,52 @@ def _run_dlc(
         _run_dlc_in_env(config_path, videos, videotype, work_dir, dlc_env, make_tracked_videos, log)
         return
 
-    video_strings = [str(v) for v in videos]
     cfg = str(config_path)
-    log("[dlc] Running DeepLabCut analyze_videos...")
-    deeplabcut.analyze_videos(cfg, video_strings, videotype=videotype, save_as_csv=True)
+    analyze = [video for video in videos if not _has_dlc_analysis(video)]
+    filtering = [video for video in videos if not _has_dlc_filtered(video)]
+    labeled = [video for video in videos if not _has_dlc_filtered_video(video)]
 
-    if make_tracked_videos:
-        log("[dlc] Creating unfiltered tracked videos...")
-        deeplabcut.create_labeled_video(cfg, video_strings, videotype=videotype, filtered=False)
+    if analyze:
+        log(f"[dlc] analyze_videos: {len(analyze)} missing recording(s)")
+        deeplabcut.analyze_videos(
+            cfg, [str(v) for v in analyze], videotype=videotype, save_as_csv=True
+        )
+    else:
+        log("[dlc] analyze_videos: reused for every recording")
 
-    log("[dlc] Filtering DLC predictions...")
-    deeplabcut.filterpredictions(cfg, video_strings, videotype=videotype, save_as_csv=True)
+    if filtering:
+        log(f"[dlc] filterpredictions: {len(filtering)} missing recording(s)")
+        deeplabcut.filterpredictions(
+            cfg, [str(v) for v in filtering], videotype=videotype, save_as_csv=True
+        )
+    else:
+        log("[dlc] filterpredictions: reused for every recording")
 
-    if make_tracked_videos:
-        log("[dlc] Creating filtered tracked videos...")
-        deeplabcut.create_labeled_video(cfg, video_strings, videotype=videotype, filtered=True)
+    if make_tracked_videos and labeled:
+        log(f"[dlc] filtered labeled videos: {len(labeled)} missing recording(s)")
+        deeplabcut.create_labeled_video(
+            cfg, [str(v) for v in labeled], videotype=videotype, filtered=True
+        )
+    elif make_tracked_videos:
+        log("[dlc] filtered labeled videos: reused for every recording")
+
+
+def _has_dlc_analysis(video: Path) -> bool:
+    return any("filtered" not in path.stem for path in video.parent.glob(f"{glob_escape(video.stem)}DLC*.h5"))
+
+
+def _has_dlc_filtered(video: Path) -> bool:
+    stem = glob_escape(video.stem)
+    return any(video.parent.glob(f"{stem}DLC*filtered.h5")) and any(
+        video.parent.glob(f"{stem}DLC*filtered.csv")
+    )
+
+
+def _has_dlc_filtered_video(video: Path) -> bool:
+    stem = glob_escape(video.stem)
+    return any(video.parent.glob(f"{stem}*filtered_labeled.mp4")) or any(
+        video.parent.glob(f"{stem}*filtered_labeled.avi")
+    )
 
 
 def _run_dlc_in_env(
@@ -521,8 +552,28 @@ def _conda_executable() -> str:
 _DLC_RUNNER_SCRIPT = r'''
 import json
 import sys
+from pathlib import Path
 
 import deeplabcut
+
+
+def has_analysis(video):
+    path = Path(video)
+    return any("filtered" not in item.stem for item in path.parent.glob(path.stem + "DLC*.h5"))
+
+
+def has_filtered(video):
+    path = Path(video)
+    return any(path.parent.glob(path.stem + "DLC*filtered.h5")) and any(
+        path.parent.glob(path.stem + "DLC*filtered.csv")
+    )
+
+
+def has_filtered_video(video):
+    path = Path(video)
+    return any(path.parent.glob(path.stem + "*filtered_labeled.mp4")) or any(
+        path.parent.glob(path.stem + "*filtered_labeled.avi")
+    )
 
 
 def main():
@@ -533,19 +584,22 @@ def main():
     videotype = job["videotype"]
     make_tracked_videos = bool(job["make_tracked_videos"])
 
-    print("Running analyze_videos", flush=True)
-    deeplabcut.analyze_videos(cfg, videos, videotype=videotype, save_as_csv=True)
+    analyze = [video for video in videos if not has_analysis(video)]
+    filtering = [video for video in videos if not has_filtered(video)]
+    labeled = [video for video in videos if not has_filtered_video(video)]
+
+    print(f"analyze_videos: {len(analyze)} missing, {len(videos) - len(analyze)} reused", flush=True)
+    if analyze:
+        deeplabcut.analyze_videos(cfg, analyze, videotype=videotype, save_as_csv=True)
+
+    print(f"filterpredictions: {len(filtering)} missing, {len(videos) - len(filtering)} reused", flush=True)
+    if filtering:
+        deeplabcut.filterpredictions(cfg, filtering, videotype=videotype, save_as_csv=True)
 
     if make_tracked_videos:
-        print("Creating unfiltered tracked videos", flush=True)
-        deeplabcut.create_labeled_video(cfg, videos, videotype=videotype, filtered=False)
-
-    print("Filtering predictions", flush=True)
-    deeplabcut.filterpredictions(cfg, videos, videotype=videotype, save_as_csv=True)
-
-    if make_tracked_videos:
-        print("Creating filtered tracked videos", flush=True)
-        deeplabcut.create_labeled_video(cfg, videos, videotype=videotype, filtered=True)
+        print(f"filtered labeled videos: {len(labeled)} missing, {len(videos) - len(labeled)} reused", flush=True)
+        if labeled:
+            deeplabcut.create_labeled_video(cfg, labeled, videotype=videotype, filtered=True)
 
 
 if __name__ == "__main__":

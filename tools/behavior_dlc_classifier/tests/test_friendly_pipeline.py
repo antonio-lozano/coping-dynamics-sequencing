@@ -11,6 +11,32 @@ from freezing_dlc.friendly_pipeline import (
     run_friendly_pipeline,
 )
 
+
+def test_dlc_resume_helpers_track_each_stage_independently(tmp_path):
+    from freezing_dlc.friendly_pipeline import (
+        _has_dlc_analysis,
+        _has_dlc_filtered,
+        _has_dlc_filtered_video,
+    )
+
+    video = tmp_path / "session_mouse1.mp4"
+    video.write_bytes(b"")
+    assert not _has_dlc_analysis(video)
+    assert not _has_dlc_filtered(video)
+    assert not _has_dlc_filtered_video(video)
+
+    (tmp_path / "session_mouse1DLC_model_shuffle1_100000.h5").write_bytes(b"")
+    assert _has_dlc_analysis(video)
+    assert not _has_dlc_filtered(video)
+
+    (tmp_path / "session_mouse1DLC_model_shuffle1_100000filtered.h5").write_bytes(b"")
+    assert not _has_dlc_filtered(video)
+    (tmp_path / "session_mouse1DLC_model_shuffle1_100000filtered.csv").write_text("x")
+    assert _has_dlc_filtered(video)
+
+    (tmp_path / "session_mouse1DLC_model_shuffle1_100000filtered_labeled.mp4").write_bytes(b"")
+    assert _has_dlc_filtered_video(video)
+
 ROOT = Path(__file__).resolve().parents[1]
 DEMO_FILTERED_DIR = ROOT / "data" / "raw" / "DLC_filtered"
 COMPACT_MODEL = ROOT / "models" / "freezing_model.sav"
