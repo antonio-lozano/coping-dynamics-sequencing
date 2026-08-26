@@ -37,7 +37,12 @@ FORBIDDEN_TERMS = (
 # Never travels to the destination, and names local paths on purpose.
 # dlc_config_resolved.yaml is regenerated per machine and is gitignored; it
 # holds this machine's project path because that is exactly its job.
-EXCLUDED_NAMES = {"MOVE.md", "dlc_config_resolved.yaml"}
+EXCLUDED_NAMES = {
+    "MOVE.md",
+    "dlc_config_resolved.yaml",
+    # Written by Step 1 on the machine that runs the tool, and git-ignored.
+    "behaviortrack_session_context.yaml",
+}
 
 
 def iter_files() -> list[Path]:

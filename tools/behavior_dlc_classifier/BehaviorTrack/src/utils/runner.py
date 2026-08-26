@@ -13,18 +13,30 @@ and not others.
 
 from __future__ import annotations
 
+import inspect
 import queue
 import threading
 import tkinter as tk
 import traceback
 from pathlib import Path
-from tkinter import ttk
+from tkinter import messagebox, ttk
 from tkinter.scrolledtext import ScrolledText
 from typing import Callable
 
+from .steps import launch_step, next_step
 from .ui_style import COLORS, apply_dark_theme, open_in_file_explorer
 
 POLL_MS = 100
+
+
+class StepCancelled(BaseException):
+    """Raised inside the worker thread when Stop is pressed.
+
+    Derived from BaseException rather than Exception for the same reason
+    KeyboardInterrupt is: the engine wraps some calls in ``except Exception``,
+    and a deliberate stop must not be caught there and reported as a step that
+    failed on its own.
+    """
 
 
 class StepWindow(tk.Tk):
@@ -103,13 +115,30 @@ class StepWindow(tk.Tk):
 
         footer = ttk.Frame(shell)
         footer.grid(row=5, column=0, sticky="ew", pady=(12, 0))
-        footer.columnconfigure(1, weight=1)
+        footer.columnconfigure(2, weight=1)
         self.run_button = ttk.Button(footer, text=self.run_label, style="Accent.TButton", command=self.start)
         self.run_button.grid(row=0, column=0, sticky="w")
+        # Idle until there is something to stop, so the button never suggests
+        # it can interrupt a step that is not running.
+        self.stop_button = ttk.Button(footer, text="Stop", command=self.request_stop, state="disabled")
+        self.stop_button.grid(row=0, column=1, sticky="w", padx=(8, 0))
         self.progress = ttk.Progressbar(footer, mode="determinate", style="Horizontal.TProgressbar")
-        self.progress.grid(row=0, column=1, sticky="ew", padx=12)
-        ttk.Button(footer, text="Open results", command=self.open_results).grid(row=0, column=2, padx=(0, 8))
-        ttk.Button(footer, text="Close", command=self.destroy).grid(row=0, column=3)
+        self.progress.grid(row=0, column=2, sticky="ew", padx=12)
+        ttk.Button(footer, text="Open results", command=self.open_results).grid(row=0, column=3, padx=(0, 8))
+
+        # Walking the workflow without going back to the launcher each time.
+        # The launcher is a separate process and stays open behind these
+        # windows, so moving on closes only this step.
+        self.next_button: ttk.Button | None = None
+        following = next_step(self.step_script())
+        if following is not None:
+            number, _entry = following
+            self.next_button = ttk.Button(
+                footer, text=f"Next: step {number}", command=self.go_to_next_step
+            )
+            self.next_button.grid(row=0, column=4, padx=(0, 8))
+
+        ttk.Button(footer, text="Close", command=self.destroy).grid(row=0, column=5)
         ttk.Label(shell, textvariable=self.status_var, style="Muted.TLabel").grid(
             row=6, column=0, sticky="w", pady=(8, 0)
         )
@@ -132,6 +161,29 @@ class StepWindow(tk.Tk):
     def results_dir(self) -> Path:
         return self.config_path.parent
 
+    # ----------------------------------------------------------- navigation #
+
+    def step_script(self) -> str:
+        """Filename of the module this window is defined in.
+
+        Each step window lives in the ``bh_*.py`` the launcher starts, so the
+        defining module names the step. Deriving it beats a class attribute
+        every subclass has to remember to set and that nothing checks.
+        """
+        return Path(inspect.getfile(type(self))).name
+
+    def go_to_next_step(self) -> None:
+        following = next_step(self.step_script())
+        if following is None:
+            return
+        _number, entry = following
+        try:
+            launch_step(entry[3], self.config_path)
+        except (OSError, FileNotFoundError) as exc:
+            messagebox.showerror("BehaviorTrack", f"Could not open the next step:\n{exc}")
+            return
+        self.destroy()
+
     # -------------------------------------------------------------- running #
 
     def start(self) -> None:
@@ -142,6 +194,7 @@ class StepWindow(tk.Tk):
         self.log_widget.configure(state="disabled")
         self._cancel.clear()
         self.run_button.configure(state="disabled")
+        self.stop_button.configure(state="normal")
         self.status_var.set("Working...")
         self.progress.configure(mode="indeterminate")
         self.progress.start(12)
@@ -150,6 +203,9 @@ class StepWindow(tk.Tk):
             try:
                 message = self.work(self.log)
                 self._queue.put(("done", message or "Finished."))
+            except StepCancelled:
+                # Asked for, so it is not a failure and gets no traceback.
+                self._queue.put(("stopped", "Stopped."))
             except Exception as exc:  # surfaced in the log, not a silent stop
                 self._queue.put(("log", traceback.format_exc().rstrip()))
                 self._queue.put(("failed", str(exc)))
@@ -158,14 +214,31 @@ class StepWindow(tk.Tk):
         self._worker.start()
 
     def log(self, message: str) -> None:
-        """Thread-safe: append to the queue the UI drains."""
+        """Thread-safe: append to the queue the UI drains.
+
+        Also the cancellation point. Every long running loop reports progress
+        through this callback - once per recording for CLAHE, once per line of
+        DeepLabCut's own output - so raising here stops the work within moments
+        without threading a stop flag through every engine signature.
+        """
+        if self._cancel.is_set():
+            raise StepCancelled()
         self._queue.put(("log", str(message)))
 
     def set_progress(self, done: int, total: int) -> None:
         self._queue.put(("progress", (done, total)))
 
     def cancelled(self) -> bool:
+        """For work() bodies that want to break out at their own checkpoints."""
         return self._cancel.is_set()
+
+    def request_stop(self) -> None:
+        """Ask the running step to stop at its next progress report."""
+        if not (self._worker and self._worker.is_alive()):
+            return
+        self._cancel.set()
+        self.stop_button.configure(state="disabled")
+        self.status_var.set("Stopping...")
 
     def _drain(self) -> None:
         try:
@@ -180,11 +253,17 @@ class StepWindow(tk.Tk):
                     done, total = payload  # type: ignore[misc]
                     self.progress.stop()
                     self.progress.configure(mode="determinate", maximum=max(1, total), value=done)
-                elif kind in {"done", "failed"}:
+                elif kind in {"done", "failed", "stopped"}:
                     self.progress.stop()
                     self.progress.configure(mode="determinate", value=0)
                     self.run_button.configure(state="normal")
+                    self.stop_button.configure(state="disabled")
                     self.status_var.set(str(payload))
+                    # Green the way on once the work lands, so the next thing
+                    # to press is obvious. Styled here rather than in
+                    # _on_finished, which subclasses override.
+                    if kind == "done" and self.next_button is not None:
+                        self.next_button.configure(style="Good.TButton")
                     self._on_finished(kind == "done")
         except queue.Empty:
             pass

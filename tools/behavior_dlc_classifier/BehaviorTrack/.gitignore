@@ -1,5 +1,7 @@
 Data/
 Results/
+# Per-machine Step 1 selections, absolute paths and all.
+behaviortrack_session_context.yaml
 __pycache__/
 *.pyc
 

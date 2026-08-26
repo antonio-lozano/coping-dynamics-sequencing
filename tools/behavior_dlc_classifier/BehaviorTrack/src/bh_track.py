@@ -9,7 +9,7 @@ but beside ``dlc-models`` makes it report the network as missing. All of that is
 already solved in ``freezing_dlc.friendly_pipeline``; a second copy here is
 exactly the "hand-replica that silently drifts" the integration plan warns about,
 so the private helpers are imported on purpose. The coupling is named in
-BehaviorTrack/README.md.
+BehaviorTrack/GUIDE.md.
 
 Recordings that already have tracking beside them are skipped unless you ask for
 a re-run, because tracking is the slow step.
@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import sys
 import tkinter as tk
+from glob import escape as glob_escape
 from pathlib import Path
 from shutil import copy2
 from tkinter import filedialog, ttk
@@ -30,6 +31,83 @@ from utils.config_loader import ensure_engine_importable, resolve_config_path  #
 from utils.runner import StepWindow, path_row  # noqa: E402
 from utils.session_parser import find_tracking_for  # noqa: E402
 from utils.workspace import load_workspace  # noqa: E402
+
+
+def _copy_video_inputs(videos: list[Path], out_dir: Path, log) -> list[Path]:
+    """Make persistent DLC inputs so raw recordings remain read-only."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    copied: list[Path] = []
+    for video in videos:
+        target = out_dir / video.name
+        if video.resolve() != target.resolve():
+            copy2(video, target)
+        copied.append(target)
+    log(f"[dlc] Prepared {len(copied)} working video copy/copies; source recordings were not modified.")
+    return copied
+
+
+def _restore_cached_outputs(source_video: Path, prepared_video: Path, workspace) -> int:
+    """Put archived DLC artifacts beside a working video for stage-level resume."""
+    stem = source_video.stem
+    origins = (
+        source_video.parent,
+        workspace.dlc_analysis_dir(stem),
+        workspace.dlc_filtered_dir(stem),
+        workspace.dlc_tracked_videos_dir(stem),
+    )
+    patterns = (
+        f"{glob_escape(stem)}DLC*.h5",
+        f"{glob_escape(stem)}DLC*.csv",
+        f"{glob_escape(stem)}DLC*includingmetadata.pickle",
+        f"{glob_escape(stem)}*filtered_labeled.mp4",
+        f"{glob_escape(stem)}*filtered_labeled.avi",
+    )
+    restored = 0
+    seen: set[Path] = set()
+    for origin in origins:
+        if not origin.is_dir():
+            continue
+        for pattern in patterns:
+            for source in origin.glob(pattern):
+                resolved = source.resolve()
+                if resolved in seen:
+                    continue
+                seen.add(resolved)
+                target = prepared_video.parent / source.name
+                if resolved != target.resolve():
+                    copy2(source, target)
+                    restored += 1
+    return restored
+
+
+def _archive_dlc_outputs(prepared_video: Path, workspace) -> int:
+    """Archive every reusable DLC stage under Results/DLC/animal/session."""
+    stem = prepared_video.stem
+    escaped = glob_escape(stem)
+    analysis_dir = workspace.dlc_analysis_dir(stem)
+    filtered_dir = workspace.dlc_filtered_dir(stem)
+    tracked_dir = workspace.dlc_tracked_videos_dir(stem)
+    filtered_csvs = 0
+
+    for source in sorted(prepared_video.parent.glob(f"{escaped}DLC*.h5")) + sorted(
+        prepared_video.parent.glob(f"{escaped}DLC*.csv")
+    ):
+        destination_dir = filtered_dir if "filtered" in source.stem else analysis_dir
+        destination_dir.mkdir(parents=True, exist_ok=True)
+        copy2(source, destination_dir / source.name)
+        if "filtered" in source.stem and source.suffix.lower() == ".csv":
+            filtered_csvs += 1
+
+    for source in prepared_video.parent.glob(f"{escaped}DLC*includingmetadata.pickle"):
+        analysis_dir.mkdir(parents=True, exist_ok=True)
+        copy2(source, analysis_dir / source.name)
+
+    labeled = sorted(prepared_video.parent.glob(f"{escaped}*filtered_labeled.mp4"))
+    labeled += sorted(prepared_video.parent.glob(f"{escaped}*filtered_labeled.avi"))
+    for source in labeled:
+        tracked_dir.mkdir(parents=True, exist_ok=True)
+        copy2(source, tracked_dir / source.name)
+    return filtered_csvs
 
 
 def _engine():
@@ -68,6 +146,10 @@ class TrackWindow(StepWindow):
         self.clahe_var = tk.BooleanVar(value=bool(tracking.get("run_clahe", True)))
         self.labeled_var = tk.BooleanVar(value=False)
         self.force_var = tk.BooleanVar(value=False)
+        # Off by default on purpose: it is a change to what the network is
+        # shown, not only to how fast it runs, so it is never applied to a
+        # cohort unless it was asked for.
+        self.dynamic_var = tk.BooleanVar(value=False)
         self.summary_var = tk.StringVar(value="")
 
     def after_build(self) -> None:
@@ -105,8 +187,17 @@ class TrackWindow(StepWindow):
         ttk.Checkbutton(
             checks, text="Re-track recordings that already have tracking", variable=self.force_var
         ).grid(row=2, column=0, sticky="w", pady=(4, 0))
+        ttk.Checkbutton(
+            checks,
+            text=(
+                "Dynamic cropping: much faster without a GPU, but the network sees a box "
+                "around the animal rather than the whole arena, so poses may differ slightly "
+                "from a full-frame run"
+            ),
+            variable=self.dynamic_var,
+        ).grid(row=3, column=0, sticky="w", pady=(4, 0))
 
-        ttk.Button(checks, text="Rescan", command=self.refresh_summary).grid(row=3, column=0, sticky="w", pady=(10, 0))
+        ttk.Button(checks, text="Rescan", command=self.refresh_summary).grid(row=4, column=0, sticky="w", pady=(10, 0))
         ttk.Label(parent, textvariable=self.summary_var, style="Panel.TLabel", wraplength=1040, justify="left").grid(
             row=4, column=0, columnspan=3, sticky="w", pady=(10, 0)
         )
@@ -159,7 +250,7 @@ class TrackWindow(StepWindow):
 
     def work(self, log) -> str:
         ensure_engine_importable(self.config_path)
-        dlc_stage, run_dlc, check_available, describe_env, clahe = _engine()
+        _dlc_stage, run_dlc, check_available, describe_env, clahe = _engine()
 
         videos, todo = self._pending()
         if not videos:
@@ -180,55 +271,71 @@ class TrackWindow(StepWindow):
         work_dir = self.workspace.results / "_working"
         work_dir.mkdir(parents=True, exist_ok=True)
 
-        inputs = todo
+        inputs: list[Path]
         if self.clahe_var.get():
             log(f"[clahe] Equalising {len(todo)} recording(s)...")
             inputs = clahe(todo, work_dir / "clahe", log)
         else:
-            log("[clahe] Skipped; DeepLabCut will read the original recordings.")
+            log("[clahe] Skipped; DeepLabCut will read persistent copies of the original recordings.")
+            inputs = _copy_video_inputs(todo, work_dir / "dlc_input", log)
 
-        log(f"[dlc] Tracking {len(inputs)} recording(s). This is the slow step.")
-        self.set_progress(0, len(inputs))
-        run_dlc(
-            config_path,
-            list(inputs),
-            self.workspace.videotype,
-            work_dir,
-            dlc_env,
-            self.labeled_var.get(),
-            log,
+        restored = sum(
+            _restore_cached_outputs(source, prepared, self.workspace)
+            for source, prepared in zip(todo, inputs)
         )
-        self.set_progress(len(inputs), len(inputs))
+        if restored:
+            log(f"[resume] Restored {restored} cached DLC artifact(s) for per-stage reuse.")
 
-        # `_run_dlc` already performed analysis and filtering (possibly in a
-        # separate Python environment).  Calling run_deeplabcut_to_filtered
-        # here would analyze every video a second time whenever DLC also happens
-        # to be importable in this GUI environment.  Collect exactly what the
-        # completed run wrote beside its input videos instead.
-        found = dlc_stage._collect_filtered_csvs(inputs)  # noqa: SLF001 - engine's canonical filename matcher
-        if not found:
-            raise FileNotFoundError("DeepLabCut finished, but no '*filtered.csv' files were found.")
-        copied: list[Path] = []
-        for source in found:
-            stem = source.stem.split("DLC")[0] or source.stem
-            destination_dir = self.workspace.dlc_filtered_dir(stem)
-            destination_dir.mkdir(parents=True, exist_ok=True)
-            destination = destination_dir / source.name
-            if source.resolve() != destination.resolve():
-                copy2(source, destination)
-            copied.append(destination)
-            if self.labeled_var.get():
-                tracked_dir = self.workspace.dlc_tracked_videos_dir(stem)
-                tracked_dir.mkdir(parents=True, exist_ok=True)
-                for labeled in sorted(source.parent.glob(f"{stem}*filtered_labeled.mp4")):
-                    target = tracked_dir / labeled.name
-                    if labeled.resolve() != target.resolve():
-                        copy2(labeled, target)
+        log(f"[dlc] Tracking {len(inputs)} recording(s), one at a time. This is the slow step.")
         log(
-            f"[collect] {len(copied)} filtered CSV(s) -> "
-            f"{self.workspace.tracking_dir}/<optional session>/Filtered_CSV"
+            "[pipeline] Each completed recording is published immediately, so steps 3 and 4 "
+            "can run while the next recording is tracked."
         )
-        return f"Tracked {len(inputs)} recording(s); {len(copied)} tracking file(s) collected."
+        self.set_progress(0, len(inputs))
+
+        # Deliberately keep the DeepLabCut call inside the per-recording loop.
+        # DLC otherwise accepts the whole batch, but then filtering and
+        # collection do not happen until every recording has finished. Publishing
+        # each filtered CSV here gives the downstream steps a stable, complete
+        # recording to consume while inference continues on the next one.
+        filtered_csvs = 0
+        completed = 0
+        for index, video in enumerate(inputs, start=1):
+            log("")
+            log(f"--- [track {index}/{len(inputs)}] {video.name} ---")
+            run_dlc(
+                config_path,
+                [video],
+                self.workspace.videotype,
+                work_dir,
+                dlc_env,
+                self.labeled_var.get(),
+                log,
+                force=self.force_var.get(),
+                dynamic=self.dynamic_var.get(),
+            )
+
+            # Keep all stage artifacts, not only the final CSV. The H5 analysis
+            # and filtered files let a later run perform only filtering or only
+            # labeled-video generation without repeating inference.
+            published = _archive_dlc_outputs(video, self.workspace)
+            if not published:
+                raise FileNotFoundError(
+                    f"DeepLabCut finished {video.name}, but no '*filtered.csv' file was found."
+                )
+            filtered_csvs += published
+            completed += 1
+            self.set_progress(index, len(inputs))
+            log(
+                f"[ready] {video.stem}: {published} filtered CSV(s) published; "
+                "steps 3 and 4 may use this recording now."
+            )
+
+        log(
+            f"[collect] {filtered_csvs} filtered CSV(s), with reusable stage files -> "
+            f"{self.workspace.tracking_dir}/<animal>/<session>"
+        )
+        return f"Processed {completed} recording(s); {filtered_csvs} tracking file(s) collected."
 
     def _on_finished(self, ok: bool) -> None:
         self.refresh_summary()
