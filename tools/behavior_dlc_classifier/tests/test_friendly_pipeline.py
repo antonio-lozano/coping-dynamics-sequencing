@@ -7,6 +7,7 @@ import pytest
 from freezing_dlc.friendly_pipeline import (
     FriendlyPipelineSettings,
     _centroid_path_pixels,
+    _run_dlc_in_env,
     _write_results_workbook,
     run_friendly_pipeline,
 )
@@ -14,6 +15,7 @@ from freezing_dlc.friendly_pipeline import (
 
 def test_dlc_resume_helpers_track_each_stage_independently(tmp_path):
     from freezing_dlc.friendly_pipeline import (
+        _dlc_stage_lists,
         _has_dlc_analysis,
         _has_dlc_filtered,
         _has_dlc_filtered_video,
@@ -36,6 +38,62 @@ def test_dlc_resume_helpers_track_each_stage_independently(tmp_path):
 
     (tmp_path / "session_mouse1DLC_model_shuffle1_100000filtered_labeled.mp4").write_bytes(b"")
     assert _has_dlc_filtered_video(video)
+
+    # A filtered result is enough to create an overlay; losing an optional
+    # unfiltered artifact must not trigger expensive inference again.
+    (tmp_path / "session_mouse1DLC_model_shuffle1_100000.h5").unlink()
+    analyze, filtering, labeled = _dlc_stage_lists([video], make_tracked_videos=True)
+    assert analyze == []
+    assert filtering == []
+    assert labeled == []
+
+    analyze, filtering, labeled = _dlc_stage_lists(
+        [video], make_tracked_videos=True, force=True
+    )
+    assert analyze == [video]
+    assert filtering == [video]
+    assert labeled == [video]
+
+
+def test_bundled_dlc_log_stream_is_always_decoded_as_utf8(tmp_path, monkeypatch):
+    """Unicode tqdm output must not inherit Windows' cp1252 decoder."""
+    captured = {}
+
+    class FakeProcess:
+        stdout = iter(["  1%|\u258f         | 1/100\n"])
+
+        def wait(self):
+            return 0
+
+        def kill(self):
+            raise AssertionError("successful child must not be killed")
+
+    def fake_popen(*args, **kwargs):
+        captured.update(kwargs)
+        return FakeProcess()
+
+    monkeypatch.setattr(
+        "freezing_dlc.friendly_pipeline._dlc_python_command",
+        lambda env: ["python"],
+    )
+    monkeypatch.setattr("freezing_dlc.friendly_pipeline.subprocess.Popen", fake_popen)
+
+    messages = []
+    _run_dlc_in_env(
+        tmp_path / "config.yaml",
+        [tmp_path / "video.mp4"],
+        ".mp4",
+        tmp_path / "work",
+        "bundled",
+        False,
+        messages.append,
+    )
+
+    assert captured["encoding"] == "utf-8"
+    assert captured["errors"] == "replace"
+    assert captured["env"]["PYTHONIOENCODING"] == "utf-8"
+    assert captured["env"]["PYTHONUTF8"] == "1"
+    assert "[dlc] 1%|\u258f" in messages[-1]
 
 ROOT = Path(__file__).resolve().parents[1]
 DEMO_FILTERED_DIR = ROOT / "data" / "raw" / "DLC_filtered"

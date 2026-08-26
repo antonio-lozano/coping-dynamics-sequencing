@@ -133,6 +133,19 @@ def apply_dark_theme(root: tk.Misc) -> None:
         "Accent.TButton",
         background=[("active", "#D9BC7D"), ("pressed", COLORS["accent_dark"])],
     )
+    # A finished step. Same weight as Accent so a card does not change size
+    # when it goes green, only colour.
+    style.configure(
+        "Good.TButton",
+        background=COLORS["good"],
+        foreground="#080808",
+        bordercolor=COLORS["good"],
+        font=("Segoe UI", 10, "bold"),
+    )
+    style.map(
+        "Good.TButton",
+        background=[("active", "#8FCBA2"), ("pressed", "#4E8C63")],
+    )
     style.configure(
         "TRadiobutton",
         background=COLORS["bg"],

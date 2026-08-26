@@ -22,6 +22,7 @@ from tkinter import messagebox, ttk
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from utils.config_loader import resolve_config_path  # noqa: E402
+from utils.steps import STEPS, launch_step  # noqa: E402
 from utils.ui_style import (  # noqa: E402
     apply_dark_theme,
     behavior_legend,
@@ -31,38 +32,6 @@ from utils.workspace import Workspace, load_workspace  # noqa: E402
 
 REFRESH_MS = 2000
 
-STEPS = [
-    (
-        "setup",
-        "1. Select videos and name sessions",
-        "Pick the folder holding your recordings, confirm how animal IDs and session types are read, and save sessions.csv.",
-        "bh_setup.py",
-    ),
-    (
-        "track",
-        "2. Run DeepLabCut tracking",
-        "Track every recording with the bundled network. Needs the DeepLabCut environment; existing tracking is reused.",
-        "bh_track.py",
-    ),
-    (
-        "classify",
-        "3. Compute features and classify behaviors",
-        "Reproduce the archived 719-feature schema, then use one frozen model for all seven behaviors.",
-        "bh_features.py",
-    ),
-    (
-        "results",
-        "4. Ethograms, totals and summaries",
-        "Per-video ethograms, per-class seconds and percentages, bout tables and the combined workbook.",
-        "bh_results.py",
-    ),
-    (
-        "model",
-        "5. Validate the seven behaviors",
-        "Create blinded annotation templates and measure every class on independent target recordings.",
-        "bh_model.py",
-    ),
-]
 
 
 def format_duration(seconds: float) -> str:
@@ -88,6 +57,8 @@ class BehaviorTrackApp:
         self.status_labels: dict[str, ttk.Label] = {}
         self.step_status: dict[str, tk.StringVar] = {}
         self.step_status_labels: dict[str, ttk.Label] = {}
+        self.step_buttons: dict[str, ttk.Button] = {}
+        self.workspace_var = tk.StringVar(value="")
 
         root.title("BehaviorTrack")
         root.geometry("1440x860")
@@ -161,12 +132,14 @@ class BehaviorTrackApp:
         card.grid(row=row, column=0, sticky="ew", pady=(0, 8))
         card.columnconfigure(0, weight=1)
 
-        ttk.Button(
+        button = ttk.Button(
             card,
             text=title,
             style="Accent.TButton",
             command=lambda s=script: self.launch(s),
-        ).grid(row=0, column=0, sticky="ew")
+        )
+        button.grid(row=0, column=0, sticky="ew")
+        self.step_buttons[key] = button
         ttk.Label(card, text=blurb, style="MutedCard.TLabel", wraplength=440, justify="left").grid(
             row=1, column=0, sticky="w", pady=(8, 0)
         )
@@ -185,7 +158,7 @@ class BehaviorTrackApp:
         ttk.Label(right, text="Workspace", style="PanelTitle.TLabel").grid(row=0, column=0, sticky="w")
         ttk.Label(
             right,
-            text=str(self.workspace.root),
+            textvariable=self.workspace_var,
             style="MutedPanel.TLabel",
             wraplength=460,
             justify="left",
@@ -236,15 +209,10 @@ class BehaviorTrackApp:
     # --------------------------------------------------------------- actions #
 
     def launch(self, script: str) -> None:
-        path = Path(__file__).resolve().parent / script
-        if not path.is_file():
-            messagebox.showerror("BehaviorTrack", f"Step not found:\n{path}")
-            return
         try:
-            subprocess.Popen(
-                [sys.executable, str(path), "--config", str(self.config_path)],
-                cwd=str(path.parent),
-            )
+            launch_step(script, self.config_path)
+        except FileNotFoundError as exc:
+            messagebox.showerror("BehaviorTrack", f"Step not found:\n{exc}")
         except OSError as exc:
             messagebox.showerror("BehaviorTrack", f"Could not start {script}:\n{exc}")
 
@@ -282,6 +250,9 @@ class BehaviorTrackApp:
         )
         missing = status["models_missing"]
         self.status_vars["models"].set("all present" if not missing else f"{len(missing)} missing")
+        self.workspace_var.set(
+            f"Videos: {self.workspace.raw_videos}\nResults: {self.workspace.results}"
+        )
 
         self._tone("tracked", status["tracked"], status["videos"])
         self._tone("classified", status["classified"], status["videos"])
@@ -303,6 +274,20 @@ class BehaviorTrackApp:
         self.step_status["model"].set(
             "report written" if validation_report.is_file() else "target validation pending"
         )
+
+        # A finished step goes green, so the workflow can be read at a glance
+        # without parsing five status lines. "All tracked" with nothing to
+        # track is not done, it is empty, so each count-based step also
+        # requires that recordings exist.
+        completed = {
+            "setup": bool(status["sessions_saved"]),
+            "track": bool(status["videos"]) and not status["untracked"],
+            "classify": bool(status["videos"]) and not status["unclassified"],
+            "results": self.workspace.summary_xlsx.is_file(),
+            "model": validation_report.is_file(),
+        }
+        for key, button in self.step_buttons.items():
+            button.configure(style="Good.TButton" if completed.get(key) else "Accent.TButton")
 
         notes: list[str] = []
         if not status["raw_videos_exists"]:

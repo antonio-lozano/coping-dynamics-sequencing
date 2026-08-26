@@ -110,7 +110,7 @@ Two changes, plus one bug that had made raw-video tracking impossible.
 
   ```bash
   uv venv .venv-dlc --python 3.10
-  uv pip install --python .venv-dlc -r requirements-dlc.txt
+  uv pip install --python .venv-dlc -r requirements-dlc.txt --extra-index-url https://download.pytorch.org/whl/cpu --index-strategy unsafe-best-match
   ```
 
   Leave the interface's **DeepLabCut environment** field blank and the tool

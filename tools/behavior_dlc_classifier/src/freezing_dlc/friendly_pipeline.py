@@ -345,6 +345,8 @@ def _run_dlc(
     dlc_env: str,
     make_tracked_videos: bool,
     log: LogFn,
+    force: bool = False,
+    dynamic: bool = False,
 ) -> None:
     config_path = prepare_dlc_config(config_path)
 
@@ -352,18 +354,41 @@ def _run_dlc(
         import deeplabcut  # type: ignore
     except Exception as exc:  # pragma: no cover - depends on local DLC install
         log(f"[dlc] DeepLabCut is not in this Python environment ({exc}).")
-        _run_dlc_in_env(config_path, videos, videotype, work_dir, dlc_env, make_tracked_videos, log)
+        _run_dlc_in_env(
+            config_path,
+            videos,
+            videotype,
+            work_dir,
+            dlc_env,
+            make_tracked_videos,
+            log,
+            force=force,
+            dynamic=dynamic,
+        )
         return
 
     cfg = str(config_path)
-    analyze = [video for video in videos if not _has_dlc_analysis(video)]
-    filtering = [video for video in videos if not _has_dlc_filtered(video)]
-    labeled = [video for video in videos if not _has_dlc_filtered_video(video)]
+    analyze, filtering, labeled = _dlc_stage_lists(videos, make_tracked_videos, force)
 
     if analyze:
         log(f"[dlc] analyze_videos: {len(analyze)} missing recording(s)")
+        if dynamic:
+            log(
+                f"[dlc] dynamic cropping on (threshold {DLC_DYNAMIC_THRESHOLD}, "
+                f"margin {DLC_DYNAMIC_MARGIN}px)"
+            )
+        log(f"[dlc] inference batch size {DLC_INFERENCE_BATCH_SIZE}")
         deeplabcut.analyze_videos(
-            cfg, [str(v) for v in analyze], videotype=videotype, save_as_csv=True
+            cfg,
+            [str(v) for v in analyze],
+            videotype=videotype,
+            save_as_csv=True,
+            batchsize=DLC_INFERENCE_BATCH_SIZE,
+            dynamic=(bool(dynamic), DLC_DYNAMIC_THRESHOLD, DLC_DYNAMIC_MARGIN),
+            # DLC 2.3.11 switches to OpenVINO whenever its Python runtime merely
+            # imports, but a working install also needs the external converter,
+            # which is usually absent and fails before the first frame.
+            use_openvino=None,
         )
     else:
         log("[dlc] analyze_videos: reused for every recording")
@@ -403,6 +428,29 @@ def _has_dlc_filtered_video(video: Path) -> bool:
     )
 
 
+def _dlc_stage_lists(
+    videos: list[Path], make_tracked_videos: bool, force: bool = False
+) -> tuple[list[Path], list[Path], list[Path]]:
+    """Plan DLC work per recording without repeating an expensive earlier stage.
+
+    A complete filtered pose file is already sufficient input for a labeled
+    video, even if an unfiltered analysis file was not retained. In that case
+    analysis must not be repeated merely to draw the overlay.
+    """
+    filtering = [video for video in videos if force or not _has_dlc_filtered(video)]
+    analyze = [
+        video
+        for video in filtering
+        if force or not _has_dlc_analysis(video)
+    ]
+    labeled = (
+        [video for video in videos if force or not _has_dlc_filtered_video(video)]
+        if make_tracked_videos
+        else []
+    )
+    return analyze, filtering, labeled
+
+
 def _run_dlc_in_env(
     config_path: Path,
     videos: list[Path],
@@ -411,8 +459,16 @@ def _run_dlc_in_env(
     dlc_env: str,
     make_tracked_videos: bool,
     log: LogFn,
+    force: bool = False,
+    dynamic: bool = False,
 ) -> None:
     log(f"[dlc] Running DeepLabCut in {_describe_dlc_env(dlc_env)}.")
+    if dynamic:
+        log(
+            f"[dlc] dynamic cropping on (threshold {DLC_DYNAMIC_THRESHOLD}, "
+            f"margin {DLC_DYNAMIC_MARGIN}px)"
+        )
+    log(f"[dlc] inference batch size {DLC_INFERENCE_BATCH_SIZE}")
     work_dir.mkdir(parents=True, exist_ok=True)
     job_path = work_dir / "dlc_job.json"
     script_path = work_dir / "run_dlc_job.py"
@@ -423,6 +479,11 @@ def _run_dlc_in_env(
                 "videos": [str(path) for path in videos],
                 "videotype": videotype,
                 "make_tracked_videos": make_tracked_videos,
+                "force": force,
+                "dynamic": bool(dynamic),
+                "dynamic_threshold": DLC_DYNAMIC_THRESHOLD,
+                "dynamic_margin": DLC_DYNAMIC_MARGIN,
+                "batchsize": DLC_INFERENCE_BATCH_SIZE,
             }
         ),
         encoding="utf-8",
@@ -430,27 +491,75 @@ def _run_dlc_in_env(
     script_path.write_text(_DLC_RUNNER_SCRIPT, encoding="utf-8")
 
     cmd = [*_dlc_python_command(dlc_env), str(script_path), str(job_path)]
+    child_env = os.environ.copy()
+    # The bundled uv Python writes tqdm's Unicode progress-bar glyphs as
+    # UTF-8, while the BehaviorTrack launcher can still inherit Windows'
+    # cp1252 locale.  Relying on text=True's locale default therefore lets a
+    # harmless progress update crash an otherwise healthy DLC run.  Make the
+    # child encoding deterministic and tolerate an occasional byte emitted by
+    # a native dependency in some other encoding; logs must never be a failure
+    # point for inference.
+    child_env["PYTHONIOENCODING"] = "utf-8"
+    child_env["PYTHONUTF8"] = "1"
     process = subprocess.Popen(
         cmd,
         cwd=str(work_dir),
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         bufsize=1,
+        env=child_env,
     )
     assert process.stdout is not None
-    for line in process.stdout:
-        line = line.strip()
-        if line:
-            log(f"[dlc] {line}")
-    returncode = process.wait()
+    try:
+        for line in process.stdout:
+            line = line.strip()
+            if line:
+                log(f"[dlc] {line}")
+        returncode = process.wait()
+    except BaseException:
+        # The log callback is the caller's cancellation point, so a stop
+        # request unwinds through this loop while DeepLabCut is mid-recording.
+        # Without killing the child it keeps running unattended after the
+        # window that started it has moved on, holding CPU and writing into the
+        # working folder. BaseException, because the stop is deliberately not
+        # an Exception subclass.
+        process.kill()
+        process.wait()
+        raise
     if returncode != 0:
         raise RuntimeError(f"DeepLabCut failed in {_describe_dlc_env(dlc_env)} with exit code {returncode}.")
 
 
+# Dynamic cropping for analyze_videos. Once a pose is detected the network sees
+# only a box around the animal instead of the whole arena, which is the one
+# meaningful speed-up available on a machine with no CUDA GPU. It is off unless
+# asked for: the network sees different pixels, so coordinates can differ
+# slightly from a full-frame run and the two are not freely comparable.
+#
+# The margin has to absorb how far the animal travels between frames. These mice
+# jump and climb, and too tight a margin loses the animal, at which point DLC
+# falls back to the full frame until it reappears and the saving evaporates.
+# These values are BarnesTrack's, which has been driving this same network on
+# this same CPU-only hardware for a while. A 120px margin is far wider than
+# DeepLabCut's default 10: the crop has to survive a jump, and losing the animal
+# costs a full-frame retry that wipes out the saving.
+DLC_DYNAMIC_THRESHOLD = 0.6
+DLC_DYNAMIC_MARGIN = 120
+
+# The trained project sets batch_size 32, which was chosen for a GPU. Batching
+# that wide allocates enormous tensors on a CPU-only machine, so inference is
+# asked for one frame at a time instead. Overridden per call rather than by
+# editing the DLC project, which must stay exactly as it was trained. Batch size
+# changes only how many frames are pushed through at once, never the pose
+# predicted for any one of them.
+DLC_INFERENCE_BATCH_SIZE = 1
+
 _DLC_SETUP_HINT = (
     "    uv venv .venv-dlc --python 3.10\n"
-    "    uv pip install --python .venv-dlc -r requirements-dlc.txt"
+    "    uv pip install --python .venv-dlc -r requirements-dlc.txt --extra-index-url https://download.pytorch.org/whl/cpu --index-strategy unsafe-best-match"
 )
 
 
@@ -583,14 +692,29 @@ def main():
     videos = job["videos"]
     videotype = job["videotype"]
     make_tracked_videos = bool(job["make_tracked_videos"])
+    force = bool(job.get("force", False))
+    dynamic = (
+        bool(job.get("dynamic", False)),
+        float(job.get("dynamic_threshold", 0.6)),
+        int(job.get("dynamic_margin", 120)),
+    )
+    batchsize = int(job.get("batchsize", 1))
 
-    analyze = [video for video in videos if not has_analysis(video)]
-    filtering = [video for video in videos if not has_filtered(video)]
-    labeled = [video for video in videos if not has_filtered_video(video)]
+    filtering = [video for video in videos if force or not has_filtered(video)]
+    analyze = [video for video in filtering if force or not has_analysis(video)]
+    labeled = [video for video in videos if force or not has_filtered_video(video)]
 
     print(f"analyze_videos: {len(analyze)} missing, {len(videos) - len(analyze)} reused", flush=True)
     if analyze:
-        deeplabcut.analyze_videos(cfg, analyze, videotype=videotype, save_as_csv=True)
+        deeplabcut.analyze_videos(
+            cfg,
+            analyze,
+            videotype=videotype,
+            save_as_csv=True,
+            batchsize=batchsize,
+            dynamic=dynamic,
+            use_openvino=None,
+        )
 
     print(f"filterpredictions: {len(filtering)} missing, {len(videos) - len(filtering)} reused", flush=True)
     if filtering:

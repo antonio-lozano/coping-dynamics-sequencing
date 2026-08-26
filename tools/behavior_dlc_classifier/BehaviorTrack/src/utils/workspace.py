@@ -104,7 +104,6 @@ class Workspace:
 
     def ensure_dirs(self) -> None:
         for path in (
-            self.raw_videos,
             self.results,
             self.tracking_dir,
             self.features_dir,
@@ -122,20 +121,32 @@ class Workspace:
                 return session
         return None
 
-    def session_segment(self, stem: str) -> str:
-        """Filesystem-safe session name, or blank when sessions are not used."""
+    @staticmethod
+    def _safe_segment(value: str) -> str:
         import re
 
+        return re.sub(r"[^A-Za-z0-9._-]+", "_", value.strip()).strip("._-")
+
+    def animal_segment(self, stem: str) -> str:
+        """Filesystem-safe animal name, or blank when no animal was parsed."""
         session = self.session_for_stem(stem)
-        raw = session.session_type.strip() if session else ""
-        if not raw:
-            return ""
-        safe = re.sub(r"[^A-Za-z0-9._-]+", "_", raw).strip("._-")
-        return safe
+        return self._safe_segment(session.animal_id) if session else ""
+
+    def session_segment(self, stem: str) -> str:
+        """Filesystem-safe session name, or blank when sessions are not used."""
+        session = self.session_for_stem(stem)
+        return self._safe_segment(session.session_type) if session else ""
 
     def scoped(self, base: Path, stem: str) -> Path:
-        session = self.session_segment(stem)
-        return Path(base) / session if session else Path(base)
+        """Group outputs by animal and then session when those names exist."""
+        path = Path(base)
+        for segment in (self.animal_segment(stem), self.session_segment(stem)):
+            if segment:
+                path /= segment
+        return path
+
+    def dlc_analysis_dir(self, stem: str) -> Path:
+        return self.scoped(self.tracking_dir, stem) / "Analysis"
 
     def dlc_filtered_dir(self, stem: str) -> Path:
         return self.scoped(self.tracking_dir, stem) / "Filtered_CSV"
@@ -145,7 +156,10 @@ class Workspace:
 
     def has_dlc_tracked_video(self, stem: str) -> bool:
         folder = self.dlc_tracked_videos_dir(stem)
-        return folder.is_dir() and any(folder.glob(f"{stem}*filtered_labeled.mp4"))
+        return folder.is_dir() and (
+            any(folder.glob(f"{stem}*filtered_labeled.mp4"))
+            or any(folder.glob(f"{stem}*filtered_labeled.avi"))
+        )
 
     def behavior_predictions_dir(self, stem: str) -> Path:
         return self.scoped(self.behaviors_dir, stem) / "Predictions"
@@ -266,6 +280,15 @@ def load_workspace(config_path: Path) -> Workspace:
     config_path = Path(config_path).resolve()
     config = load_config(config_path)
     context = load_session_context(config_path)
+    # Step 1 is the user's authoritative choice for this experiment. Keep the
+    # shipped config immutable while making every subsequently opened window
+    # see the selected video type and filename parsing rules as well as paths.
+    if context.get("videotype"):
+        config.setdefault("video", {})["videotype"] = context["videotype"]
+    if "animal_id_pattern" in context:
+        config.setdefault("onboarding", {})["animal_id_pattern"] = context["animal_id_pattern"]
+    if "filename_patterns" in context:
+        config.setdefault("onboarding", {})["filename_patterns"] = context["filename_patterns"]
     root = workspace_root(config, config_path)
     paths = config.get("paths", {}) or {}
     raw_videos = (

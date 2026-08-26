@@ -10,7 +10,7 @@ On Windows, double-click `launch_behaviortrack.bat`. On macOS or Linux, run:
 bash launch_behaviortrack.sh
 ```
 
-The Windows launcher tests candidate Python environments by constructing a hidden Tk window. On this portable machine it selects `C:\Users\jenif\anaconda3\python.exe`; the `uv` Python can import `tkinter` but lacks Tcl's runtime files and cannot open a GUI. To set up a dedicated ordinary-analysis environment manually, use a Python distribution that includes Tcl/Tk, then install the tool dependencies:
+The Windows launcher tests candidate Python environments by constructing a hidden Tk window and takes the first that can actually open a GUI, in practice a full Anaconda or python.org install; the `uv` Python can import `tkinter` but lacks Tcl's runtime files and cannot open a GUI. To set up a dedicated ordinary-analysis environment manually, use a Python distribution that includes Tcl/Tk, then install the tool dependencies:
 
 ```bash
 cd tools/behavior_dlc_classifier
@@ -35,21 +35,24 @@ uv pip install --python .venv-dlc -r requirements-dlc.txt
 
 Videos are referenced in place; they are never copied into BehaviorTrack's `Data` folder. Step 1 stores the selected external video and results paths for the project.
 
-When `sessions.csv` contains a session type, outputs use that session as the first level. If it is blank, that level is omitted:
+When `sessions.csv` contains animal and session names, outputs are grouped by animal and then session. Either missing level is omitted:
 
 ```text
 Results/
-  DLC/<optional-session>/Filtered_CSV/
-  DLC/<optional-session>/Tracked_Videos/
-  Features/<optional-session>/
-  Behaviors/<optional-session>/Predictions/
-  Behaviors/<optional-session>/Summaries/
-  Behaviors/<optional-session>/Provenance/
-  Figures/<optional-session>/
-  Annotated_Videos/<optional-session>/
+  DLC/<optional-animal>/<optional-session>/Analysis/
+  DLC/<optional-animal>/<optional-session>/Filtered_CSV/
+  DLC/<optional-animal>/<optional-session>/Tracked_Videos/
+  Features/<optional-animal>/<optional-session>/
+  Behaviors/<optional-animal>/<optional-session>/Predictions/
+  Behaviors/<optional-animal>/<optional-session>/Summaries/
+  Behaviors/<optional-animal>/<optional-session>/Provenance/
+  Figures/<optional-animal>/<optional-session>/
+  Annotated_Videos/<optional-animal>/<optional-session>/
   Validation/Manual_Labels/
   Validation/Reports/
 ```
+
+The `Analysis` and `Filtered_CSV` folders retain the H5/CSV artifacts needed for stage-level resume. On a later run BehaviorTrack independently decides whether each recording needs inference, filtering, or only a labeled video. Untouched source videos are never used as DeepLabCut's output directory.
 
 ## Models and interpretation
 

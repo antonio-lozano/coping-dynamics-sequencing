@@ -17,6 +17,8 @@ project:
   dlc_env: ""
 
 paths:
+  # First-launch fallbacks only. Step 1 persists the chosen external folders,
+  # and every later window reloads those selections.
   raw_videos: Data/Raw_Videos
   results: Results
 
@@ -25,12 +27,14 @@ video:
   fps: 25
 
 onboarding:
-  # Regex pulling the animal ID out of a filename, e.g. C5121 from
-  # "Trial 2_C5121.mp4". Blank disables ID parsing and every video is its own
-  # session.
+  # Regex pulling the animal ID out of a filename, e.g. Animal3 from
+  # "Animal3_Day1_conditioning.mp4". The whole match becomes the ID, so the
+  # trailing \d+ is what separates Animal3 from Animal4; without it every
+  # recording collapses onto one animal. Blank disables ID parsing and every
+  # video is its own session.
   # Single-quoted on purpose: YAML processes backslash escapes inside double
   # quotes but not single ones, so '\d' survives as a regex either way.
-  animal_id_pattern: '[A-Za-z]\d{3,5}'
+  animal_id_pattern: 'Animal\d+'
   # Tokens marking a session type. A filename matching none of them is still
   # analysed; it is just left without a session label.
   filename_patterns:

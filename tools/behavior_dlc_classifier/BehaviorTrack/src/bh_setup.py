@@ -19,7 +19,11 @@ from tkinter import filedialog, ttk
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from utils.config_loader import resolve_config_path, save_session_context  # noqa: E402
+from utils.config_loader import (  # noqa: E402
+    load_config,
+    resolve_config_path,
+    save_session_context,
+)
 from utils.runner import StepWindow, path_row  # noqa: E402
 from utils.session_parser import (  # noqa: E402
     discover_sessions,
@@ -72,7 +76,7 @@ class SetupWindow(StepWindow):
 
         ttk.Label(options, text="Animal ID pattern", style="MutedPanel.TLabel").grid(row=0, column=0, sticky="w", pady=4)
         ttk.Entry(options, textvariable=self.pattern_var).grid(row=0, column=1, sticky="ew", padx=(8, 18), pady=4)
-        ttk.Label(options, text="Session tokens", style="MutedPanel.TLabel").grid(row=0, column=2, sticky="w", pady=4)
+        ttk.Label(options, text="Session", style="MutedPanel.TLabel").grid(row=0, column=2, sticky="w", pady=4)
         ttk.Entry(options, textvariable=self.tokens_var).grid(row=0, column=3, sticky="ew", padx=(8, 18), pady=4)
         ttk.Label(options, text="Video type", style="MutedPanel.TLabel").grid(row=0, column=4, sticky="w", pady=4)
         ttk.Entry(options, textvariable=self.videotype_var, width=8).grid(row=0, column=5, sticky="w", padx=(8, 0), pady=4)
@@ -191,23 +195,25 @@ def self_test(config_path: Path) -> int:
     import tempfile
 
     print("[self-test] bh_setup")
-    workspace = load_workspace(config_path)
-    onboarding = workspace.section("onboarding")
+    # The shipped config, not load_workspace: that layers the operator's saved
+    # Step 1 choices on top, so whichever cohort was last onboarded would
+    # decide whether this check passes. The fixtures below match what ships.
+    onboarding = load_config(config_path).get("onboarding", {}) or {}
     pattern = str(onboarding.get("animal_id_pattern", "") or "")
     tokens = onboarding.get("filename_patterns", []) or []
 
     with tempfile.TemporaryDirectory() as tmp:
         folder = Path(tmp)
         names = [
-            "Trial 1_Hab_C5121.mp4",
-            "Trial 2_Cond_C5121.mp4",
-            "Trial 3_Test_C5122.mp4",
-            "Trial 3_Test_C5122DLC_resnet50_Freezing.mp4",  # DLC output, must be skipped
+            "Trial 1_Hab_Animal3.mp4",
+            "Trial 2_Cond_Animal3.mp4",
+            "Trial 3_Test_Animal4.mp4",
+            "Trial 3_Test_Animal4DLC_resnet50_Freezing.mp4",  # DLC output, must be skipped
             "notes.txt",
         ]
         for name in names:
             (folder / name).write_bytes(b"")
-        (folder / "Trial 1_Hab_C5121DLC_resnet50_Freezingshuffle1_100000filtered.csv").write_text("x", encoding="utf-8")
+        (folder / "Trial 1_Hab_Animal3DLC_resnet50_Freezingshuffle1_100000filtered.csv").write_text("x", encoding="utf-8")
 
         sessions = discover_sessions(folder, ".mp4", animal_id_pattern=pattern, filename_patterns=tokens)
         counts = summarise(sessions)

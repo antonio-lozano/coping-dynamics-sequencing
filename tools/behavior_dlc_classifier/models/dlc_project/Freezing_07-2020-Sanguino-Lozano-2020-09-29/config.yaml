@@ -2,6 +2,10 @@
 Task: Freezing_07-2020
 scorer: Sanguino-Lozano
 date: Sep29
+# One animal per recording. DeepLabCut's read_config supplies no default for
+# this key, and create_labeled_video indexes it directly, so omitting it fails
+# the labelled-overlay step with KeyError: 'multianimalproject'.
+multianimalproject: false
 
 # Project path.
 # This is rewritten automatically at run time to point at wherever this

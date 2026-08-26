@@ -242,7 +242,7 @@ its own environment — two commands with uv:
 
 ```bash
 uv venv .venv-dlc --python 3.10
-uv pip install --python .venv-dlc -r requirements-dlc.txt
+uv pip install --python .venv-dlc -r requirements-dlc.txt --extra-index-url https://download.pytorch.org/whl/cpu --index-strategy unsafe-best-match
 ```
 
 Then leave the interface's **DeepLabCut environment** field blank. The tool
@@ -769,7 +769,7 @@ model was trained on. Retrain on your own tracking.
 
 **DeepLabCut cannot be found.** Create its environment with
 `uv venv .venv-dlc --python 3.10` then
-`uv pip install --python .venv-dlc -r requirements-dlc.txt`, and leave the
+`uv pip install --python .venv-dlc -r requirements-dlc.txt --extra-index-url https://download.pytorch.org/whl/cpu --index-strategy unsafe-best-match`, and leave the
 interface's **DeepLabCut environment** field blank. If you use conda instead,
 put the environment name in that field; conda does not need to be on PATH.
 
