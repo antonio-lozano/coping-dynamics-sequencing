@@ -1,0 +1,26 @@
+Creative Commons Attribution 4.0 International (CC BY 4.0)
+
+Copyright (c) 2026 Jeniffer Sanguino Gómez and Antonio Lozano
+
+The data files bundled in this repository are licensed under the Creative
+Commons Attribution 4.0 International License. This covers:
+
+    data/raw/               bundled experimental inputs
+    data/processed/         tables derived from those inputs
+    figure_source_data/     the plotted values behind Figures 2-7
+    statistics/             statistical model outputs
+    report/                 the raw-data workbook and statistical report
+    supplementary_media/    the supplementary videos and their source index
+
+Source code in this repository is licensed separately under the MIT License;
+see LICENSE.
+
+You are free to share and adapt this material for any purpose, including
+commercially, provided you give appropriate credit, link to the license, and
+indicate whether changes were made.
+
+Full legal code:  https://creativecommons.org/licenses/by/4.0/legalcode
+Summary:          https://creativecommons.org/licenses/by/4.0/
+
+To attribute, cite the associated manuscript and the archived dataset record
+(see CITATION.cff and the Data availability statement in the manuscript).

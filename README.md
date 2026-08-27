@@ -236,9 +236,19 @@ See `docs/supplementary_media.md` for scope and provenance.
   outside the reproducibility contract and unrelated to the Figure 7
   classifier in `classifier/`.
 
-## Citation
+## Citation and licensing
 
 Software citation metadata lives in `CITATION.cff`; GitHub's "Cite this
-repository" button reads it, and CI validates it on every push. A Zenodo DOI
-for the archived release is planned and will be added to `CITATION.cff` once
-minted. See `LICENSE` for licensing.
+repository" button reads it, and CI validates it on every push. `.zenodo.json`
+carries the metadata for the archived release: Zenodo reads it in preference to
+`CITATION.cff`, so the two are kept in agreement by hand. The Zenodo DOIs are
+added to `CITATION.cff` once the first release is archived.
+
+Code is released under the MIT License (`LICENSE`). The bundled data —
+`data/`, `figure_source_data/`, `statistics/`, `report/` and
+`supplementary_media/` — are released under Creative Commons Attribution 4.0
+International (`LICENSE-DATA`).
+
+`docs/publication_release.md` is the release runbook: how the code and dataset
+DOIs are minted and cross-linked, what the journal requires of the data and
+code availability statements, and draft wording for both.
