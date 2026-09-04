@@ -44,6 +44,14 @@ Thumbs.db
 # Local overrides
 config/paths.py
 
+# Conference decks and other large presentation sources. The project page is
+# built from their content, but the sources themselves are far too heavy to
+# version and are not needed to rebuild anything.
+ppt/
+*.pptx
+*.ppt
+*.odp
+
 # Local scratch logs / rebuild experiments
 *.log
 *_test.xlsx
