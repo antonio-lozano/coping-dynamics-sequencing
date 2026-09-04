@@ -4,10 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Coping Dynamics Sequencing</title>
-<meta name="description" content="Early-life stress splits mice into two coping profiles. Unsupervised keypoint-MoSeq behavioral sequencing resolves them, in a manuscript repository that rebuilds byte-identically.">
+<meta name="description" content="Early-life stress splits mice into two coping profiles. Unsupervised keypoint-MoSeq behavioural sequencing resolves them, in a manuscript repository that rebuilds byte-identically.">
 <meta property="og:title" content="Coping Dynamics Sequencing">
-<meta property="og:description" content="Two ways of coping with the same early-life stress, read out of movement itself.">
+<meta property="og:description" content="Two coping profiles after the same early-life stress, measured from behavioural sequences.">
 <meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='0' y='0.00' width='32' height='4.57' fill='%23BE7AA5'/%3E%3Crect x='0' y='4.57' width='32' height='4.57' fill='%235A9DAE'/%3E%3Crect x='0' y='9.14' width='32' height='4.57' fill='%238BC2D9'/%3E%3Crect x='0' y='13.71' width='32' height='4.57' fill='%23AFD93D'/%3E%3Crect x='0' y='18.29' width='32' height='4.57' fill='%23F5C12D'/%3E%3Crect x='0' y='22.86' width='32' height='4.57' fill='%23F6A65A'/%3E%3Crect x='0' y='27.43' width='32' height='4.57' fill='%23E85655'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -108,7 +109,7 @@
     mix-blend-mode: multiply;
   }
   header.hero p.lede {
-    font-size: clamp(18px, 2vw, 21px); color: var(--muted); margin-top: 22px; max-width: 60ch;
+    font-size: clamp(18px, 2vw, 21px); color: var(--muted); margin-top: 22px; max-width: 62ch;
   }
   header.hero p.lede b { color: var(--ink); font-weight: 500; }
 
@@ -167,19 +168,22 @@
     font-size: 30px; font-weight: 500; color: var(--ink); line-height: 1.1; margin-bottom: 3px;
   }
 
-  /* ---- findings ---- */
-  .findings { display: grid; grid-template-columns: repeat(2, 1fr); gap: 34px 30px; margin-top: 42px; }
-  @media (max-width: 780px) { .findings { grid-template-columns: 1fr; } }
-  .finding img { background: #FFFFFF; }
-  .finding h3 { margin: 16px 0 8px; }
+  /* ---- findings ----
+     The figures are full manuscript pages, so they are shown one per row at a
+     size where panel labels and axes can actually be read, each linking to the
+     vector PDF for anything finer. */
+  .findings { display: flex; flex-direction: column; gap: 64px; margin-top: 44px; }
+  .finding img { background: #FFFFFF; max-width: 880px; height: auto; }
+  .finding .findtext { max-width: 62ch; margin-top: 18px; }
+  .finding h3 { margin: 6px 0 8px; }
   .finding .label {
     font-family: var(--mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
-    color: var(--muted); display: block; margin-top: 14px;
+    color: var(--muted); display: block;
   }
   .finding p { font-size: 15.5px; color: var(--muted); line-height: 1.6; }
   .finding .src {
     display: block; font-family: var(--mono); font-size: 12.5px; color: var(--muted);
-    margin-top: 10px; word-break: break-all;
+    margin-top: 10px;
   }
 
   /* ---- contrast table ---- */
@@ -218,6 +222,33 @@
   footer p + p { margin-top: 12px; }
 
   @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+  /* ---- print: this is what docs/web/coping-dynamics-sequencing.pdf is made of ---- */
+  @media print {
+    html { scroll-behavior: auto; }
+    body { background: #FFFFFF; font-size: 10.5pt; line-height: 1.5; }
+    .wrap { max-width: none; padding: 0; }
+    .topbar, .cta, .print-hide { display: none !important; }
+    section { padding: 22pt 0; }
+    header.hero { padding: 0 0 4pt; }
+    header.hero img.logo { width: 82mm; margin-bottom: 18pt; }
+    h1 { font-size: 26pt; }
+    h2 { font-size: 17pt; }
+    h3 { font-size: 12pt; }
+    header.hero p.lede { font-size: 11.5pt; }
+    .hero-media { margin-top: 20pt; }
+    .findings { gap: 26pt; }
+    /* Sized so the figure and the text under it land on the same page. */
+    .finding img { max-width: 100%; max-height: 165mm; width: auto; }
+    figure, .finding, .step, .facts > div, tr, pre, .prose { break-inside: avoid; }
+    h2, h3, .eyebrow { break-after: avoid-page; }
+    table { min-width: 0; font-size: 9.5pt; }
+    .tablewrap { overflow: visible; }
+    pre { font-size: 9pt; white-space: pre-wrap; }
+    a { color: var(--ink); text-decoration: none; }
+    .print-url { display: inline; }
+  }
+  .print-url { display: none; }
 </style>
 </head>
 <body>
@@ -241,17 +272,17 @@
   <div class="wrap">
     <img class="logo" src="media/logo.png" alt="Coping Dynamics Sequencing">
     <span class="eyebrow">Early-life stress &middot; Behavioural sequencing</span>
-    <h1>Two ways of coping with the same early-life stress</h1>
-    <p class="lede">Mice raised under limited bedding and nesting behave differently
-    when a second threat arrives in adulthood. Sequencing their movement rather
-    than scoring it splits them in two: a <b>vulnerable</b> group whose behaviour
-    turns repetitive and stereotyped, and a <b>resilient</b> group that, on every
-    measure separating the vulnerable animals from controls, is indistinguishable
-    from a control.</p>
+    <h1>Two coping profiles after the same early-life stress</h1>
+    <p class="lede">Mice raised under limited bedding and nesting were fear-conditioned
+    in adulthood, and their behaviour was sequenced with unsupervised keypoint-MoSeq
+    rather than scored by an observer. The stressed group divides in two: a
+    <b>vulnerable</b> subgroup whose sequences are more repetitive and less diverse
+    than those of controls, and a <b>resilient</b> subgroup that does not differ from
+    controls on any of those measures.</p>
     <div class="cta">
       <a class="btn primary" href="#findings">Read the findings</a>
       <a class="btn" href="https://github.com/antonio-lozano/coping-dynamics-sequencing">View the repository</a>
-      <a class="btn" href="#reproduce">Reproduce it</a>
+      <a class="btn" href="coping-dynamics-sequencing.pdf">Download as PDF</a>
     </div>
     <figure class="hero-media">
       <img src="media/syllable_atlas.gif" alt="Pose-overlaid mouse clips, one representative occurrence per behavioural cluster, looping side by side">
@@ -265,17 +296,16 @@
   <div class="wrap">
     <div class="prose">
       <span class="eyebrow">The repertoire</span>
-      <h2>Stop naming the stress response. Measure it.</h2>
-      <p>Cannon called it fight or flight in 1925. Bracha added freeze and fawn in
-      2004. The list has kept growing ever since &mdash; fold, flop, feign, fret,
-      falter &mdash; one label for every new observation, and no measurement
-      underneath any of them.</p>
-      <p>So we stopped naming and started sequencing. <b>Keypoint-MoSeq</b> segments
-      pose tracking into short recurring motifs without supervision. The motifs
-      group into seven behaviours a human can recognise, and every session becomes
-      a sequence of them at 250&nbsp;ms resolution &mdash; which means coping can be
-      described by what an animal does next, not only by how much of each thing it
-      does.</p>
+      <h2>Sequencing behaviour instead of scoring it</h2>
+      <p>The stress response is usually reported as a set of labels &mdash; fight,
+      flight, freeze, fawn &mdash; assigned by an observer. The list has grown as
+      observations accumulated, but the labels are categories imposed on a recording
+      rather than quantities measured from it.</p>
+      <p><b>Keypoint-MoSeq</b> segments pose tracking into short recurring motifs
+      without supervision. Here the motifs map onto seven behavioural clusters, and
+      each session becomes a sequence of those clusters at 250&nbsp;ms resolution.
+      The order of behaviour then becomes measurable, not only the amount of each
+      behaviour.</p>
     </div>
     <ul class="chips">
       <li><i style="background:var(--freeze)"></i>Freezing</li>
@@ -287,11 +317,12 @@
       <li><i style="background:var(--jump)"></i>Jump</li>
     </ul>
     <figure style="margin-top:38px">
-      <video controls loop muted playsinline preload="metadata"
+      <video class="print-hide" controls loop muted playsinline preload="metadata"
         src="media/Supplementary_Video_1_MoSeq_syllable_atlas_grid.mp4"></video>
       <figcaption>Supplementary Video 1, grid view: all 25 cluster-mapped syllables
       playing at once, ordered and coloured by behavioural cluster. Each tile loops
-      three representative pose-overlaid occurrences.</figcaption>
+      three representative pose-overlaid occurrences.<span class="print-url">
+      Video at antonio-lozano.github.io/coping-dynamics-sequencing.</span></figcaption>
     </figure>
   </div>
 </section>
@@ -300,10 +331,10 @@
   <div class="wrap">
     <div class="prose">
       <span class="eyebrow">The paradigm</span>
-      <h2>Stress early, then a second threat</h2>
-      <p>Adversity in the first days of life, then a fear challenge in adulthood.
-      The question is not whether the stressed animals freeze more or less, but
-      whether their behaviour is organised differently when the threat returns.</p>
+      <h2>Early-life stress, then fear conditioning in adulthood</h2>
+      <p>Adversity in the first postnatal days, then a fear challenge at adulthood.
+      The question is whether behaviour is organised differently when the threat
+      returns, not only whether the stressed animals freeze more or less.</p>
     </div>
     <div class="steps">
       <div class="step">
@@ -342,52 +373,64 @@
     <div class="prose">
       <span class="eyebrow">Findings</span>
       <h2>What the sequences show</h2>
-      <p>Four figures, in the order the argument is built. Each is regenerated from
-      the bundled data by <code>scripts/run_all.py</code>, and the values behind
-      every panel are exported next to it.</p>
+      <p>Four figures, in the order the argument is built. Each regenerates from the
+      bundled data with <code>scripts/run_all.py</code>, the plotted values are
+      exported next to it, and each links to the vector PDF at full resolution.</p>
     </div>
     <div class="findings">
 
       <figure class="finding">
-        <img src="assets/figure3_thumb.png" alt="Figure 3: behaviour frequencies and their time courses across the session">
-        <span class="label">Figure 3</span>
-        <h3>Early-life stress changes what happens, and when</h3>
-        <p>Behaviour frequencies differ between groups, and the time courses diverge
-        across the session rather than sitting at a constant offset &mdash; the
-        stressed animals are not simply doing more or less of one thing.</p>
-        <span class="src">figure_source_data/figure3.csv</span>
+        <a href="figures/figure3.pdf"><img src="assets/figure3_thumb.png" width="1400" height="1979" loading="lazy" alt="Figure 3: behaviour frequencies and their time courses across the session"></a>
+        <div class="findtext">
+          <span class="label">Figure 3</span>
+          <h3>Behaviour frequencies and time courses differ between groups</h3>
+          <p>Group differences appear both in how often each behaviour occurs and in
+          how those frequencies change across the session, rather than as a constant
+          offset between groups.</p>
+          <span class="src">figure_source_data/figure3.csv &middot;
+          <a href="figures/figure3.pdf">Full-resolution PDF</a></span>
+        </div>
       </figure>
 
       <figure class="finding">
-        <img src="assets/figure4_thumb.png" alt="Figure 4: diversity, bout duration and transition metrics per animal">
-        <span class="label">Figure 4</span>
-        <h3>Stressed animals hold active behaviours longer</h3>
-        <p>Sniffing bouts run 0.32&nbsp;s longer and turns 0.16&nbsp;s longer than in
-        controls (p&nbsp;=&nbsp;0.029 and 0.020). Recurrence and determinism rise
-        only as trends (p&nbsp;=&nbsp;0.058, 0.075) &mdash; the group average is
-        hiding something.</p>
-        <span class="src">statistics/stats_figure4_bouts_MixedLM.csv</span>
+        <a href="figures/figure4.pdf"><img src="assets/figure4_thumb.png" width="1400" height="1921" loading="lazy" alt="Figure 4: diversity, bout duration and transition metrics per animal"></a>
+        <div class="findtext">
+          <span class="label">Figure 4</span>
+          <h3>Stressed animals hold active behaviours longer</h3>
+          <p>Sniffing bouts are 0.32&nbsp;s longer and turns 0.16&nbsp;s longer than
+          in controls (p&nbsp;=&nbsp;0.029 and 0.020). Recurrence and determinism are
+          higher in the stressed group but do not reach significance
+          (p&nbsp;=&nbsp;0.058 and 0.075).</p>
+          <span class="src">statistics/stats_figure4_bouts_MixedLM.csv &middot;
+          <a href="figures/figure4.pdf">Full-resolution PDF</a></span>
+        </div>
       </figure>
 
       <figure class="finding">
-        <img src="assets/figure5_thumb.png" alt="Figure 5: behavioural dynamics similarity score and the resulting animal clusters">
-        <span class="label">Figure 5</span>
-        <h3>A dynamics score splits the stressed group in two</h3>
-        <p>Scoring each animal by how close its behavioural dynamics sit to the
-        control distribution, then clustering on that score, separates
-        <b>29 vulnerable</b> from <b>12 resilient</b> stressed animals &mdash; without
-        ever looking at the outcome measures.</p>
-        <span class="src">statistics/animal_dendrogram_clusters.csv</span>
+        <a href="figures/figure5.pdf"><img src="assets/figure5_thumb.png" width="1400" height="1979" loading="lazy" alt="Figure 5: behavioural dynamics similarity score and the resulting animal clusters"></a>
+        <div class="findtext">
+          <span class="label">Figure 5</span>
+          <h3>A dynamics score splits the stressed group in two</h3>
+          <p>Each animal is scored by how close its behavioural dynamics sit to the
+          control distribution. Clustering on that score separates <b>29 vulnerable</b>
+          from <b>12 resilient</b> stressed animals, without using the outcome
+          measures.</p>
+          <span class="src">statistics/animal_dendrogram_clusters.csv &middot;
+          <a href="figures/figure5.pdf">Full-resolution PDF</a></span>
+        </div>
       </figure>
 
       <figure class="finding">
-        <img src="assets/figure6_thumb.png" alt="Figure 6: diversity, bout and transition metrics compared across control, vulnerable and resilient groups">
-        <span class="label">Figure 6</span>
-        <h3>Resilience is less recurrence and less stereotypy</h3>
-        <p>Split that way, the effects sharpen. Vulnerable animals return to the same
-        states more often and use a narrower repertoire; resilient animals do
-        neither, and look like controls throughout.</p>
-        <span class="src">statistics/fig6_*_resilience_stats.csv</span>
+        <a href="figures/figure6.pdf"><img src="assets/figure6_thumb.png" width="1400" height="1921" loading="lazy" alt="Figure 6: diversity, bout and transition metrics compared across control, vulnerable and resilient groups"></a>
+        <div class="findtext">
+          <span class="label">Figure 6</span>
+          <h3>The split sharpens the group differences</h3>
+          <p>Vulnerable animals return to the same states more often and use a
+          narrower repertoire than controls. Resilient animals differ from the
+          vulnerable group and not from controls.</p>
+          <span class="src">statistics/fig6_*_resilience_stats.csv &middot;
+          <a href="figures/figure6.pdf">Full-resolution PDF</a></span>
+        </div>
       </figure>
 
     </div>
@@ -398,12 +441,11 @@
   <div class="wrap">
     <div class="prose">
       <span class="eyebrow">Two profiles</span>
-      <h2>The average hides the effect. The split reveals it.</h2>
-      <p>Pooled across all stressed animals, the sequence measures move in the right
-      direction but stop at trends. Separate the two coping profiles and the picture
-      resolves: <b>on every measure that survives FDR correction between vulnerable
-      animals and controls, resilient animals do not differ from controls at
-      all.</b></p>
+      <h2>Vulnerable and resilient animals against controls</h2>
+      <p>Pooled across all stressed animals, the sequence measures move in the
+      expected direction but stop at trends. Split by coping profile, the picture is
+      consistent: <b>on every measure that separates vulnerable animals from controls
+      after FDR correction, resilient animals do not differ from controls.</b></p>
     </div>
     <div class="tablewrap">
       <table>
@@ -459,10 +501,10 @@
   <div class="wrap">
     <div class="prose">
       <span class="eyebrow">Reproduce</span>
-      <h2>Three commands, identical bytes</h2>
+      <h2>Rebuilding the analysis</h2>
       <p>Every figure, table, statistic and report on this page rebuilds from the
       data in the repository. There are no hidden inputs and no download step: a
-      clone is the whole package.</p>
+      clone contains everything needed.</p>
     </div>
     <pre><span class="c"># install the locked environment</span>
 uv sync --locked
@@ -474,7 +516,7 @@ uv run python scripts/check_reproducibility.py
 uv run python scripts/run_all.py</pre>
     <div class="facts">
       <div>
-        <h3>The repository referees itself</h3>
+        <h3>Hash-checked artifacts</h3>
         <p><code>MANIFEST.csv</code> carries a SHA-256 for every artifact. A rebuild
         that changes one byte fails the check, on Windows and on Linux alike.</p>
       </div>
@@ -485,7 +527,7 @@ uv run python scripts/run_all.py</pre>
         manuscript to the shipped report.</p>
       </div>
       <div>
-        <h3>A companion classifier</h3>
+        <h3>Companion classifier</h3>
         <p><code>tools/behavior_dlc_classifier/</code> ships the trained
         DeepLabCut networks, demo videos, tests and a guide, so new recordings can
         be tracked and classified without training anything.</p>
