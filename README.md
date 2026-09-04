@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/media/logo.png" alt="Coping Dynamics Sequencing" width="700">
+</p>
+
 # Coping Dynamics Sequencing
 
 [![Reproducibility checks](https://github.com/antonio-lozano/coping-dynamics-sequencing/actions/workflows/reproducibility.yml/badge.svg)](https://github.com/antonio-lozano/coping-dynamics-sequencing/actions/workflows/reproducibility.yml)
