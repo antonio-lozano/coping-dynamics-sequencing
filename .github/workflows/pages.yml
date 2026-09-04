@@ -1,6 +1,7 @@
 # Deploys the project page (docs/web/) to GitHub Pages. The site is assembled
-# in CI: the committed page plus the README media and the grid-view video, so
-# no artifact bytes are duplicated in the repository.
+# in CI: the committed page plus the README media, the grid-view video and the
+# four vector figures it links, so no artifact bytes are duplicated in the
+# repository.
 #
 # One-time setup: repository Settings -> Pages -> Source: "GitHub Actions".
 # Runs on pushes to main. The pre-merge branch is listed too so the page can be
@@ -15,6 +16,7 @@ on:
     paths:
       - "docs/web/**"
       - "docs/media/**"
+      - "figures/*.pdf"
       - "supplementary_media/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
@@ -38,9 +40,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Assemble site
         run: |
-          mkdir -p _site/media
+          mkdir -p _site/media _site/figures
           cp -r docs/web/. _site/
           cp docs/media/*.gif docs/media/*.png _site/media/
+          cp figures/figure3.pdf figures/figure4.pdf figures/figure5.pdf figures/figure6.pdf _site/figures/
           cp supplementary_media/Supplementary_Video_1_MoSeq_syllable_atlas_grid.mp4 _site/media/
       - uses: actions/upload-pages-artifact@v3
         with:
