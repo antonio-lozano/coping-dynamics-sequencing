@@ -44,7 +44,12 @@ and into the code record's metadata.
 ## Order of operations
 
 1. **Merge to main and tag.** Zenodo archives the default branch state of a
-   release, so the reproducible layout must be on `main` first.
+   release, so the reproducible layout must be on `main` first. The merge also
+   puts the project page on its permanent trigger: `docs/web/index.html` deploys
+   to <https://antonio-lozano.github.io/coping-dynamics-sequencing/> through
+   `.github/workflows/pages.yml`, which needs *Settings → Pages → Source: GitHub
+   Actions* enabled once. Remove the pre-merge branch from that workflow's
+   `branches` list at the same time.
 2. **Reserve the dataset DOI.** Log in to Zenodo, *New upload*, set
    *Resource type* to **Dataset**, answer **No** to "Do you already have a
    DOI?", and press **Get a DOI now!**. Fill in title, authors, description and

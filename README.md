@@ -8,6 +8,10 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11-blue.svg)](pyproject.toml)
 
+**[Project page &rarr; antonio-lozano.github.io/coping-dynamics-sequencing](https://antonio-lozano.github.io/coping-dynamics-sequencing/)**
+&mdash; the study in five minutes: the behavioural repertoire, the paradigm, the
+findings, and the two coping profiles.
+
 Self-contained manuscript repository for the behavioral motif, freezing, and
 stress-coping dynamics analyses. All data required to rebuild the data-derived
 figures, statistical CSVs, Excel reports, and validation manifest are included

@@ -4,210 +4,505 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Coping Dynamics Sequencing</title>
-<meta name="description" content="Byte-reproducible manuscript repository: keypoint-MoSeq behavioral motif dynamics of stress coping in mice.">
+<meta name="description" content="Early-life stress splits mice into two coping profiles. Unsupervised keypoint-MoSeq behavioral sequencing resolves them, in a manuscript repository that rebuilds byte-identically.">
+<meta property="og:title" content="Coping Dynamics Sequencing">
+<meta property="og:description" content="Two ways of coping with the same early-life stress, read out of movement itself.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
   :root {
-    --bg: #0C0E10; --panel: #14171A; --panel-2: #191D21; --rule: #262B30;
-    --ink: #E8EAED; --muted: #98A0A8; --accent: #F5C12D;
-    --freeze: #BE7AA5; --sniff: #5A9DAE; --groom: #8BC2D9; --turn: #AFD93D;
-    --loco: #F5C12D; --climb: #F6A65A; --jump: #E85655;
+    /* Ground and ink: neutrals biased faintly warm, so the behaviour palette
+       sits on top of them rather than fighting them. */
+    --ground: #FAFAF8;
+    --panel:  #F3F2EE;
+    --rule:   #DFDDD6;
+    --ink:    #14161A;
+    --muted:  #5E6169;
+
+    /* One interactive accent: a deepened Freeze, contrast-safe on the ground. */
+    --accent: #9C4F80;
+
+    /* The seven behavioural clusters, verbatim from the figure palette. These
+       colours mean a behaviour and are never used as decoration. */
+    --freeze: #BE7AA5;
+    --sniff:  #5A9DAE;
+    --groom:  #8BC2D9;
+    --turn:   #AFD93D;
+    --loco:   #F5C12D;
+    --climb:  #F6A65A;
+    --jump:   #E85655;
+
+    --serif: "Newsreader", "Iowan Old Style", Georgia, "Times New Roman", serif;
+    --sans:  "IBM Plex Sans", -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono:  "IBM Plex Mono", ui-monospace, Consolas, "Cascadia Mono", monospace;
   }
+
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
+  html { scroll-behavior: smooth; scroll-padding-top: 74px; }
   body {
-    background: var(--bg); color: var(--ink);
-    font: 17px/1.6 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--ground);
+    color: var(--ink);
+    font: 400 17px/1.65 var(--sans);
+    -webkit-font-smoothing: antialiased;
   }
+
   a { color: var(--accent); text-decoration: none; }
   a:hover { text-decoration: underline; }
-  code, pre { font-family: ui-monospace, Consolas, "Cascadia Mono", monospace; }
-  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
-  .eyebrow { font-size: 13px; font-weight: 700; letter-spacing: .14em; color: var(--muted); text-transform: uppercase; }
-
-  header { padding: 88px 0 48px; }
-  header h1 { font-size: clamp(38px, 6vw, 58px); line-height: 1.08; margin: 14px 0 18px; text-wrap: balance; }
-  header p.tag { max-width: 640px; color: var(--muted); font-size: 19px; }
-  .cta { margin-top: 28px; display: flex; gap: 14px; flex-wrap: wrap; }
-  .btn {
-    display: inline-block; padding: 11px 22px; border-radius: 8px; font-weight: 600;
-    border: 1px solid var(--rule); color: var(--ink); background: var(--panel);
+  a:focus-visible, .btn:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px;
   }
-  .btn.primary { background: var(--accent); color: #14171A; border-color: var(--accent); }
-  .btn:hover { text-decoration: none; filter: brightness(1.1); }
+  code { font-family: var(--mono); font-size: .92em; overflow-wrap: anywhere; }
 
-  .hero-media { margin: 40px 0 8px; }
-  .hero-media img { width: 100%; border-radius: 10px; border: 1px solid var(--rule); display: block; }
-  .caption { font-size: 14px; color: var(--muted); margin-top: 10px; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+  .prose { max-width: 62ch; }
 
-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin: 40px 0; }
-  .stat { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 20px 22px; }
-  .stat b { display: block; font-size: 26px; margin-bottom: 4px; }
-  .stat span { color: var(--muted); font-size: 15px; }
+  .eyebrow {
+    display: block; font-family: var(--mono); font-size: 12px; font-weight: 500;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+    margin-bottom: 14px;
+  }
 
-  section { padding: 56px 0; border-top: 1px solid var(--rule); }
-  section h2 { font-size: 30px; margin: 10px 0 14px; }
-  section > .wrap > p { max-width: 720px; color: var(--muted); }
+  h1, h2, h3 { font-family: var(--serif); font-weight: 500; text-wrap: balance; }
+  h1 { font-size: clamp(34px, 5.4vw, 56px); line-height: 1.08; letter-spacing: -.01em; }
+  h2 { font-size: clamp(27px, 3.4vw, 36px); line-height: 1.18; letter-spacing: -.005em; }
+  h3 { font-size: 19px; line-height: 1.3; }
+  .prose h2 { margin-bottom: 18px; }
 
-  video { width: 100%; border-radius: 10px; border: 1px solid var(--rule); display: block; background: #000; }
+  /* The repertoire strip: the seven clusters as hard stops. It is the page's
+     one structural device, and it stands for the unit of analysis — a coloured
+     sequence of behaviour in time. */
+  .strip {
+    height: 5px;
+    background: linear-gradient(90deg,
+      var(--freeze) 0 14.285%, var(--sniff) 14.285% 28.57%, var(--groom) 28.57% 42.857%,
+      var(--turn) 42.857% 57.14%, var(--loco) 57.14% 71.428%, var(--climb) 71.428% 85.714%,
+      var(--jump) 85.714% 100%);
+  }
 
-  .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; margin-top: 30px; }
-  .card { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
-  .card img { width: 100%; display: block; background: #fff; }
-  .card figcaption { padding: 12px 16px; font-size: 15px; color: var(--muted); }
-  .card figcaption b { color: var(--ink); }
+  /* ---- top bar ---- */
+  .topbar {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(250, 250, 248, .92);
+    backdrop-filter: saturate(180%) blur(12px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .topbar .wrap {
+    display: flex; align-items: center; gap: 26px;
+    height: 58px;
+  }
+  .topbar .mark {
+    font-family: var(--serif); font-size: 17px; color: var(--ink); margin-right: auto;
+  }
+  .topbar .mark:hover { text-decoration: none; }
+  .topbar nav { display: flex; gap: 24px; font-size: 15px; }
+  .topbar nav a { color: var(--muted); }
+  .topbar nav a:hover { color: var(--ink); text-decoration: none; }
+  @media (max-width: 720px) { .topbar nav a.opt { display: none; } }
 
+  /* ---- hero ---- */
+  header.hero { padding: 76px 0 8px; }
+  header.hero img.logo {
+    width: min(560px, 100%); height: auto; display: block; margin-bottom: 40px;
+    mix-blend-mode: multiply;
+  }
+  header.hero p.lede {
+    font-size: clamp(18px, 2vw, 21px); color: var(--muted); margin-top: 22px; max-width: 60ch;
+  }
+  header.hero p.lede b { color: var(--ink); font-weight: 500; }
+
+  .cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 32px; }
+  .btn {
+    display: inline-block; padding: 11px 22px; border-radius: 4px;
+    font-size: 15px; font-weight: 500; border: 1px solid var(--rule);
+    color: var(--ink); background: transparent;
+  }
+  .btn:hover { text-decoration: none; border-color: var(--ink); }
+  .btn.primary {
+    background: var(--accent); border-color: var(--accent); color: #FFFFFF;
+  }
+  .btn.primary:hover { background: #86416E; border-color: #86416E; }
+
+  figure { margin: 0; }
+  figure img, figure video {
+    width: 100%; display: block; border: 1px solid var(--rule); border-radius: 3px;
+    background: #FFFFFF;
+  }
+  figcaption { font-size: 14px; line-height: 1.55; color: var(--muted); margin-top: 12px; }
+  .hero-media { margin-top: 52px; }
+
+  /* ---- sections ---- */
+  section { padding: 72px 0; border-top: 1px solid var(--rule); }
+  section p + p { margin-top: 16px; }
+  section .prose p { color: var(--muted); }
+  section .prose p b { color: var(--ink); font-weight: 500; }
+
+  /* ---- behaviour chips ---- */
+  .chips { display: flex; flex-wrap: wrap; gap: 10px 12px; margin: 34px 0 0; list-style: none; }
+  .chips li {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-family: var(--mono); font-size: 13px; letter-spacing: .02em;
+    border: 1px solid var(--rule); border-radius: 3px; padding: 7px 13px 7px 10px;
+    background: #FFFFFF;
+  }
+  .chips i { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+
+  /* ---- paradigm timeline ---- */
+  .steps { display: grid; gap: 1px; background: var(--rule); border: 1px solid var(--rule);
+           border-radius: 3px; margin-top: 38px; grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 780px) { .steps { grid-template-columns: 1fr; } }
+  .step { background: var(--ground); padding: 24px 24px 26px; }
+  .step .when {
+    font-family: var(--mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--accent); display: block; margin-bottom: 10px;
+  }
+  .step h3 { margin-bottom: 8px; }
+  .step p { font-size: 15px; color: var(--muted); line-height: 1.55; }
+
+  .counts { display: flex; flex-wrap: wrap; gap: 14px 48px; margin-top: 38px; list-style: none; }
+  .counts li { font-size: 15px; color: var(--muted); }
+  .counts b {
+    display: block; font-family: var(--mono); font-variant-numeric: tabular-nums;
+    font-size: 30px; font-weight: 500; color: var(--ink); line-height: 1.1; margin-bottom: 3px;
+  }
+
+  /* ---- findings ---- */
+  .findings { display: grid; grid-template-columns: repeat(2, 1fr); gap: 34px 30px; margin-top: 42px; }
+  @media (max-width: 780px) { .findings { grid-template-columns: 1fr; } }
+  .finding img { background: #FFFFFF; }
+  .finding h3 { margin: 16px 0 8px; }
+  .finding .label {
+    font-family: var(--mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted); display: block; margin-top: 14px;
+  }
+  .finding p { font-size: 15.5px; color: var(--muted); line-height: 1.6; }
+  .finding .src {
+    display: block; font-family: var(--mono); font-size: 12.5px; color: var(--muted);
+    margin-top: 10px; word-break: break-all;
+  }
+
+  /* ---- contrast table ---- */
+  .tablewrap { overflow-x: auto; margin-top: 38px; border: 1px solid var(--rule); border-radius: 3px; }
+  table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 15px; }
+  caption { text-align: left; padding: 0 0 12px; font-size: 14px; color: var(--muted); }
+  th, td { padding: 13px 20px; text-align: left; border-bottom: 1px solid var(--rule); }
+  thead th {
+    font-family: var(--mono); font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase;
+    font-weight: 500; color: var(--muted); background: var(--panel); white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td .q { color: var(--muted); }
+  .flag {
+    display: inline-block; font-family: var(--mono); font-size: 11px; letter-spacing: .06em;
+    padding: 2px 7px; border-radius: 2px; margin-left: 8px; vertical-align: 1px;
+  }
+  .flag.diff { background: #F6E3EE; color: #7E3D66; }
+  .flag.same { background: var(--panel); color: var(--muted); }
+  .note { font-size: 14px; color: var(--muted); margin-top: 16px; max-width: 72ch; line-height: 1.6; }
+
+  /* ---- reproduce ---- */
   pre {
-    background: var(--panel); border: 1px solid var(--rule); border-radius: 10px;
-    padding: 18px 20px; overflow-x: auto; font-size: 15px; line-height: 1.7; margin: 18px 0;
+    background: var(--panel); border: 1px solid var(--rule); border-radius: 3px;
+    padding: 20px 22px; overflow-x: auto; font-family: var(--mono); font-size: 14px;
+    line-height: 1.8; margin-top: 30px;
   }
   pre .c { color: var(--muted); }
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 30px; margin-top: 44px; }
+  .facts h3 { margin-bottom: 8px; }
+  .facts p { font-size: 15px; color: var(--muted); line-height: 1.6; }
 
-  .contract { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; margin-top: 30px; }
-  .tile { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 22px 24px; }
-  .tile h3 { font-size: 18px; margin-bottom: 8px; }
-  .tile p { color: var(--muted); font-size: 15px; }
-  .tile code { color: var(--ink); font-size: 14px; }
+  footer { border-top: 1px solid var(--rule); padding: 44px 0 64px; }
+  footer p { font-size: 14.5px; color: var(--muted); max-width: 72ch; }
+  footer p + p { margin-top: 12px; }
 
-  .chips { display: flex; gap: 10px 18px; flex-wrap: wrap; margin-top: 18px; }
-  .chip { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; color: var(--muted); }
-  .chip i { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
-
-  footer { border-top: 1px solid var(--rule); padding: 40px 0 60px; color: var(--muted); font-size: 15px; }
   @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 </style>
 </head>
 <body>
 
-<header>
+<div class="strip"></div>
+
+<div class="topbar">
   <div class="wrap">
-    <span class="eyebrow">Manuscript repository · Byte-reproducible</span>
-    <h1>Coping Dynamics Sequencing</h1>
-    <p class="tag">Behavioral motif dynamics of stress coping in mice: keypoint-MoSeq
-    syllables, litter-clustered statistics, and a pipeline whose every artifact
-    rebuilds byte-identically on Windows and Linux.</p>
+    <a class="mark" href="#top">Coping Dynamics Sequencing</a>
+    <nav>
+      <a class="opt" href="#repertoire">Repertoire</a>
+      <a class="opt" href="#paradigm">Paradigm</a>
+      <a class="opt" href="#findings">Findings</a>
+      <a class="opt" href="#coping">Two profiles</a>
+      <a href="https://github.com/antonio-lozano/coping-dynamics-sequencing">GitHub</a>
+    </nav>
+  </div>
+</div>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <img class="logo" src="media/logo.png" alt="Coping Dynamics Sequencing">
+    <span class="eyebrow">Early-life stress &middot; Behavioural sequencing</span>
+    <h1>Two ways of coping with the same early-life stress</h1>
+    <p class="lede">Mice raised under limited bedding and nesting behave differently
+    when a second threat arrives in adulthood. Sequencing their movement rather
+    than scoring it splits them in two: a <b>vulnerable</b> group whose behaviour
+    turns repetitive and stereotyped, and a <b>resilient</b> group that, on every
+    measure separating the vulnerable animals from controls, is indistinguishable
+    from a control.</p>
     <div class="cta">
-      <a class="btn primary" href="https://github.com/antonio-lozano/coping-dynamics-sequencing">View on GitHub</a>
-      <a class="btn" href="#reproduce">Reproduce in three commands</a>
+      <a class="btn primary" href="#findings">Read the findings</a>
+      <a class="btn" href="https://github.com/antonio-lozano/coping-dynamics-sequencing">View the repository</a>
+      <a class="btn" href="#reproduce">Reproduce it</a>
     </div>
-    <div class="hero-media">
-      <img src="media/syllable_atlas.gif" alt="Representative pose-overlaid occurrences, one per behavioral cluster">
-      <p class="caption">One representative keypoint-MoSeq syllable per behavioral cluster,
-      egocentrically aligned, from SHA-256-verified archived clips.</p>
-    </div>
-    <div class="chips">
-      <span class="chip"><i style="background:var(--freeze)"></i>Freeze</span>
-      <span class="chip"><i style="background:var(--sniff)"></i>Sniff</span>
-      <span class="chip"><i style="background:var(--groom)"></i>Groom</span>
-      <span class="chip"><i style="background:var(--turn)"></i>Turn</span>
-      <span class="chip"><i style="background:var(--loco)"></i>Locomotion</span>
-      <span class="chip"><i style="background:var(--climb)"></i>Climb</span>
-      <span class="chip"><i style="background:var(--jump)"></i>Jump</span>
-    </div>
-    <div class="stats">
-      <div class="stat"><b>558</b><span>artifacts hashed in MANIFEST.csv</span></div>
-      <div class="stat"><b>1 command</b><span>rebuilds every figure, table and report</span></div>
-      <div class="stat"><b>2 platforms</b><span>identical bytes on Windows and Linux CI</span></div>
-      <div class="stat"><b>0 hidden inputs</b><span>all data required for a rebuild ships in-repo</span></div>
-    </div>
+    <figure class="hero-media">
+      <img src="media/syllable_atlas.gif" alt="Pose-overlaid mouse clips, one representative occurrence per behavioural cluster, looping side by side">
+      <figcaption>One representative keypoint-MoSeq syllable per behavioural cluster,
+      egocentrically aligned, drawn from hash-verified archived clips.</figcaption>
+    </figure>
   </div>
 </header>
 
-<section id="video">
+<section id="repertoire">
   <div class="wrap">
-    <span class="eyebrow">Supplementary Video 1 · Grid view</span>
-    <h2>The whole repertoire at a glance</h2>
-    <p>All 25 cluster-mapped syllables playing simultaneously, ordered and
-    color-coded by behavioral cluster. Each tile loops three representative
-    pose-overlaid occurrences; sources and SHA-256 hashes are recorded in the
-    shipped index.</p>
-    <div style="margin-top:28px">
+    <div class="prose">
+      <span class="eyebrow">The repertoire</span>
+      <h2>Stop naming the stress response. Measure it.</h2>
+      <p>Cannon called it fight or flight in 1925. Bracha added freeze and fawn in
+      2004. The list has kept growing ever since &mdash; fold, flop, feign, fret,
+      falter &mdash; one label for every new observation, and no measurement
+      underneath any of them.</p>
+      <p>So we stopped naming and started sequencing. <b>Keypoint-MoSeq</b> segments
+      pose tracking into short recurring motifs without supervision. The motifs
+      group into seven behaviours a human can recognise, and every session becomes
+      a sequence of them at 250&nbsp;ms resolution &mdash; which means coping can be
+      described by what an animal does next, not only by how much of each thing it
+      does.</p>
+    </div>
+    <ul class="chips">
+      <li><i style="background:var(--freeze)"></i>Freezing</li>
+      <li><i style="background:var(--sniff)"></i>Sniffing</li>
+      <li><i style="background:var(--groom)"></i>Grooming</li>
+      <li><i style="background:var(--turn)"></i>Turn</li>
+      <li><i style="background:var(--loco)"></i>Locomotion</li>
+      <li><i style="background:var(--climb)"></i>Climbing</li>
+      <li><i style="background:var(--jump)"></i>Jump</li>
+    </ul>
+    <figure style="margin-top:38px">
       <video controls loop muted playsinline preload="metadata"
         src="media/Supplementary_Video_1_MoSeq_syllable_atlas_grid.mp4"></video>
+      <figcaption>Supplementary Video 1, grid view: all 25 cluster-mapped syllables
+      playing at once, ordered and coloured by behavioural cluster. Each tile loops
+      three representative pose-overlaid occurrences.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="paradigm">
+  <div class="wrap">
+    <div class="prose">
+      <span class="eyebrow">The paradigm</span>
+      <h2>Stress early, then a second threat</h2>
+      <p>Adversity in the first days of life, then a fear challenge in adulthood.
+      The question is not whether the stressed animals freeze more or less, but
+      whether their behaviour is organised differently when the threat returns.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <span class="when">P2 &ndash; P9</span>
+        <h3>Early-life stress</h3>
+        <p>Limited bedding and nesting, the chronic-adversity model of
+        Rice&nbsp;et&nbsp;al.,&nbsp;2008.</p>
+      </div>
+      <div class="step">
+        <span class="when">P60</span>
+        <h3>Fear conditioning</h3>
+        <p>A 30&nbsp;s tone at 2.8&nbsp;kHz and 80&nbsp;dB, paired with a 2&nbsp;s
+        foot shock at 0.4&nbsp;mA.</p>
+      </div>
+      <div class="step">
+        <span class="when">Analysis</span>
+        <h3>Behavioural sequencing</h3>
+        <p>Pose tracking, then unsupervised keypoint-MoSeq syllables mapped onto
+        seven behavioural clusters in 250&nbsp;ms bins.</p>
+      </div>
+    </div>
+    <ul class="counts">
+      <li><b>82</b>animals clustered</li>
+      <li><b>49</b>litters</li>
+      <li><b>7</b>behavioural clusters</li>
+      <li><b>250 ms</b>sequencing resolution</li>
+    </ul>
+    <p class="note">Every model in the paper is mixed-effects or GEE, grouped by
+    animal, with litter composition and litter variance reported alongside
+    (<code>statistics/litter_variance_components.csv</code>).</p>
+  </div>
+</section>
+
+<section id="findings">
+  <div class="wrap">
+    <div class="prose">
+      <span class="eyebrow">Findings</span>
+      <h2>What the sequences show</h2>
+      <p>Four figures, in the order the argument is built. Each is regenerated from
+      the bundled data by <code>scripts/run_all.py</code>, and the values behind
+      every panel are exported next to it.</p>
+    </div>
+    <div class="findings">
+
+      <figure class="finding">
+        <img src="assets/figure3_thumb.png" alt="Figure 3: behaviour frequencies and their time courses across the session">
+        <span class="label">Figure 3</span>
+        <h3>Early-life stress changes what happens, and when</h3>
+        <p>Behaviour frequencies differ between groups, and the time courses diverge
+        across the session rather than sitting at a constant offset &mdash; the
+        stressed animals are not simply doing more or less of one thing.</p>
+        <span class="src">figure_source_data/figure3.csv</span>
+      </figure>
+
+      <figure class="finding">
+        <img src="assets/figure4_thumb.png" alt="Figure 4: diversity, bout duration and transition metrics per animal">
+        <span class="label">Figure 4</span>
+        <h3>Stressed animals hold active behaviours longer</h3>
+        <p>Sniffing bouts run 0.32&nbsp;s longer and turns 0.16&nbsp;s longer than in
+        controls (p&nbsp;=&nbsp;0.029 and 0.020). Recurrence and determinism rise
+        only as trends (p&nbsp;=&nbsp;0.058, 0.075) &mdash; the group average is
+        hiding something.</p>
+        <span class="src">statistics/stats_figure4_bouts_MixedLM.csv</span>
+      </figure>
+
+      <figure class="finding">
+        <img src="assets/figure5_thumb.png" alt="Figure 5: behavioural dynamics similarity score and the resulting animal clusters">
+        <span class="label">Figure 5</span>
+        <h3>A dynamics score splits the stressed group in two</h3>
+        <p>Scoring each animal by how close its behavioural dynamics sit to the
+        control distribution, then clustering on that score, separates
+        <b>29 vulnerable</b> from <b>12 resilient</b> stressed animals &mdash; without
+        ever looking at the outcome measures.</p>
+        <span class="src">statistics/animal_dendrogram_clusters.csv</span>
+      </figure>
+
+      <figure class="finding">
+        <img src="assets/figure6_thumb.png" alt="Figure 6: diversity, bout and transition metrics compared across control, vulnerable and resilient groups">
+        <span class="label">Figure 6</span>
+        <h3>Resilience is less recurrence and less stereotypy</h3>
+        <p>Split that way, the effects sharpen. Vulnerable animals return to the same
+        states more often and use a narrower repertoire; resilient animals do
+        neither, and look like controls throughout.</p>
+        <span class="src">statistics/fig6_*_resilience_stats.csv</span>
+      </figure>
+
     </div>
   </div>
 </section>
 
-<section id="figures">
+<section id="coping">
   <div class="wrap">
-    <span class="eyebrow">Figures</span>
-    <h2>Every data figure, rebuilt from source</h2>
-    <p>Figures 2&ndash;7 are regenerated by <code>scripts/run_all.py</code> from
-    the bundled data; the values behind every panel are exported to
-    <code>figure_source_data/</code> and the fitted models to
-    <code>statistics/</code>.</p>
-    <div class="gallery">
-      <figure class="card"><img src="assets/figure2_thumb.png" alt="Figure 2">
-        <figcaption><b>Figure 2</b> · Pipeline validation</figcaption></figure>
-      <figure class="card"><img src="assets/figure3_thumb.png" alt="Figure 3">
-        <figcaption><b>Figure 3</b> · Behavior clusters</figcaption></figure>
-      <figure class="card"><img src="assets/figure4_thumb.png" alt="Figure 4">
-        <figcaption><b>Figure 4</b> · Diversity dynamics</figcaption></figure>
-      <figure class="card"><img src="assets/figure5_thumb.png" alt="Figure 5">
-        <figcaption><b>Figure 5</b> · Resilience dynamics</figcaption></figure>
-      <figure class="card"><img src="assets/figure6_thumb.png" alt="Figure 6">
-        <figcaption><b>Figure 6</b> · Resilience and diversity</figcaption></figure>
-      <figure class="card"><img src="assets/figure7_thumb.png" alt="Figure 7">
-        <figcaption><b>Figure 7</b> · Predicting resilience</figcaption></figure>
+    <div class="prose">
+      <span class="eyebrow">Two profiles</span>
+      <h2>The average hides the effect. The split reveals it.</h2>
+      <p>Pooled across all stressed animals, the sequence measures move in the right
+      direction but stop at trends. Separate the two coping profiles and the picture
+      resolves: <b>on every measure that survives FDR correction between vulnerable
+      animals and controls, resilient animals do not differ from controls at
+      all.</b></p>
     </div>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Sequence measure</th>
+            <th scope="col">ELS vulnerable vs control</th>
+            <th scope="col">ELS resilient vs control</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Recurrence rate</th>
+            <td class="num">&plus;0.026 <span class="q">q&nbsp;=&nbsp;0.005</span><span class="flag diff">differs</span></td>
+            <td class="num">&minus;0.008 <span class="q">q&nbsp;=&nbsp;0.69</span><span class="flag same">n.s.</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Simpson diversity</th>
+            <td class="num">&minus;0.022 <span class="q">q&nbsp;=&nbsp;0.013</span><span class="flag diff">differs</span></td>
+            <td class="num">&plus;0.007 <span class="q">q&nbsp;=&nbsp;0.77</span><span class="flag same">n.s.</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Freezing bout duration</th>
+            <td class="num">&minus;0.18 s <span class="q">q&nbsp;=&nbsp;0.028</span><span class="flag diff">differs</span></td>
+            <td class="num">&plus;0.08 s <span class="q">q&nbsp;=&nbsp;0.73</span><span class="flag same">n.s.</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Sniffing bout duration</th>
+            <td class="num">&plus;0.42 s <span class="q">q&nbsp;=&nbsp;0.042</span><span class="flag diff">differs</span></td>
+            <td class="num">&plus;0.09 s <span class="q">q&nbsp;=&nbsp;0.73</span><span class="flag same">n.s.</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Turn bout duration</th>
+            <td class="num">&plus;0.22 s <span class="q">q&nbsp;=&nbsp;0.028</span><span class="flag diff">differs</span></td>
+            <td class="num">&plus;0.02 s <span class="q">q&nbsp;=&nbsp;0.84</span><span class="flag same">n.s.</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">Mixed-effects coefficients grouped by animal, with
+    Benjamini&ndash;Hochberg FDR correction within each metric family; bout
+    coefficients are in seconds. The resilient-versus-vulnerable contrast is
+    significant in the same direction for recurrence
+    (q&nbsp;=&nbsp;0.005) and Simpson diversity (q&nbsp;=&nbsp;0.010). Every value
+    here is read from the shipped tables
+    <code>statistics/fig6_transition_resilience_stats.csv</code>,
+    <code>fig6_diversity_resilience_stats.csv</code> and
+    <code>fig6_bout_resilience_stats.csv</code>, which the rebuild regenerates.</p>
   </div>
 </section>
 
 <section id="reproduce">
   <div class="wrap">
-    <span class="eyebrow">Reproduce</span>
-    <h2>Three commands, identical bytes</h2>
-    <p>The locked <code>uv</code> environment installs the recorded Python and
-    exact dependency versions; conda and pip routes ship too.</p>
+    <div class="prose">
+      <span class="eyebrow">Reproduce</span>
+      <h2>Three commands, identical bytes</h2>
+      <p>Every figure, table, statistic and report on this page rebuilds from the
+      data in the repository. There are no hidden inputs and no download step: a
+      clone is the whole package.</p>
+    </div>
     <pre><span class="c"># install the locked environment</span>
 uv sync --locked
 
 <span class="c"># verify the shipped artifacts against MANIFEST.csv</span>
 uv run python scripts/check_reproducibility.py
 
-<span class="c"># rebuild every figure, table, report and the manifest — the tree ends clean</span>
+<span class="c"># rebuild everything — the tree ends clean</span>
 uv run python scripts/run_all.py</pre>
-    <div class="contract">
-      <div class="tile"><h3>Hash manifest</h3>
-        <p><code>MANIFEST.csv</code> records a SHA-256 for all 558 artifacts. A
-        rebuild that changes any byte fails the check; the repository referees
-        itself.</p></div>
-      <div class="tile"><h3>Statistics fitted once</h3>
-        <p>Every model is fitted in one place and exported;
-        <code>scripts/check_manuscript.py</code> pins each statistic quoted in
-        the manuscript to the shipped report.</p></div>
-      <div class="tile"><h3>Continuous verification</h3>
-        <p>CI executes the science: locked installs, the full checker and test
-        suite on Ubuntu and Windows, plus the companion tool's own tests.</p></div>
+    <div class="facts">
+      <div>
+        <h3>The repository referees itself</h3>
+        <p><code>MANIFEST.csv</code> carries a SHA-256 for every artifact. A rebuild
+        that changes one byte fails the check, on Windows and on Linux alike.</p>
+      </div>
+      <div>
+        <h3>Statistics fitted once</h3>
+        <p>Each model is fitted in one place and exported;
+        <code>scripts/check_manuscript.py</code> pins every statistic quoted in the
+        manuscript to the shipped report.</p>
+      </div>
+      <div>
+        <h3>A companion classifier</h3>
+        <p><code>tools/behavior_dlc_classifier/</code> ships the trained
+        DeepLabCut networks, demo videos, tests and a guide, so new recordings can
+        be tracked and classified without training anything.</p>
+      </div>
     </div>
-  </div>
-</section>
-
-<section id="tool">
-  <div class="wrap">
-    <span class="eyebrow">Companion tool</span>
-    <h2>Behavior classifier</h2>
-    <p>A self-contained DeepLabCut-based freezing and seven-behavior classifier
-    ships under <code>tools/behavior_dlc_classifier/</code> with the trained
-    tracking networks — including the iteration behind every published
-    prediction — demo videos, its own test suite, and a step-by-step guide, so
-    new videos can be tracked and classified without training anything.</p>
-  </div>
-</section>
-
-<section id="cite">
-  <div class="wrap">
-    <span class="eyebrow">Cite &amp; availability</span>
-    <h2>Citation</h2>
-    <p>Citation metadata lives in <code>CITATION.cff</code> (use GitHub's
-    &ldquo;Cite this repository&rdquo;). Code is MIT-licensed; an archived,
-    DOI-minted release accompanies the manuscript at submission.</p>
   </div>
 </section>
 
 <footer>
   <div class="wrap">
-    Coping Dynamics Sequencing ·
-    <a href="https://github.com/antonio-lozano/coping-dynamics-sequencing">github.com/antonio-lozano/coping-dynamics-sequencing</a>
+    <p><b>Coping Dynamics Sequencing</b> &mdash; Jeniffer Sanguino-G&oacute;mez and
+    colleagues, Brain Plasticity group, SILS-CNS, University of Amsterdam.</p>
+    <p>Code is MIT-licensed and the bundled data CC&nbsp;BY&nbsp;4.0. Citation
+    metadata lives in <code>CITATION.cff</code> &mdash; use GitHub&rsquo;s
+    &ldquo;Cite this repository&rdquo;. An archived, DOI-minted release accompanies
+    the manuscript at submission.</p>
+    <p><a href="https://github.com/antonio-lozano/coping-dynamics-sequencing">github.com/antonio-lozano/coping-dynamics-sequencing</a></p>
   </div>
 </footer>
 

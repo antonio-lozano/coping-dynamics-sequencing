@@ -3,12 +3,15 @@
 # no artifact bytes are duplicated in the repository.
 #
 # One-time setup: repository Settings -> Pages -> Source: "GitHub Actions".
-# Runs on pushes to main; workflow_dispatch allows a manual deploy earlier.
+# Runs on pushes to main. The pre-merge branch is listed too so the page can be
+# deployed before the merge; that also needs the branch allowed under Settings ->
+# Environments -> github-pages, which restricts deployments to the default branch
+# out of the box. Drop the branch from the list once it has been merged.
 name: pages
 
 on:
   push:
-    branches: [main]
+    branches: [main, chore/tier2-tests-packaging]
     paths:
       - "docs/web/**"
       - "docs/media/**"
@@ -37,7 +40,7 @@ jobs:
         run: |
           mkdir -p _site/media
           cp -r docs/web/. _site/
-          cp docs/media/*.gif _site/media/
+          cp docs/media/*.gif docs/media/*.png _site/media/
           cp supplementary_media/Supplementary_Video_1_MoSeq_syllable_atlas_grid.mp4 _site/media/
       - uses: actions/upload-pages-artifact@v3
         with:
