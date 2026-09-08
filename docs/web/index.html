@@ -24,11 +24,11 @@
     --on-dark: #ECEBE6;
     --on-dark-muted: #9DA1AA;
 
-    /* The violet end of the logo, deep enough to sit on white as a link. */
-    --accent: #6B4FC2;
-    --accent-2: #5A3FAE;
+    /* The magenta the logo opens on, deepened enough to sit on white as a link. */
+    --accent: #B03A6D;
+    --accent-2: #93305B;
     /* The logo's sweep, used once: on the words that carry the thesis. */
-    --sweep: linear-gradient(90deg, #E2B800 0%, #8DC63F 28%, #2CAD93 50%, #325FB9 70%, #8068C9 86%, #B57BD6 100%);
+    --sweep: linear-gradient(90deg, #D9558F 0%, #4F98D1 16%, #62B3C2 30%, #C7CD45 44%, #F1C232 58%, #F4802F 76%, #E94A64 100%);
 
     /* The seven behavioural clusters, as drawn in Figures 4 and 6. */
     --freeze: #C37BA0;
@@ -154,7 +154,7 @@
   /* ---- bands ---- */
   .band-dark { background: var(--dark); color: var(--on-dark); }
   .band-dark h2, .band-dark h3 { color: #FFFFFF; }
-  .band-dark a { color: #C9B8FF; }
+  .band-dark a { color: #F19CBE; }
   .band-dark code { color: var(--on-dark); }
   .band-paper { background: var(--paper); }
 
@@ -179,7 +179,7 @@
   .wall .plot { position: relative; }
   .wall .plot > img { display: block; width: 100%; height: auto; background: var(--dark-2); }
   .wall .tone {
-    position: absolute; top: -10px; height: calc(100% - 26px); width: 6.667%;
+    position: absolute; top: -10px; height: calc(100% + 10px); width: 6.667%;
     border-left: 1px solid rgba(255,255,255,.4); border-right: 1px solid rgba(255,255,255,.4);
     background: rgba(255,255,255,.06); pointer-events: none;
   }
@@ -195,7 +195,7 @@
   .wall .plot { overflow: visible; }
   .wallband .wrap { overflow: hidden; }
   .wall .axis {
-    display: grid; grid-template-columns: repeat(15, 1fr); margin-top: 8px;
+    grid-column: 2; display: grid; grid-template-columns: repeat(15, 1fr); margin-top: 8px;
     font-family: var(--mono); font-size: 11.5px; color: var(--on-dark-muted); font-variant-numeric: tabular-nums;
   }
   .wall .axis span { grid-column: span 2; border-left: 1px solid rgba(255,255,255,.22); padding: 6px 0 0 6px; }
@@ -207,6 +207,7 @@
   .wallfoot p { max-width: 58ch; font-size: 14px; line-height: 1.55; color: var(--on-dark-muted); }
   @media screen and (max-width: 720px) {
     .wall { grid-template-columns: 1fr; }
+    .wall .axis { grid-column: 1; }
     .wall .groups { display: none; }
     .wall .tone::before { display: none; }
   }
@@ -293,7 +294,7 @@
   dialog.lb::backdrop { background: rgba(15, 17, 21, .86); }
   dialog.lb img { display: block; width: 100%; height: auto; background: #FFFFFF; border-radius: 6px; }
   dialog.lb .lbbar { position: sticky; bottom: 0; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 10px; color: var(--on-dark); font-size: 14px; background: rgba(15,17,21,.94); border-radius: 0 0 6px 6px; }
-  dialog.lb .lbbar a { color: #C9B8FF; }
+  dialog.lb .lbbar a { color: #F19CBE; }
   dialog.lb button { background: transparent; border: 1px solid rgba(255,255,255,.3); color: #FFFFFF; border-radius: 999px; padding: 7px 14px; font: 500 13px var(--sans); cursor: pointer; }
 
   /* ---- two profiles ---- */
@@ -339,7 +340,7 @@
     padding: 22px 24px; overflow-x: auto; font-family: var(--mono); font-size: 13.5px; line-height: 1.8;
   }
   pre .c { color: var(--on-dark-muted); }
-  pre .k { color: #C9B8FF; }
+  pre .k { color: #F19CBE; }
   .repro { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 28px; margin-top: 36px; }
   .repro h3 { font-size: 20px; margin-bottom: 8px; }
   .repro p { font-size: 15px; color: var(--muted); line-height: 1.6; }
@@ -422,7 +423,7 @@
     .tile span.t { font-size: 8.5pt; }
     a { text-decoration: none; }
     section a:not(.tile):not(.btn) { color: var(--ink); }
-    .band-dark a { color: #C9B8FF; }
+    .band-dark a { color: #F19CBE; }
     footer { padding: 18pt 0 0; }
   }
 </style>
@@ -452,7 +453,7 @@
 
 <header class="hero" id="top">
   <div class="wrap">
-    <img class="logo" src="media/logo.png" alt="Coping Dynamics Sequencing">
+    <img class="logo" src="media/logo.png" width="1655" height="537" alt="Coping Dynamics Sequencing">
     <span class="eyebrow">Early-life stress &middot; Fear conditioning &middot; Behavioural sequencing</span>
     <h1><span class="sweep">Two ways of coping</span> with the same early-life stress</h1>
     <p class="lede">Mice raised under limited bedding and nesting were fear-conditioned in
@@ -498,9 +499,9 @@
       <div class="plot">
         <img src="assets/sequence_wall.png" width="3600" height="848" alt="Eighty-two rows of behavioural sequences coloured by cluster, grouped as control, ELS vulnerable and ELS resilient, with freezing increasing after each of three tones">
         <div class="tone t1"></div><div class="tone t2"></div><div class="tone t3"></div>
-        <div class="axis" aria-hidden="true">
-          <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7 min</span>
-        </div>
+      </div>
+      <div class="axis" aria-hidden="true">
+        <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7 min</span>
       </div>
     </div>
     <div class="wallfoot reveal">
