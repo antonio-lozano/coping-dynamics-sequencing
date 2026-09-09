@@ -22,5 +22,5 @@ in `statistics/`. Manuscript-facing Excel workbooks are:
 - `report/raw_data.xlsx`
 - `report/statistical_report.xlsx`
 
-For public release, archive the repository on a persistent platform such as
-Zenodo, Figshare, Dryad, or OSF and cite the archive DOI in the manuscript.
+The data are being deposited on Figshare. The archive DOI will be added here
+and to the manuscript once the upload is complete.
