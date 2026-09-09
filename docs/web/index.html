@@ -24,6 +24,12 @@
     --on-dark: #ECEBE6;
     --on-dark-muted: #9DA1AA;
 
+    /* The two data bands. Deeper than the paper bands so the rhythm survives,
+       light enough that the cluster colours read as they do in the figures. */
+    --tint:   #EBE8DF;
+    --tint-2: #DEDACE;
+    --tint-rule: #D3CFC1;
+
     /* The magenta the logo opens on, deepened enough to sit on white as a link. */
     --accent: #A83F79;
     --accent-2: #8C3465;
@@ -71,8 +77,6 @@
   .prose p + p { margin-top: 16px; }
   .prose p { color: var(--muted); }
   .prose p b { color: var(--ink); font-weight: 600; }
-  .band-dark .prose p { color: var(--on-dark-muted); }
-  .band-dark .prose p b { color: #FFFFFF; }
 
   .eyebrow {
     display: inline-flex; align-items: center; gap: 10px;
@@ -81,7 +85,6 @@
     margin-bottom: 18px;
   }
   .eyebrow::before { content: ""; width: 26px; height: 1px; background: currentColor; opacity: .6; }
-  .band-dark .eyebrow { color: var(--on-dark-muted); }
 
   h1, h2, h3 { font-family: var(--serif); font-weight: 500; text-wrap: balance; }
   h1 { font-size: clamp(40px, 6.4vw, 76px); line-height: 1.02; letter-spacing: -.022em; font-variation-settings: "opsz" 72; }
@@ -152,40 +155,40 @@
   .facts li b { color: var(--ink); font-weight: 500; }
 
   /* ---- bands ---- */
-  .band-dark { background: var(--dark); color: var(--on-dark); }
-  .band-dark h2, .band-dark h3 { color: #FFFFFF; }
-  .band-dark a { color: #F19CBE; }
-  .band-dark code { color: var(--on-dark); }
+  .band-tint {
+    background: var(--tint); color: var(--ink);
+    border-top: 1px solid var(--tint-rule); border-bottom: 1px solid var(--tint-rule);
+  }
   .band-paper { background: var(--paper); }
 
   /* ---- the sequence wall ---- */
   .wallband { padding: 72px 0 64px; }
   .wallhead { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 18px 40px; margin-bottom: 44px; }
   .wallhead h2 { margin-bottom: 0; max-width: 20ch; }
-  .wallhead p { max-width: 46ch; color: var(--on-dark-muted); font-size: 15.5px; line-height: 1.55; }
+  .wallhead p { max-width: 46ch; color: var(--muted); font-size: 15.5px; line-height: 1.55; }
 
   .wall { display: grid; grid-template-columns: 118px 1fr; gap: 0 14px; }
   .wall .groups { position: relative; }
   .wall .groups span {
     position: absolute; left: 0; right: 0; transform: translateY(-50%);
     font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase;
-    color: var(--on-dark-muted); line-height: 1.35; text-align: right; padding-right: 8px;
+    color: var(--muted); line-height: 1.35; text-align: right; padding-right: 8px;
     border-right: 3px solid var(--rule);
   }
-  .wall .groups span b { display: block; font-family: var(--sans); color: #FFFFFF; font-weight: 600; letter-spacing: 0; text-transform: none; font-size: 13.5px; }
+  .wall .groups span b { display: block; font-family: var(--sans); color: var(--ink); font-weight: 600; letter-spacing: 0; text-transform: none; font-size: 13.5px; }
   .wall .groups .g-c { top: 24.2%; border-color: var(--control); }
   .wall .groups .g-v { top: 67.1%; border-color: var(--vuln); }
   .wall .groups .g-r { top: 92.9%; border-color: var(--res); }
   .wall .plot { position: relative; }
-  .wall .plot > img { display: block; width: 100%; height: auto; background: var(--dark-2); }
+  .wall .plot > img { display: block; width: 100%; height: auto; background: var(--tint-2); }
   .wall .tone {
     position: absolute; top: -10px; height: calc(100% + 10px); width: 6.667%;
-    border-left: 1px solid rgba(255,255,255,.4); border-right: 1px solid rgba(255,255,255,.4);
-    background: rgba(255,255,255,.06); pointer-events: none;
+    border-left: 1px solid rgba(16,18,22,.34); border-right: 1px solid rgba(16,18,22,.34);
+    background: rgba(16,18,22,.05); pointer-events: none;
   }
   .wall .tone::before {
     content: "tone"; position: absolute; top: -18px; left: 0; font-family: var(--mono);
-    font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--on-dark-muted);
+    font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
   }
   .wall .tone::after {
     content: ""; position: absolute; top: 0; right: -1px; width: 3px; height: 100%; background: var(--jump); opacity: .9;
@@ -196,15 +199,15 @@
   .wallband .wrap { overflow: hidden; }
   .wall .axis {
     grid-column: 2; display: grid; grid-template-columns: repeat(15, 1fr); margin-top: 8px;
-    font-family: var(--mono); font-size: 11.5px; color: var(--on-dark-muted); font-variant-numeric: tabular-nums;
+    font-family: var(--mono); font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums;
   }
-  .wall .axis span { grid-column: span 2; border-left: 1px solid rgba(255,255,255,.22); padding: 6px 0 0 6px; }
+  .wall .axis span { grid-column: span 2; border-left: 1px solid rgba(16,18,22,.2); padding: 6px 0 0 6px; }
   .wall .axis span:last-child { grid-column: span 1; }
   .wallfoot { display: flex; flex-wrap: wrap; gap: 18px 36px; align-items: flex-start; justify-content: space-between; margin-top: 26px; }
-  .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; list-style: none; font-family: var(--mono); font-size: 12.5px; color: var(--on-dark-muted); }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; list-style: none; font-family: var(--mono); font-size: 12.5px; color: var(--muted); }
   .legend li { display: inline-flex; align-items: center; gap: 8px; }
   .legend i { width: 12px; height: 12px; border-radius: 2px; flex: none; }
-  .wallfoot p { max-width: 58ch; font-size: 14px; line-height: 1.55; color: var(--on-dark-muted); }
+  .wallfoot p { max-width: 58ch; font-size: 14px; line-height: 1.55; color: var(--muted); }
   @media screen and (max-width: 720px) {
     .wall { grid-template-columns: 1fr; }
     .wall .axis { grid-column: 1; }
@@ -299,27 +302,27 @@
 
   /* ---- two profiles ---- */
   .profiles { padding: 96px 0; }
-  .board { margin-top: 44px; border: 1px solid rgba(255,255,255,.12); border-radius: 8px; overflow: hidden; }
+  .board { margin-top: 44px; border: 1px solid var(--tint-rule); border-radius: 8px; overflow: hidden; }
   .boardwrap { overflow-x: auto; }
   .board table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 15px; }
-  .board th, .board td { padding: 16px 20px; text-align: left; border-bottom: 1px solid rgba(255,255,255,.1); vertical-align: middle; }
+  .board th, .board td { padding: 16px 20px; text-align: left; border-bottom: 1px solid var(--tint-rule); vertical-align: middle; }
   .board thead th {
     font-family: var(--mono); font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; font-weight: 500;
-    color: var(--on-dark-muted); background: var(--dark-2); white-space: nowrap;
+    color: var(--muted); background: var(--tint-2); white-space: nowrap;
   }
   .board thead th i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 8px; vertical-align: -1px; }
-  .board tbody th { font-weight: 500; color: #FFFFFF; }
-  .board tbody th small { display: block; font-family: var(--mono); font-size: 11.5px; color: var(--on-dark-muted); font-weight: 400; margin-top: 2px; }
+  .board tbody th { font-weight: 500; color: var(--ink); }
+  .board tbody th small { display: block; font-family: var(--mono); font-size: 11.5px; color: var(--muted); font-weight: 400; margin-top: 2px; }
   .board tbody tr:last-child td, .board tbody tr:last-child th { border-bottom: none; }
-  .board td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; color: #FFFFFF; }
-  .board td .q { color: var(--on-dark-muted); margin-left: 8px; }
+  .board td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--ink); }
+  .board td .q { color: var(--muted); margin-left: 8px; }
   .pill {
     display: inline-block; font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
     padding: 3px 9px; border-radius: 999px; margin-left: 12px; vertical-align: 1px;
   }
-  .pill.diff { background: var(--vuln); color: #1A0E15; }
-  .pill.same { background: rgba(255,255,255,.1); color: var(--on-dark-muted); }
-  .board-note { font-size: 14px; color: var(--on-dark-muted); margin-top: 18px; max-width: 78ch; line-height: 1.6; }
+  .pill.diff { background: var(--vuln); color: #2A1420; }
+  .pill.same { background: rgba(16,18,22,.07); color: var(--muted); }
+  .board-note { font-size: 14px; color: var(--muted); margin-top: 18px; max-width: 78ch; line-height: 1.6; }
 
   /* ---- for readers, reviewers and users ---- */
   .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-top: 40px; }
@@ -378,7 +381,7 @@
     .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
     .topbar, .cta, .print-hide, .finding .figwrap .zoom, .cite button, dialog { display: none !important; }
     .print-only { display: inline; }
-    .band-dark, .band-paper, .pill, .tile .ico, pre, .step .when { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .band-tint, .band-paper, .pill, .tile .ico, pre, .step .when { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     section, .profiles { padding: 22pt 0; }
     header.hero { padding: 0 0 8pt; }
     header.hero img.logo { width: 70mm; margin-bottom: 12pt; }
@@ -425,7 +428,6 @@
     .tile span.t { font-size: 8.5pt; }
     a { text-decoration: none; }
     section a:not(.tile):not(.btn) { color: var(--ink); }
-    .band-dark a { color: #F19CBE; }
     footer { padding: 18pt 0 0; }
   }
 </style>
@@ -482,7 +484,7 @@
   </div>
 </header>
 
-<div class="band-dark wallband" id="wall">
+<div class="band-tint wallband" id="wall">
   <div class="wrap">
     <div class="wallhead reveal">
       <div>
@@ -516,7 +518,7 @@
         <li><i style="background:var(--loco)"></i>Locomotion</li>
         <li><i style="background:var(--climb)"></i>Climb</li>
         <li><i style="background:var(--jump)"></i>Jump</li>
-        <li><i style="background:var(--dark-2); border:1px solid rgba(255,255,255,.25)"></i>Unassigned</li>
+        <li><i style="background:var(--tint-2); border:1px solid var(--tint-rule)"></i>Unassigned</li>
       </ul>
       <p>Each bin shows the cluster of its dominant syllable, read from
       <code>data/raw/syllable_usage_per_timebin_250ms.csv</code> with the cluster mapping and
@@ -714,7 +716,7 @@
   </div>
 </section>
 
-<section id="coping" class="band-dark profiles">
+<section id="coping" class="band-tint profiles">
   <div class="wrap">
     <div class="prose reveal">
       <span class="eyebrow">Two profiles</span>
