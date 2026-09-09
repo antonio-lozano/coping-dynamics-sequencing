@@ -416,6 +416,8 @@
     .board table { min-width: 0; font-size: 9.5pt; }
     .board th, .board td { padding: 8pt 10pt; }
     pre { font-size: 8.5pt; white-space: pre-wrap; padding: 12pt 14pt; }
+    #bibtex { font-size: 7.2pt; line-height: 1.38; padding: 9pt 11pt; }
+    #cite { margin-top: 18pt !important; }
     .tiles { grid-template-columns: repeat(4, 1fr); gap: 8pt; }
     .tile { padding: 12pt; }
     .tile .ico { width: 24pt; height: 24pt; margin-bottom: 8pt; }
@@ -464,6 +466,7 @@
     <div class="cta">
       <a class="btn primary" href="#findings">Read the findings
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10 4v12M4 10l6 6 6-6"/></svg></a>
+      <a class="btn" href="https://doi.org/10.1101/2025.09.01.673507">Preprint</a>
       <a class="btn" href="https://github.com/antonio-lozano/coping-dynamics-sequencing">Repository</a>
       <a class="btn" href="coping-dynamics-sequencing.pdf">Download the PDF</a>
     </div>
@@ -857,13 +860,23 @@
 <span class="k">uv</span> run python scripts/run_all.py</pre>
         <div id="cite" style="margin-top:40px">
           <span class="eyebrow">Cite</span>
-          <p class="citation"><b>Sanguino Gomez J, Lozano A.</b> Coping Dynamics Sequencing:
-          reproducible analysis of behavioural motifs, freezing and stress-coping dynamics in
-          mice. Version 1.0.0, 2026. github.com/antonio-lozano/coping-dynamics-sequencing.
-          An archived, DOI-minted release accompanies the manuscript at submission.</p>
+          <p class="citation"><b>Sanguino-Gomez J, G&uuml;&ccedil;l&uuml; U, Krugers HJ, Lozano A.</b>
+          Coping strategies dynamics and resilience profiles after early life stress revealed by
+          behavioural sequencing. <i>bioRxiv</i>, 2025.
+          <a href="https://doi.org/10.1101/2025.09.01.673507">doi:10.1101/2025.09.01.673507</a>.
+          The code and data are cited separately below; an archived, DOI-minted release
+          accompanies the manuscript at submission.</p>
           <div class="cite">
             <button type="button" data-copy="bibtex">Copy BibTeX</button>
-<pre id="bibtex">@software{sanguino_gomez_2026_coping,
+<pre id="bibtex">@article{sanguino_gomez_2025_coping,
+  author  = {Sanguino-Gomez, Jeniffer and G&uuml;&ccedil;l&uuml;, Umut and Krugers, Harm J. and Lozano, Antonio},
+  title   = {Coping strategies dynamics and resilience profiles after early life stress revealed by behavioral sequencing},
+  journal = {bioRxiv},
+  year    = {2025},
+  doi     = {10.1101/2025.09.01.673507}
+}
+
+@software{sanguino_gomez_2026_coping,
   author  = {Sanguino Gomez, Jeniffer and Lozano, Antonio},
   title   = {Coping Dynamics Sequencing},
   year    = {2026},

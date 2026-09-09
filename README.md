@@ -7,6 +7,7 @@
 [![Reproducibility checks](https://github.com/antonio-lozano/coping-dynamics-sequencing/actions/workflows/reproducibility.yml/badge.svg)](https://github.com/antonio-lozano/coping-dynamics-sequencing/actions/workflows/reproducibility.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11-blue.svg)](pyproject.toml)
+[![Preprint](https://img.shields.io/badge/preprint-bioRxiv-b31b1b.svg)](https://doi.org/10.1101/2025.09.01.673507)
 
 **[Project page &rarr; antonio-lozano.github.io/coping-dynamics-sequencing](https://antonio-lozano.github.io/coping-dynamics-sequencing/)**
 &mdash; the study in five minutes: the behavioural repertoire, the paradigm, the
@@ -14,6 +15,10 @@ findings, and the two coping profiles. The same page is committed as a print
 version at [`docs/web/coping-dynamics-sequencing.pdf`](docs/web/coping-dynamics-sequencing.pdf).
 The page's media come from `scripts/build_page_media.py` and the PDF from
 `scripts/build_page_pdf.py`.
+
+**Preprint** &mdash; Sanguino-Gomez J, G&uuml;&ccedil;l&uuml; U, Krugers HJ, Lozano A.
+*Coping strategies dynamics and resilience profiles after early life stress revealed by behavioral sequencing.*
+bioRxiv, 2025. [doi:10.1101/2025.09.01.673507](https://doi.org/10.1101/2025.09.01.673507)
 
 Self-contained manuscript repository for the behavioral motif, freezing, and
 stress-coping dynamics analyses. All data required to rebuild the data-derived
@@ -248,6 +253,10 @@ See `docs/supplementary_media.md` for scope and provenance.
   classifier in `classifier/`.
 
 ## Citation and licensing
+
+The preprint is the citation of record until the paper is published; it is
+carried in `CITATION.cff` as `preferred-citation`, so GitHub's "Cite this
+repository" button returns the study rather than the code alone.
 
 Software citation metadata lives in `CITATION.cff`; GitHub's "Cite this
 repository" button reads it, and CI validates it on every push. `.zenodo.json`

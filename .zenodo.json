@@ -26,6 +26,11 @@
   ],
   "related_identifiers": [
     {
+      "identifier": "10.1101/2025.09.01.673507",
+      "relation": "isSupplementTo",
+      "scheme": "doi"
+    },
+    {
       "identifier": "https://github.com/antonio-lozano/coping-dynamics-sequencing",
       "relation": "isSupplementTo",
       "scheme": "url"
