@@ -239,7 +239,6 @@ See `docs/supplementary_media.md` for scope and provenance.
 - `docs/figure4_coping_provenance.md`: Figure 4 analysis provenance.
 - `docs/figure_structure.md`: canonical main and supplementary panel mapping.
 - `docs/behavior_classifier.md`: classifier and Supplementary Figure 4 usage.
-- `docs/cleanup_todo.md`: known loose ends and pending cleanup decisions.
 - `docs/manuscript_statistics_validation/`: independent validation of the
   statistics reported in the manuscript (Wald-identity checks plus mixed-model
   re-fits), with the HTML report and the scripts that rebuild it under
