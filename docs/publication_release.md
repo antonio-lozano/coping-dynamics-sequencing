@@ -23,6 +23,16 @@ The preprint is recorded in `CITATION.cff` as `preferred-citation`, in
 README badge row. Replace it with the journal article, keeping the preprint
 entry, once the paper is published.
 
+## The data archive is on hold
+
+The destination for the dataset is not decided; figshare is the current
+intention, not Zenodo, and the upload is not ready. Until it is, nothing in this
+repository names a data archive or a dataset DOI. The dataset half of the plan
+below is written for Zenodo and is **not current** — treat it as a record of the
+requirements (one record, its own licence, cross-linked to the code) rather than
+as steps to follow. The code half is unaffected: the code release goes to Zenodo
+through the GitHub integration as described.
+
 ## Two records, not one
 
 Code and data are archived as **separate Zenodo records**, cross-linked to each
