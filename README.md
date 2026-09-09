@@ -265,4 +265,3 @@ Code is released under the MIT License (`LICENSE`). The bundled data —
 `data/`, `figure_source_data/`, `statistics/`, `report/` and
 `supplementary_media/` — are released under Creative Commons Attribution 4.0
 International (`LICENSE-DATA`).
-
