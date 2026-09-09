@@ -62,3 +62,6 @@ data/processed/**/*_smoke.csv
 
 # Companion tools are kept out of version control for now.
 tools/
+
+# Private local notes, never committed.
+notes/
