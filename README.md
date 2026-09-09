@@ -9,12 +9,11 @@
 [![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11-blue.svg)](pyproject.toml)
 [![Preprint](https://img.shields.io/badge/preprint-bioRxiv-b31b1b.svg)](https://doi.org/10.1101/2025.09.01.673507)
 
-**[Project page &rarr; antonio-lozano.github.io/coping-dynamics-sequencing](https://antonio-lozano.github.io/coping-dynamics-sequencing/)**
-&mdash; the study in five minutes: the behavioural repertoire, the paradigm, the
-findings, and the two coping profiles. The same page is committed as a print
-version at [`docs/web/coping-dynamics-sequencing.pdf`](docs/web/coping-dynamics-sequencing.pdf).
-The page's media come from `scripts/build_page_media.py` and the PDF from
-`scripts/build_page_pdf.py`.
+[`docs/web/coping-dynamics-sequencing.pdf`](docs/web/coping-dynamics-sequencing.pdf)
+is the study in five minutes: the behavioural repertoire, the paradigm, the
+findings, and the two coping profiles. It is printed from `docs/web/index.html`
+by `scripts/build_page_pdf.py`, whose media come from
+`scripts/build_page_media.py`.
 
 **Preprint** &mdash; Sanguino-Gomez J, G&uuml;&ccedil;l&uuml; U, Krugers HJ, Lozano A.
 *Coping strategies dynamics and resilience profiles after early life stress revealed by behavioral sequencing.*
@@ -261,14 +260,16 @@ repository" button returns the study rather than the code alone.
 Software citation metadata lives in `CITATION.cff`; GitHub's "Cite this
 repository" button reads it, and CI validates it on every push. `.zenodo.json`
 carries the metadata for the archived release: Zenodo reads it in preference to
-`CITATION.cff`, so the two are kept in agreement by hand. The Zenodo DOIs are
-added to `CITATION.cff` once the first release is archived.
+`CITATION.cff`, so the two are kept in agreement by hand. The code DOI is added
+to `CITATION.cff` once the first release is archived. Where the data are
+archived is not settled yet; nothing in this repository claims a data archive
+until it exists.
 
 Code is released under the MIT License (`LICENSE`). The bundled data —
 `data/`, `figure_source_data/`, `statistics/`, `report/` and
 `supplementary_media/` — are released under Creative Commons Attribution 4.0
 International (`LICENSE-DATA`).
 
-`docs/publication_release.md` is the release runbook: how the code and dataset
-DOIs are minted and cross-linked, what the journal requires of the data and
-code availability statements, and draft wording for both.
+`docs/publication_release.md` is the release runbook: how the code DOI is
+minted, what the journal requires of the data and code availability statements,
+and draft wording for both.
