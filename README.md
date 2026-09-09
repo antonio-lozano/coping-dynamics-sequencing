@@ -104,7 +104,6 @@ scripts/migrations/   One-time imports from the legacy tree, kept for provenance
 coping_dynamics/      Shared analysis, plotting, statistics, and classifier code (installed package)
 docs/                 Data dictionary and focused provenance notes
 config/               Figure metadata used by the report package
-tools/                Self-contained companion tools, outside the rebuild and the manifest
 ```
 
 Two kinds of scripts are not part of a rebuild. `scripts/migrations/` holds the
@@ -219,16 +218,15 @@ See `docs/supplementary_media.md` for scope and provenance.
   implementations in `coping_dynamics/statistics.py`, cross-implementation agreement
   checks, the layout checker under pytest, and slow-marked double-build
   determinism tests. Run `uv run pytest -m "not slow"` for the fast selection.
-- `.github/workflows/reproducibility.yml` runs four jobs on GitHub: source
+- `.github/workflows/reproducibility.yml` runs three jobs on GitHub: source
   guards (pre-commit hooks, `uv lock --check`, citation metadata validation),
   the locked-environment checks on Ubuntu and Windows (install, import smoke
-  check, compile sweep, layout checker, fast tests), the vendored classifier
-  tool's own test suite in its own locked environment, and an informational
+  check, compile sweep, layout checker, fast tests), and an informational
   full rebuild of the pipeline with double-build determinism tests.
 - `.pre-commit-config.yaml` guards commits locally: oversized files, merge
   conflict markers, malformed YAML/TOML/JSON, whitespace, and ruff lint and
   formatting for hand-written sources. Enable with `uvx pre-commit install`.
-  Hooks never touch generated artifacts or `tools/`.
+  Hooks never touch generated artifacts.
 - All default paths resolve inside the repository through
   `coping_dynamics/config.py`.
 
@@ -246,30 +244,26 @@ See `docs/supplementary_media.md` for scope and provenance.
   statistics reported in the manuscript (Wald-identity checks plus mixed-model
   re-fits), with the HTML report and the scripts that rebuild it under
   `scripts/analysis/`.
-- `tools/behavior_dlc_classifier/GUIDE.md`: standalone DeepLabCut freezing and
-  seven-behavior video classifier with its own environment and lock file,
-  outside the reproducibility contract and unrelated to the Figure 7
-  classifier in `classifier/`.
 
 ## Citation and licensing
 
-The preprint is the citation of record until the paper is published; it is
-carried in `CITATION.cff` as `preferred-citation`, so GitHub's "Cite this
+The bioRxiv preprint is the citation of record until the paper is published.
+`CITATION.cff` carries it as `preferred-citation`, so GitHub's "Cite this
 repository" button returns the study rather than the code alone.
 
-Software citation metadata lives in `CITATION.cff`; GitHub's "Cite this
-repository" button reads it, and CI validates it on every push. `.zenodo.json`
-carries the metadata for the archived release: Zenodo reads it in preference to
-`CITATION.cff`, so the two are kept in agreement by hand. The code DOI is added
-to `CITATION.cff` once the first release is archived. Where the data are
-archived is not settled yet; nothing in this repository claims a data archive
-until it exists.
+```bibtex
+@article{SanguinoGomez2025coping,
+  title   = {Coping strategies dynamics and resilience profiles after early life stress revealed by behavioral sequencing},
+  author  = {Sanguino-Gomez, Jeniffer and G{\"u}{\c{c}}l{\"u}, Umut and Krugers, Harm J. and Lozano, Antonio},
+  journal = {bioRxiv},
+  year    = {2025},
+  doi     = {10.1101/2025.09.01.673507},
+  url     = {https://doi.org/10.1101/2025.09.01.673507}
+}
+```
 
 Code is released under the MIT License (`LICENSE`). The bundled data —
 `data/`, `figure_source_data/`, `statistics/`, `report/` and
 `supplementary_media/` — are released under Creative Commons Attribution 4.0
 International (`LICENSE-DATA`).
 
-`docs/publication_release.md` is the release runbook: how the code DOI is
-minted, what the journal requires of the data and code availability statements,
-and draft wording for both.
