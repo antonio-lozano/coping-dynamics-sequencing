@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-message: "If you use this repository, please cite the associated manuscript and archived repository release."
+message: "If you use this repository, please cite the associated manuscript."
 title: "Coping Dynamics Sequencing"
 abstract: "Reproducible analysis pipeline for behavioral motif, freezing, and stress-coping dynamics in mice, built on keypoint-MoSeq syllables, litter-clustered statistical models, and a behavior classifier for resilience prediction."
 authors:
@@ -38,14 +38,3 @@ keywords:
   - "stress coping"
   - "resilience"
   - "reproducible research"
-# Once the first Zenodo release is published, add its DOIs here, e.g.
-#
-# identifiers:
-#   - type: doi
-#     value: 10.5281/zenodo.XXXXXXX
-#     description: "The concept DOI for all versions of this software."
-#   - type: doi
-#     value: 10.5281/zenodo.XXXXXXX
-#     description: "The versioned DOI for version 1.0.0 of this software."
-#
-# DOI values are bare (no https://doi.org/ prefix). See docs/publication_release.md.
