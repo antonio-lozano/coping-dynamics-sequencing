@@ -30,6 +30,25 @@ preferred-citation:
   doi: "10.1101/2025.09.01.673507"
   url: "https://doi.org/10.1101/2025.09.01.673507"
   notes: "Preprint, version 2, posted 2025-09-04. Replace with the journal article once it is published."
+references:
+  - type: data
+    title: "Coping strategies dynamics and resilience profiles after early-life stress revealed by behavioral sequencing"
+    authors:
+      - family-names: "Sanguino Gomez"
+        given-names: "Jeniffer"
+      - family-names: "Güçlü"
+        given-names: "Umut"
+      - family-names: "Lozano"
+        given-names: "Antonio"
+      - family-names: "Krugers"
+        given-names: "Harm J."
+    year: 2026
+    publisher:
+      name: "figshare"
+    doi: "10.6084/m9.figshare.33439885"
+    url: "https://doi.org/10.6084/m9.figshare.33439885"
+    license: "CC-BY-4.0"
+    notes: "Companion dataset: raw videos, DeepLabCut pose estimates and network snapshot, keypoint-MoSeq model outputs, per-frame freezing predictions, syllable clips. Held privately by the journal until the manuscript is accepted; the DOI resolves after publication."
 keywords:
   - "behavioral neuroscience"
   - "keypoint-MoSeq"

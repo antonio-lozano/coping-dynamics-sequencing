@@ -22,10 +22,17 @@ in `statistics/`. Manuscript-facing Excel workbooks are:
 - `report/raw_data.xlsx`
 - `report/statistical_report.xlsx`
 
-The upstream inputs that this repository does not ship are being deposited on
-Figshare as a companion dataset: the 98 raw behavioral videos, the DeepLabCut
-pose estimates (raw and median-filtered) and network snapshot, the keypoint-MoSeq
+The upstream inputs that this repository does not ship are deposited on Figshare
+as a companion dataset: the 98 raw behavioral videos, the DeepLabCut pose
+estimates (raw and median-filtered) and network snapshot, the keypoint-MoSeq
 model configuration and outputs (`results.h5`, `moseq_df.csv`, PCA), the
-per-frame supervised freezing predictions, and the representative syllable
-clips behind Supplementary Video 1. The archive DOI will be added here and to
-the manuscript once the upload is complete.
+per-frame supervised freezing predictions, and the representative syllable clips
+behind Supplementary Video 1.
+
+Sanguino Gómez J, Güçlü U, Lozano A, Krugers HJ. Coping strategies dynamics and
+resilience profiles after early-life stress revealed by behavioral sequencing.
+figshare. Dataset. https://doi.org/10.6084/m9.figshare.33439885
+
+The Figshare record is held privately by the journal until the manuscript is
+accepted, so the DOI resolves only after publication. The dataset is released
+under CC BY 4.0.
