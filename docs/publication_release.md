@@ -5,6 +5,24 @@ citable archive that satisfies Nature Portfolio policy. Journal requirements
 quoted here are from the Nature Neuroscience / Nature Portfolio pages listed at
 the end.
 
+## The preprint is already public
+
+Sanguino-Gomez J, Güçlü U, Krugers HJ, Lozano A. *Coping strategies dynamics and
+resilience profiles after early life stress revealed by behavioral sequencing.*
+bioRxiv, version 2, posted 2025-09-04. <https://doi.org/10.1101/2025.09.01.673507>
+
+Nature Portfolio permits preprint posting and does not treat it as prior
+publication, so the repository, its dataset and the project page may be public
+before the paper is accepted. Two conditions attach: the public material must
+describe the preprint rather than claim peer review, and authors are asked not
+to run a media or press campaign ahead of journal publication. Sharing the code
+and the page is not promotion in that sense.
+
+The preprint is recorded in `CITATION.cff` as `preferred-citation`, in
+`.zenodo.json` under `related_identifiers` as `isSupplementTo`, and in the
+README badge row. Replace it with the journal article, keeping the preprint
+entry, once the paper is published.
+
 ## Two records, not one
 
 Code and data are archived as **separate Zenodo records**, cross-linked to each

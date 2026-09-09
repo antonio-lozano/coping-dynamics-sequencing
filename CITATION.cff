@@ -12,6 +12,24 @@ type: "software"
 version: "1.0.0"
 date-released: "2026-07-17"
 repository-code: "https://github.com/antonio-lozano/coping-dynamics-sequencing"
+preferred-citation:
+  type: article
+  title: "Coping strategies dynamics and resilience profiles after early life stress revealed by behavioral sequencing"
+  authors:
+    - family-names: "Sanguino-Gomez"
+      given-names: "Jeniffer"
+    - family-names: "Güçlü"
+      given-names: "Umut"
+    - family-names: "Krugers"
+      given-names: "Harm J."
+    - family-names: "Lozano"
+      given-names: "Antonio"
+  journal: "bioRxiv"
+  year: 2025
+  month: 9
+  doi: "10.1101/2025.09.01.673507"
+  url: "https://doi.org/10.1101/2025.09.01.673507"
+  notes: "Preprint, version 2, posted 2025-09-04. Replace with the journal article once it is published."
 keywords:
   - "behavioral neuroscience"
   - "keypoint-MoSeq"
