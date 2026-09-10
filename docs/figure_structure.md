@@ -1,4 +1,4 @@
-# Canonical Figure Structure
+# Figure Structure
 
 This is the repository-wide panel map used by the figure generators, source-data
 exports, Excel reports, and reproducibility checks.
@@ -25,10 +25,10 @@ exports, Excel reports, and reproducibility checks.
 | Figure | Panels | Content | Primary source data |
 | --- | --- | --- | --- |
 | Supplementary Figure 1 | A-D | Omitted/mixed behavior dynamics and total frequencies | `data/processed/supplementary_figure1_*` |
-| Supplementary Figure 2 | assembled | Behavioral-dynamics workflow | Canonical tracked export |
+| Supplementary Figure 2 | assembled | Behavioral-dynamics workflow | Drawn by hand, no script |
 | Supplementary Figure 3 | A-K | Alternative distance metrics and resilient-group overlap | `data/processed/supplementary_figure3_*` |
 | Supplementary Figure 4 | A-H (published as Figure 7 panels D-M) | Class-specific behavior-classifier SHAP panels | `classifier/legacy_shap/shap_values.npz` and `figure_source_data/supplementary_figure4_shap_summary.csv` |
-| Supplementary Figure 5 | assembled | Convex-hull floor/wall overlap validation for climbing identification | Canonical tracked export |
+| Supplementary Figure 5 | assembled | Convex-hull floor/wall overlap validation for climbing identification | Drawn by hand, no script |
 
 ### Supplementary Figure 4 comes from the legacy classifier
 

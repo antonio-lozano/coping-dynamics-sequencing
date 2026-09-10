@@ -160,7 +160,7 @@ Raw inputs include:
 
 | Output | Script |
 | --- | --- |
-| Figure 1 | Tracked export, hand-assembled schematic |
+| Figure 1 | Drawn by hand, no script |
 | Figure 2 | `scripts/generate_figures/figure_2_validation.py` |
 | Figure 3 | `scripts/generate_figures/figure_3_behavior_clusters.py` |
 | Figure 4 | `scripts/generate_figures/figure_4_diversity_dynamics.py` |
@@ -168,13 +168,14 @@ Raw inputs include:
 | Figure 6 | `scripts/generate_figures/figure_6_resilience_diversity.py` |
 | Figure 7 | `scripts/generate_figures/figure_7_resilience_prediction.py` |
 | Supplementary Figure 1 | `scripts/generate_figures/supplementary_figure_1_tracking_clusters.py` |
-| Supplementary Figure 2 | Tracked export, analysis workflow schematic |
+| Supplementary Figure 2 | Drawn by hand, no script |
 | Supplementary Figure 3 | `scripts/generate_figures/supplementary_figure_3_distances.py` |
 | Supplementary Figure 4 | `scripts/generate_figures/supplementary_figure_4_classifier_shap.py --source DIR` |
-| Supplementary Figure 5 | Tracked export, convex-hull climbing validation |
+| Supplementary Figure 5 | Drawn by hand, no script |
 
-Three figures were assembled by hand and are tracked as files rather than
-rebuilt: Figure 1, Supplementary Figure 2 and Supplementary Figure 5.
+Figure 1 and Supplementary Figure 2 are schematics. Supplementary Figure 5
+shows the convex-hull climbing validation. All three were drawn by hand, so they
+are kept as files and nothing rebuilds them.
 
 Supplementary Figure 4 draws its panels from the archived classifier in
 `classifier/legacy_shap/`, not from
