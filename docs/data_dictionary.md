@@ -68,11 +68,11 @@ remain in `data/raw/`.
 | `statistics/stats_figure2h_syllables_MixedLM.csv` | Every fitted parameter of the Figure 2H syllable timecourse models, per minute. |
 | `statistics/stats_figure5_dynamics.csv` | Every fitted parameter of the Figure 5A-B dynamics-score models. |
 | `statistics/stats_figure5_timecourse_MixedLM.csv` | Every fitted parameter of the Figure 5D-J cluster timecourse models, per minute; replaces the degenerate `fig5_timecourse_mixedlm.csv`. |
-| `figures/` | Canonical manuscript figure exports in PDF, SVG, and PNG formats. |
+| `figures/` | Manuscript figure exports in PDF, SVG, and PNG formats. |
 | `report/raw_data.xlsx` | Manuscript-facing raw-data workbook. |
 | `report/statistical_report.xlsx` | Manuscript-facing statistical report workbook. |
 | `classifier/figure7_behavior_classifier.joblib` | Reusable classifier artifact for Figure 7A-C (33 centroid-kinematic features). |
 | `classifier/legacy_shap/xgb_model.pkl` | Legacy classifier behind Supplementary Figure 4 (719 body-part features); with `label_encoder.pkl`. |
 
-The canonical panel-to-file mapping is documented in
+The panel-to-file mapping is documented in
 `docs/figure_structure.md`.

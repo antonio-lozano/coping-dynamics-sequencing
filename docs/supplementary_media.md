@@ -5,7 +5,7 @@
 `supplementary_media/Supplementary_Video_1_MoSeq_syllable_atlas.mp4` is the
 recommended audiovisual supplement. It combines three 20-frame representative
 pose-overlaid occurrences for each available common MoSeq syllable (0–34) with
-the corresponding canonical 14-point skeleton trajectory. The geometry-derived
+the corresponding 14-point skeleton trajectory. The geometry-derived
 climbing class (111) is shown without a MoSeq skeleton. Syllables are ordered by
 the seven curated behavioral classes used in the manuscript; motifs excluded
 from those classes remain explicitly labeled as unassigned.
