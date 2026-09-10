@@ -95,8 +95,8 @@ data/raw/             Immutable bundled inputs used by the analyses
 data/processed/       Deterministic tables regenerated from data/raw
 figure_source_data/   Plotted values and summary values behind Figures 2-7
 statistics/           Machine-readable statistical model outputs
-figures/              Canonical manuscript figure exports
-report/               raw-data workbook and canonical statistical report
+figures/              Manuscript figure exports
+report/               Raw-data workbook and statistical report
 classifier/           Classifier artifact used in Figure 7A-C and Supplementary Figure 4
 supplementary_media/  Submission-ready audiovisual supplement and source index
 scripts/              Rebuild, report, figure, and validation entry points
@@ -120,7 +120,7 @@ current.
 `figure_source_data` is used only for the plotted data underlying manuscript
 figures, not for raw experimental inputs.
 
-The statistical builder creates one canonical output:
+The statistical builder creates one output:
 
 - `report/statistical_report.xlsx` recalculates the Combined full dataset,
   Sanguino-Gomez & Krugers, and Sanguino-Gomez et al. analyses where source
@@ -160,7 +160,7 @@ Raw inputs include:
 
 | Output | Script |
 | --- | --- |
-| Figure 1 | Canonical tracked export (hand-assembled schematic) |
+| Figure 1 | Tracked export, hand-assembled schematic |
 | Figure 2 | `scripts/generate_figures/figure_2_validation.py` |
 | Figure 3 | `scripts/generate_figures/figure_3_behavior_clusters.py` |
 | Figure 4 | `scripts/generate_figures/figure_4_diversity_dynamics.py` |
@@ -168,65 +168,58 @@ Raw inputs include:
 | Figure 6 | `scripts/generate_figures/figure_6_resilience_diversity.py` |
 | Figure 7 | `scripts/generate_figures/figure_7_resilience_prediction.py` |
 | Supplementary Figure 1 | `scripts/generate_figures/supplementary_figure_1_tracking_clusters.py` |
-| Supplementary Figure 2 | Canonical tracked export (analysis workflow schematic) |
+| Supplementary Figure 2 | Tracked export, analysis workflow schematic |
 | Supplementary Figure 3 | `scripts/generate_figures/supplementary_figure_3_distances.py` |
 | Supplementary Figure 4 | `scripts/generate_figures/supplementary_figure_4_classifier_shap.py --source DIR` |
-| Supplementary Figure 5 | Canonical tracked export (convex-hull climbing validation) |
+| Supplementary Figure 5 | Tracked export, convex-hull climbing validation |
 
-Figures 1 and Supplementary Figure 2 are tracked as canonical assembled
-manuscript figures. Figure 7 is regenerated from tracked source tables and the
-prediction analysis. Supplementary Figure 5 is a canonical assembled climbing-validation export.
-Supplementary Figure 4 is a legacy figure: its panels come from the archived
-classifier in `classifier/legacy_shap/`, not from
+Three figures were assembled by hand and are tracked as files rather than
+rebuilt: Figure 1, Supplementary Figure 2 and Supplementary Figure 5.
+
+Supplementary Figure 4 draws its panels from the archived classifier in
+`classifier/legacy_shap/`, not from
 `classifier/figure7_behavior_classifier.joblib`. See `docs/figure_structure.md`.
 
 ## Supplementary Media
 
-`supplementary_media/Supplementary_Video_1_MoSeq_syllable_atlas.mp4` is a
-submission-ready H.264 atlas of representative pose-overlaid syllables and
-canonical skeleton trajectories, and
-`Supplementary_Video_1_MoSeq_syllable_atlas_grid.mp4` is its grid view: all 25
-cluster-mapped syllables playing simultaneously, ordered and color-coded by
-behavioral cluster. The editable submission legend is in `report/SIGuide.docx`,
-and `Supplementary_Video_1_source_index.csv` records the source hashes both
-videos are verified against. Regenerate them from the archived keypoint-MoSeq
-outputs with:
+`supplementary_media/` holds Supplementary Video 1 in two versions. The atlas
+shows representative pose-overlaid syllables and skeleton trajectories. The grid
+version plays all 25 syllables at once, ordered and coloured by behavioral
+cluster. `report/SIGuide.docx` has the editable legend, and
+`Supplementary_Video_1_source_index.csv` the source hashes both are checked
+against.
+
+Both are rebuilt from the archived keypoint-MoSeq clips:
 
 ```bash
-python scripts/generate_supplementary_video_1.py \
-  --clip-dir PATH/TO/video_clips \
-  --skeleton-gif PATH/TO/skeleton_trajectories.gif
-python scripts/generate_supplementary_video_1_grid.py \
-  --clip-dir PATH/TO/video_clips
+python scripts/generate_supplementary_video_1.py   --clip-dir PATH/TO/video_clips   --skeleton-gif PATH/TO/skeleton_trajectories.gif
+python scripts/generate_supplementary_video_1_grid.py   --clip-dir PATH/TO/video_clips
 ```
 
-See `docs/supplementary_media.md` for scope and provenance.
+See `docs/supplementary_media.md`.
 
 ## Quality Controls
 
-- `MANIFEST.csv` records byte sizes and SHA-256 hashes for tracked publication
+- `MANIFEST.csv` records sizes and SHA-256 hashes for tracked publication
   artifacts.
 - `scripts/check_manuscript.py` checks every statistic in the manuscript
-  against `statistics/`, `report/statistical_report.xlsx`, and the significance
-  markers drawn on the figures, and fails if any of the four disagree or if the
-  manuscript quotes a statistic the script does not cover.
+  against `statistics/`, `report/statistical_report.xlsx` and the significance
+  markers on the figures. It fails if they disagree, or if the manuscript
+  quotes a statistic it does not cover.
 - `scripts/check_reproducibility.py` verifies required files, figure exports,
-  98 raw freezing prediction CSVs, manifest hashes, retired-path absence,
-  absence of local absolute paths in text files, and absence of local tool
-  traces.
-- `tests/` is the root test suite: golden values pinning the canonical metric
-  implementations in `coping_dynamics/statistics.py`, cross-implementation agreement
-  checks, the layout checker under pytest, and slow-marked double-build
-  determinism tests. Run `uv run pytest -m "not slow"` for the fast selection.
-- `.github/workflows/reproducibility.yml` runs three jobs on GitHub: source
-  guards (pre-commit hooks, `uv lock --check`, citation metadata validation),
-  the locked-environment checks on Ubuntu and Windows (install, import smoke
-  check, compile sweep, layout checker, fast tests), and an informational
-  full rebuild of the pipeline with double-build determinism tests.
-- `.pre-commit-config.yaml` guards commits locally: oversized files, merge
-  conflict markers, malformed YAML/TOML/JSON, whitespace, and ruff lint and
-  formatting for hand-written sources. Enable with `uvx pre-commit install`.
-  Hooks never touch generated artifacts.
+  the 98 freezing prediction CSVs and manifest hashes, and checks that retired
+  paths, local absolute paths and local tool traces are absent.
+- `tests/` pins the metric implementations in `coping_dynamics/statistics.py`
+  to golden values, checks the implementations agree with each other, runs the
+  layout checker, and rebuilds twice to confirm determinism. Run
+  `uv run pytest -m "not slow"` to skip the slow rebuild.
+- `.github/workflows/reproducibility.yml` runs three jobs: source guards
+  (pre-commit, `uv lock --check`, citation metadata), locked-environment checks
+  on Ubuntu and Windows, and a full rebuild with determinism tests, which is
+  informational only.
+- `.pre-commit-config.yaml` catches oversized files, conflict markers, malformed
+  YAML, TOML and JSON, whitespace, and ruff lint and formatting. Enable it with
+  `uvx pre-commit install`. It never touches generated artifacts.
 - All default paths resolve inside the repository through
   `coping_dynamics/config.py`.
 
@@ -237,7 +230,7 @@ See `docs/supplementary_media.md` for scope and provenance.
 - `CODE_AVAILABILITY.md`: manuscript-facing code availability language.
 - `docs/data_dictionary.md`: file-level description of inputs and outputs.
 - `docs/figure4_coping_provenance.md`: Figure 4 analysis provenance.
-- `docs/figure_structure.md`: canonical main and supplementary panel mapping.
+- `docs/figure_structure.md`: main and supplementary panel mapping.
 - `docs/behavior_classifier.md`: classifier and Supplementary Figure 4 usage.
 - `docs/manuscript_statistics_validation/`: independent validation of the
   statistics reported in the manuscript (Wald-identity checks plus mixed-model
