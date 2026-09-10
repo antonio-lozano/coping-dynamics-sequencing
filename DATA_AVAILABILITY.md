@@ -29,7 +29,7 @@ model configuration and outputs (`results.h5`, `moseq_df.csv`, PCA), the
 per-frame supervised freezing predictions, and the representative syllable clips
 behind Supplementary Video 1.
 
-Sanguino Gómez J, Güçlü U, Lozano A, Krugers HJ. Coping strategies dynamics and
+Sanguino-Gómez J, Güçlü U, Krugers HJ, Lozano A. Coping strategies dynamics and
 resilience profiles after early-life stress revealed by behavioral sequencing.
 figshare. Dataset. https://doi.org/10.6084/m9.figshare.33439885
 

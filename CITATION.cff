@@ -34,14 +34,14 @@ references:
   - type: data
     title: "Coping strategies dynamics and resilience profiles after early-life stress revealed by behavioral sequencing"
     authors:
-      - family-names: "Sanguino Gomez"
+      - family-names: "Sanguino-Gomez"
         given-names: "Jeniffer"
       - family-names: "Güçlü"
         given-names: "Umut"
-      - family-names: "Lozano"
-        given-names: "Antonio"
       - family-names: "Krugers"
         given-names: "Harm J."
+      - family-names: "Lozano"
+        given-names: "Antonio"
     year: 2026
     publisher:
       name: "figshare"

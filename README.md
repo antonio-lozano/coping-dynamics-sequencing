@@ -246,9 +246,7 @@ See `docs/supplementary_media.md` for scope and provenance.
 
 ## Citation and licensing
 
-The bioRxiv preprint is the citation of record until the paper is published.
-`CITATION.cff` carries it as `preferred-citation`, so GitHub's "Cite this
-repository" button returns the study rather than the code alone.
+Cite the preprint.
 
 ```bibtex
 @article{SanguinoGomez2025coping,
