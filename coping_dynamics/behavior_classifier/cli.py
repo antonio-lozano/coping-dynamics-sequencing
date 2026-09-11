@@ -1,4 +1,4 @@
-"""CLI for the Figure 7A-C and Supplementary Figure 4 classifier."""
+"""CLI for the experimental centroid-feature behavior classifier."""
 
 from __future__ import annotations
 
@@ -8,8 +8,8 @@ from pathlib import Path
 from coping_dynamics.config import CLASSIFIER_DIR, MOSEQ_DF
 
 DEFAULT_MODEL = CLASSIFIER_DIR / "figure7_behavior_classifier.joblib"
-DEFAULT_METRICS = CLASSIFIER_DIR / "figure7_behavior_classifier_cv_metrics.csv"
-DEFAULT_CONFUSION = CLASSIFIER_DIR / "figure7_behavior_classifier_confusion_matrix.csv"
+DEFAULT_METRICS = CLASSIFIER_DIR / "outputs" / "experimental_cv_metrics.csv"
+DEFAULT_CONFUSION = CLASSIFIER_DIR / "outputs" / "experimental_confusion_matrix.csv"
 DEFAULT_OUTPUT_DIR = CLASSIFIER_DIR / "outputs"
 
 
@@ -123,13 +123,17 @@ def train_from_dlc_command(args: argparse.Namespace) -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Train or apply the Figure 7A-C behavior-cluster classifier."
+        description=(
+            "Apply compatible saved behavior models, including the archived Figure 7 model, "
+            "or train an experimental centroid-feature classifier. "
+            "Retraining does not reproduce the historical Figure 7 training procedure."
+        )
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     train = subparsers.add_parser("train", help="Train the behavior classifier.")
     train.add_argument("--input", type=Path, default=MOSEQ_DF)
-    train.add_argument("--model", type=Path, default=DEFAULT_MODEL)
+    train.add_argument("--model", type=Path, default=DEFAULT_OUTPUT_DIR / "experimental.joblib")
     train.add_argument("--metrics", type=Path, default=DEFAULT_METRICS)
     train.add_argument("--confusion", type=Path, default=DEFAULT_CONFUSION)
     train.add_argument("--cv-splits", type=int, default=3)
@@ -149,21 +153,23 @@ def build_parser() -> argparse.ArgumentParser:
     )
     train_dlc.add_argument("--dlc-dir", type=Path, required=True)
     train_dlc.add_argument("--labels-dir", type=Path, required=True)
-    train_dlc.add_argument("--model", type=Path, default=DEFAULT_MODEL)
+    train_dlc.add_argument(
+        "--model", type=Path, default=DEFAULT_OUTPUT_DIR / "experimental_dlc.joblib"
+    )
     train_dlc.add_argument(
         "--metrics",
         type=Path,
-        default=CLASSIFIER_DIR / "figure7_behavior_classifier_dlc_cv_metrics.csv",
+        default=DEFAULT_OUTPUT_DIR / "experimental_dlc_cv_metrics.csv",
     )
     train_dlc.add_argument(
         "--confusion",
         type=Path,
-        default=CLASSIFIER_DIR / "figure7_behavior_classifier_dlc_confusion_matrix.csv",
+        default=DEFAULT_OUTPUT_DIR / "experimental_dlc_confusion_matrix.csv",
     )
     train_dlc.add_argument(
         "--training-table",
         type=Path,
-        default=CLASSIFIER_DIR / "figure7_behavior_classifier_dlc_training_table.csv",
+        default=DEFAULT_OUTPUT_DIR / "experimental_dlc_training_table.csv",
     )
     train_dlc.add_argument("--fps", type=float, default=25.0)
     train_dlc.add_argument("--max-frames", type=int, default=None)
@@ -187,7 +193,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     raw = subparsers.add_parser(
         "run-from-raw",
-        help="Run DLC on a raw video, then predict Figure 7A-C behaviors.",
+        help="Run DLC on a raw video, then predict behavior labels.",
     )
     raw.add_argument("--video", type=Path, required=True)
     raw.add_argument("--dlc-config", type=Path, required=True)
@@ -204,7 +210,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     dlc = subparsers.add_parser(
         "run-from-dlc",
-        help="Predict Figure 7A-C behaviors from an existing DLC filtered CSV/H5.",
+        help="Predict behavior labels from an existing DLC filtered CSV/H5.",
     )
     dlc.add_argument("--dlc-file", type=Path, required=True)
     dlc.add_argument("--model", type=Path, default=DEFAULT_MODEL)

@@ -2,20 +2,17 @@
 #
 # Every mutating hook excludes the generated artifact trees and the vendored
 # tool: a formatter that rewrites bytes hashed by MANIFEST.csv would break the
-# reproducibility contract, and tools/ manages its own environment and style.
-# check-added-large-files deliberately has no path filter so an oversized file
-# is caught wherever it lands; the limit sits above the two bundled DeepLabCut
-# snapshots (95,061 KiB each, plain blobs until the planned release-asset move)
-# and below the size GitHub refuses outright (100 MiB).
+# reproducibility contract, and apps/ manages its own environment and style.
+# Research artifacts already tracked are retained; new large assets belong in data releases.
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
       - id: check-added-large-files
-        args: ["--maxkb=98000"]
+        args: ["--maxkb=1024"]
       - id: check-merge-conflict
       - id: check-yaml
-        exclude: &generated ^(figures/|figure_source_data/|statistics/|data/|report/|classifier/|supplementary_media/|tools/|MANIFEST\.csv$|uv\.lock$)
+        exclude: &generated ^(figures/|figure_source_data/|statistics/|data/|report/|classifier/|supplementary_media/|apps/|tools/|MANIFEST\.csv$|uv\.lock$)
       - id: check-toml
         exclude: *generated
       - id: check-json

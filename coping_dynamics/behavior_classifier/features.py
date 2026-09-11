@@ -61,7 +61,7 @@ def build_frame_features(
     windows: Sequence[int] = (5, 15, 30),
     lags: Sequence[int] = (1, 5, 15),
 ) -> tuple[pd.DataFrame, list[str]]:
-    """Create movement features matching the Figure 7A-C XGBoost checks."""
+    """Create movement features for the experimental centroid classifier."""
 
     require_columns(df, [group_col, frame_col, *BASE_FEATURES])
     out = df.copy()

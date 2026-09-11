@@ -21,11 +21,15 @@ in the repository. Row counts and checksums are verified by
 | `data/raw/syllable_usage_per_timebin_250ms.csv` | MoSeq syllable usage at 250 ms resolution. |
 | `data/raw/updated_results.pkl.gz` | Compressed MoSeq result object used for dynamics and distance analyses. |
 
-The legacy classifier figure PDF once kept at
-`data/raw/legacy_figures/figure7_classifier_original.pdf` was lost before it
-could be committed and is retired;
-`figure_source_data/figure7_classifier_global_shap.csv` is the archival source
-of record for its values (see `docs/figure_structure.md`).
+The recovered original classifier figure is preserved at
+[`docs/provenance/original-figure7.pdf`](provenance/original-figure7.pdf), with
+source hash in `config/original-artifacts.json`. The existing extracted SHAP
+CSV remains unchanged; see [figure provenance](figure_structure.md).
+
+`updated_results.pkl.gz` stores behavior **cluster codes** in its `syllable`
+field, not raw MoSeq state IDs. Do not compare that field directly to per-frame
+MoSeq IDs. The per-frame bundled CSV is itself a derived, rounded and climbing-
+overlaid subset of the external MoSeq table. See [the frame-keyed source audit](source-data-provenance.md).
 
 ## Processed Tables
 
@@ -68,11 +72,11 @@ remain in `data/raw/`.
 | `statistics/stats_figure2h_syllables_MixedLM.csv` | Every fitted parameter of the Figure 2H syllable timecourse models, per minute. |
 | `statistics/stats_figure5_dynamics.csv` | Every fitted parameter of the Figure 5A-B dynamics-score models. |
 | `statistics/stats_figure5_timecourse_MixedLM.csv` | Every fitted parameter of the Figure 5D-J cluster timecourse models, per minute; replaces the degenerate `fig5_timecourse_mixedlm.csv`. |
-| `figures/` | Manuscript figure exports in PDF, SVG, and PNG formats. |
+| `figures/` | Canonical manuscript figure exports in PDF, SVG, and PNG formats. |
 | `report/raw_data.xlsx` | Manuscript-facing raw-data workbook. |
 | `report/statistical_report.xlsx` | Manuscript-facing statistical report workbook. |
 | `classifier/figure7_behavior_classifier.joblib` | Reusable classifier artifact for Figure 7A-C (33 centroid-kinematic features). |
 | `classifier/legacy_shap/xgb_model.pkl` | Legacy classifier behind Supplementary Figure 4 (719 body-part features); with `label_encoder.pkl`. |
 
-The panel-to-file mapping is documented in
+The canonical panel-to-file mapping is documented in
 `docs/figure_structure.md`.

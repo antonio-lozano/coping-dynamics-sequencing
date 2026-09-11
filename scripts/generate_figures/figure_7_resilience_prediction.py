@@ -36,6 +36,8 @@ import pandas as pd
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.gridspec import GridSpec
 
+from coping_dynamics.protocol import TONE_SPANS_MIN
+
 REPO = Path(__file__).resolve().parents[2]
 if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
@@ -79,7 +81,7 @@ FREEZE_ONLY_COLOR = "#C671A0"
 DYNAMICS_COLOR = "#A6A6A6"
 AXIS = "#4D4D4D"
 CHANCE_GREY = "#9A9A9A"
-EVENT_SPANS = [(3.0, 3.5), (4.5, 5.0), (6.0, 6.5)]
+EVENT_SPANS = list(TONE_SPANS_MIN)
 # Horizons run 0.5-7.5 min; pad so the first and last markers are drawn whole
 # rather than being clipped in half by the axes edge. Shared by panels I-N.
 HORIZON_XLIM = (0.0, 7.65)
@@ -828,15 +830,15 @@ def build_figure(
     return fig
 
 
-def recap_tables() -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Load tracked predictor tables, recomputing them only when absent."""
+def recap_tables(*, fresh: bool = False) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Recompute predictor models when requested, otherwise permit archival replay."""
     panel_ab = SOURCE_OUT / "figure7_predictor_catalog.csv"
     panel_c = SOURCE_OUT / "figure7_predictor_timecourse.csv"
-    if not panel_ab.exists() or not panel_c.exists():
-        labels, predictors = recap.cached("predictors", recap.build_predictors, fresh=False)
-        ab = recap.cached("panel_ab", lambda: recap.panel_ab_data(labels, predictors), fresh=False)
-        horizon = recap.cached("horizon_features", recap.all_horizon_features, fresh=False)
-        c = recap.cached("panel_c", lambda: recap.panel_c_data(labels, horizon), fresh=False)
+    if fresh or not panel_ab.exists() or not panel_c.exists():
+        labels, predictors = recap.cached("predictors", recap.build_predictors, fresh=fresh)
+        ab = recap.cached("panel_ab", lambda: recap.panel_ab_data(labels, predictors), fresh=fresh)
+        horizon = recap.cached("horizon_features", recap.all_horizon_features, fresh=fresh)
+        c = recap.cached("panel_c", lambda: recap.panel_c_data(labels, horizon), fresh=fresh)
         ab.drop(columns=["color"], errors="ignore").to_csv(panel_ab, index=False)
         c.drop(columns=["color"], errors="ignore").to_csv(panel_c, index=False)
     else:
@@ -1484,7 +1486,9 @@ def build_complete_figure(
     def_panels = gs[1, :].subgridspec(1, 4, width_ratios=[0.72, 0.92, 0.66, 1.52], wspace=0.52)
     c_grid = def_panels[0, 0].subgridspec(1, 2, width_ratios=[1.0, 0.045], wspace=0.06)
     ax_c_source = fig.add_subplot(c_grid[0, 0])
-    letter_c = draw_figure7_c(ax_c_source, fig.add_subplot(c_grid[0, 1]))
+    # Anchor the colourbar to the rendered square matrix, not the taller grid
+    # cell; otherwise its top overlaps the confusion-matrix title.
+    letter_c = draw_figure7_c(ax_c_source, ax_c_source.inset_axes([1.03, 0, 0.045, 1]))
 
     ax_d = fig.add_subplot(def_panels[0, 1])
     ax_e = fig.add_subplot(def_panels[0, 2])
@@ -1781,7 +1785,7 @@ def main() -> None:
 
     if not use_cache:
         write_classifier_source_data()
-    ab_recap, c_recap = recap_tables()
+    ab_recap, c_recap = recap_tables(fresh=args.recompute)
     if not use_cache:
         ab_recap.drop(columns=["color"], errors="ignore").to_csv(
             SOURCE_OUT / "figure7_predictor_catalog.csv", index=False

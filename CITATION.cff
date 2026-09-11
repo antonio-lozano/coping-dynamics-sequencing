@@ -1,59 +1,68 @@
 cff-version: 1.2.0
-message: "If you use this repository, please cite the associated manuscript."
-title: "Coping Dynamics Sequencing"
-abstract: "Reproducible analysis pipeline for behavioral motif, freezing, and stress-coping dynamics in mice, built on keypoint-MoSeq syllables, litter-clustered statistical models, and a behavior classifier for resilience prediction."
+message: If you use this software or study data, please cite the bioRxiv preprint below.
+title: Coping Dynamics Sequencing
+type: software
+license: MIT
+repository-code: https://github.com/antonio-lozano/coping-dynamics-sequencing
 authors:
-  - family-names: "Sanguino Gomez"
-    given-names: "Jeniffer"
-  - family-names: "Lozano"
-    given-names: "Antonio"
-license: "MIT"
-type: "software"
-version: "1.0.0"
-date-released: "2026-09-10"
-repository-code: "https://github.com/antonio-lozano/coping-dynamics-sequencing"
+- family-names: Sanguino-Gómez
+  given-names: Jeniffer
+  website: https://github.com/jsanguinogomez
+- family-names: Lozano
+  given-names: Antonio
+  website: https://github.com/antonio-lozano
+- family-names: Güçlü
+  given-names: Umut
+  website: https://github.com/umguec
 preferred-citation:
   type: article
-  title: "Coping strategies dynamics and resilience profiles after early life stress revealed by behavioral sequencing"
+  title: Coping strategies dynamics and resilience profiles after early life stress revealed by behavioral
+    sequencing
   authors:
-    - family-names: "Sanguino-Gomez"
-      given-names: "Jeniffer"
-    - family-names: "Güçlü"
-      given-names: "Umut"
-    - family-names: "Krugers"
-      given-names: "Harm J."
-    - family-names: "Lozano"
-      given-names: "Antonio"
-  journal: "bioRxiv"
+  - family-names: Sanguino-Gómez
+    given-names: Jeniffer
+  - family-names: Güçlü
+    given-names: Umut
+  - family-names: Krugers
+    given-names: Harm
+  - family-names: Lozano
+    given-names: Antonio
   year: 2025
-  month: 9
-  doi: "10.1101/2025.09.01.673507"
-  url: "https://doi.org/10.1101/2025.09.01.673507"
-  notes: "Preprint, version 2, posted 2025-09-04. Replace with the journal article once it is published."
-references:
-  - type: data
-    title: "Coping strategies dynamics and resilience profiles after early-life stress revealed by behavioral sequencing"
-    authors:
-      - family-names: "Sanguino-Gomez"
-        given-names: "Jeniffer"
-      - family-names: "Güçlü"
-        given-names: "Umut"
-      - family-names: "Krugers"
-        given-names: "Harm J."
-      - family-names: "Lozano"
-        given-names: "Antonio"
-    year: 2026
-    publisher:
-      name: "figshare"
-    doi: "10.6084/m9.figshare.33439885"
-    url: "https://doi.org/10.6084/m9.figshare.33439885"
-    license: "CC-BY-4.0"
-    notes: "Companion dataset: raw videos, DeepLabCut pose estimates and network snapshot, keypoint-MoSeq model outputs, per-frame freezing predictions, syllable clips. Held privately by the journal until the manuscript is accepted; the DOI resolves after publication."
+  journal: bioRxiv
+  doi: 10.1101/2025.09.01.673507
+  url: https://www.biorxiv.org/content/early/2025/09/04/2025.09.01.673507
+abstract: Reproducible analysis pipeline for behavioral motif, freezing, and stress-coping dynamics in
+  mice, built on keypoint-MoSeq syllables, litter-clustered statistical models, and a behavior classifier
+  for resilience prediction.
 keywords:
-  - "behavioral neuroscience"
-  - "keypoint-MoSeq"
-  - "unsupervised behavior segmentation"
-  - "early-life stress"
-  - "stress coping"
-  - "resilience"
-  - "reproducible research"
+- behavioral neuroscience
+- keypoint-MoSeq
+- unsupervised behavior segmentation
+- early-life stress
+- stress coping
+- resilience
+- reproducible research
+version: 1.0.0
+date-released: '2026-09-10'
+references:
+- type: data
+  title: Coping strategies dynamics and resilience profiles after early-life stress revealed by behavioral
+    sequencing
+  authors:
+  - family-names: Sanguino-Gomez
+    given-names: Jeniffer
+  - family-names: Güçlü
+    given-names: Umut
+  - family-names: Krugers
+    given-names: Harm J.
+  - family-names: Lozano
+    given-names: Antonio
+  year: 2026
+  publisher:
+    name: figshare
+  doi: 10.6084/m9.figshare.33439885
+  url: https://doi.org/10.6084/m9.figshare.33439885
+  license: CC-BY-4.0
+  notes: 'Companion dataset: raw videos, DeepLabCut pose estimates and network snapshot, keypoint-MoSeq
+    model outputs, per-frame freezing predictions, syllable clips. Held privately by the journal until
+    the manuscript is accepted; the DOI resolves after publication.'

@@ -1,4 +1,4 @@
-"""Behavior classifier used by Figure 7A-C and Supplementary Figure 4."""
+"""Experimental behavior classifier; archived figure results use a different model."""
 
 from .annotations import BEHAVIOR_CLUSTER_MAP, behavior_lookup
 

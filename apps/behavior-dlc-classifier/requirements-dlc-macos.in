@@ -1,0 +1,7 @@
+# Apple Silicon, Python 3.10; legacy TensorFlow network, not DLC 3.
+deeplabcut==2.3.11
+tensorflow-macos==2.10.0
+numpy==1.23.5
+tensorpack==0.11
+tf-slim==1.1.0
+torch==2.2.2

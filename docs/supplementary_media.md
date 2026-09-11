@@ -1,60 +1,27 @@
-# Supplementary audiovisual material
+# Behavioral atlas and supplementary media
 
-## Selected submission file
+The [grid atlas](../supplementary_media/Supplementary_Video_1_MoSeq_syllable_atlas_grid.mp4) plays 25 representative motifs simultaneously in a 5 × 5 grid. The [sequential atlas](../supplementary_media/Supplementary_Video_1_MoSeq_syllable_atlas.mp4) presents them one at a time. The README's animated preview links to the grid video.
 
-`supplementary_media/Supplementary_Video_1_MoSeq_syllable_atlas.mp4` is the
-recommended audiovisual supplement. It combines three 20-frame representative
-pose-overlaid occurrences for each available common MoSeq syllable (0–34) with
-the corresponding 14-point skeleton trajectory. The geometry-derived
-climbing class (111) is shown without a MoSeq skeleton. Syllables are ordered by
-the seven curated behavioral classes used in the manuscript; motifs excluded
-from those classes remain explicitly labeled as unassigned.
+Both movies use 24 selected MoSeq syllables plus the derived climbing label, grouped by seven behavioral classes. They illustrate representative behavior, not the complete fitted-state inventory. The grid is 22.2 seconds at 1920 × 1080; the sequential movie is 63 seconds at 960 × 540. Both use silent H.264 video at 25 fps.
 
-The movie is 16:9 H.264/yuv420p, 960 × 540 pixels, 25 frames s⁻¹, silent,
-and below Nature's 30 MB per-video limit. Its editable title and legend are in
-`report/SIGuide.docx`. Source paths, sizes and SHA-256 hashes are recorded in
-`supplementary_media/Supplementary_Video_1_source_index.csv`.
+## Sources
 
-## Grid view
+Download `syllable_clips`, `ethograms` and `barcodes` from [Figshare](https://doi.org/10.6084/m9.figshare.33439885), using the [dataset downloader](datasets.md).
 
-`supplementary_media/Supplementary_Video_1_MoSeq_syllable_atlas_grid.mp4` shows
-the same 25 cluster-mapped syllables playing simultaneously in a 5 × 5 grid
-(1920 × 1080 pixels, H.264/yuv420p, 25 frames s⁻¹, silent, below 30 MB), so the
-whole repertoire can be compared at a glance: tiles are ordered and
-color-coded by behavioral cluster, and each tile loops the same three
-representative occurrences the sequential atlas uses. It is built by
-`scripts/generate_supplementary_video_1_grid.py` from the identical archived
-clips, each verified against the SHA-256 recorded in
-`Supplementary_Video_1_source_index.csv`, which therefore remains the single
-provenance record for both videos.
-
-## Scope decision
-
-The fitted label space contained 96 syllables, 87 of which were observed in the
-bundled per-frame table; after the manuscript's 99.5% coverage filter, 38 were
-retained for downstream analyses. These are model-derived syllables, not 87
-independently validated ethological behaviors. The archived audiovisual source
-currently available on the mounted drives contains clips for syllables 0–34 and
-the derived climbing class. The submission therefore presents the concise,
-interpretable common-syllable atlas and does not imply that all 87 observed
-labels are distinct behavior categories.
-
-The original raw videos referenced by the historical scripts were on an
-unmounted storage volume. If that volume becomes available, additional retained
-syllables can be rendered for repository quality control, but a large rare-label
-dump is not recommended as journal Supplementary Information.
+`Supplementary_Video_1_source_index.csv` records hashes, labels and selected occurrences for the atlas. Occurrence numbers are one-based within concatenated 20-frame clips: occurrence `n` selects `[20*(n-1), 20*n)`. They are not raw-recording frame indices. `per_animal_index.csv` maps recording IDs to bundled ethograms and barcodes.
 
 ## Regeneration
 
-Run the generator with explicit source locations:
+Use a disposable checkout and explicit source paths:
 
 ```bash
-python scripts/generate_supplementary_video_1.py \
-  --clip-dir PATH/TO/video_clips \
-  --skeleton-gif PATH/TO/skeleton_trajectories.gif
+uv run python -m coping_dynamics.datasets syllable_clips --output ../coping-data --extract
+uv run python scripts/generate_supplementary_video_1_grid.py \
+  --clip-dir PATH/TO/EXTRACTED/CLIPS --output ../new-grid-atlas.mp4
 ```
 
-The generator verifies source presence, writes the indexed provenance table and
-encodes the movie without audio. The source clip files contain concatenated
-20-frame representative occurrences with the 14-point pose overlay and a white
-dot marking frames assigned to the displayed syllable.
+The grid generator verifies clips against the source index. The sequential generator additionally requires `--skeleton-gif`; supply the matching skeleton animation. Keep outputs separate from original media.
+
+## Reuse
+
+Study media are [CC BY 4.0](../LICENSE-DATA). Credit the authors and cite the [preprint](https://doi.org/10.1101/2025.09.01.673507); indicate modifications when adapting a figure or video.
