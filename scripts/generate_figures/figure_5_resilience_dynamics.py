@@ -28,6 +28,7 @@ from coping_dynamics.config import (
     UPDATED_MOSEQ_PICKLE,
 )
 from coping_dynamics.panel_letters import align_panel_letters
+from coping_dynamics.protocol import TONE_SPANS_MIN
 
 FIGURE_OUTPUT_DIR = FIGURES_DIR
 TABLE_OUTPUT_DIR = PROCESSED_DATA_DIR
@@ -39,7 +40,9 @@ ELS = "#C37BA0"
 RESILIENT = "#90BE6D"
 PALETTE = {"Control": CONTROL, "ELS": ELS, "ELS resilient": RESILIENT}
 GROUP_ORDER = ["Control", "ELS", "ELS resilient"]
-EVENT_SPANS = [(3.5, 4.0), (5.0, 5.5), (6.5, 7.0)]
+# Actual tone times: 180 s baseline, 30 s tones separated by 60 s.
+# Bin endpoint labels must not shift the experimental events.
+EVENT_SPANS = list(TONE_SPANS_MIN)
 
 ELS_RESILIENT = {
     "2.4",

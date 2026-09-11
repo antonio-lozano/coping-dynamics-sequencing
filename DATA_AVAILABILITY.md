@@ -1,38 +1,12 @@
-# Data Availability
+# Data availability
 
-All data required to reproduce the data-derived manuscript figures and
-statistical outputs are included in this repository.
 
-Raw inputs are in `data/raw/` and include keypoint-MoSeq syllable usage tables,
-per-frame MoSeq syllable assignments, supervised freezing predictions,
-behavioral group metadata, behavioral flexibility scores, validation support
-tables, and compressed MoSeq result objects used by the downstream dynamics
-analyses.
+> Model weights and app demo recordings are separate assets. During the data embargo, obtain the authorized archive from the authors; run `python scripts/install_app_assets.py /path/to/behavior-studio-assets.zip` from the repository root before following bundled-model examples. The public dataset reference is DOI `10.6084/m9.figshare.33439885`. No private download link is included.
 
-The original supervised freezing predictions are provided as 98 per-animal CSVs
-in `data/raw/freezing_predictions/`. The repository also includes
-`data/raw/freezing_predictions_index.csv` and
-`data/raw/freezing_predictions_light.csv.gz`, which are regenerated from the
-per-animal CSVs by `scripts/derive_tables/freezing_predictions_light.py`.
+Study data are available on [Figshare](https://doi.org/10.6084/m9.figshare.33439885) under **CC BY 4.0**. The collection includes 98 raw videos, DeepLabCut pose estimates and network assets, keypoint-MoSeq outputs, supervised freezing predictions, syllable clips, ethograms and barcodes.
 
-Generated analysis-ready tables are in `data/processed/`. Plotted values for
-manuscript figures are in `figure_source_data/`. Statistical model outputs are
-in `statistics/`. Manuscript-facing Excel workbooks are:
+Use the [dataset download guide](docs/datasets.md) to select archives and use the files in the app or analysis code. No Google Drive account or Drive download tool is required.
 
-- `report/raw_data.xlsx`
-- `report/statistical_report.xlsx`
+The repository also bundles compact inputs in `data/raw/`, generated tables in `data/processed/`, plotted values in `figure_source_data/` and statistical outputs in `statistics/`. Workbooks are `report/raw_data.xlsx` and `report/statistical_report.xlsx`. These bundled tables support the quickstart and downstream figure workflows without downloading raw videos.
 
-The upstream inputs that this repository does not ship are deposited on Figshare
-as a companion dataset: the 98 raw behavioral videos, the DeepLabCut pose
-estimates (raw and median-filtered) and network snapshot, the keypoint-MoSeq
-model configuration and outputs (`results.h5`, `moseq_df.csv`, PCA), the
-per-frame supervised freezing predictions, and the representative syllable clips
-behind Supplementary Video 1.
-
-Sanguino-Gómez J, Güçlü U, Krugers HJ, Lozano A. Coping strategies dynamics and
-resilience profiles after early-life stress revealed by behavioral sequencing.
-figshare. Dataset. https://doi.org/10.6084/m9.figshare.33439885
-
-The Figshare record is held privately by the journal until the manuscript is
-accepted, so the DOI resolves only after publication. The dataset is released
-under CC BY 4.0.
+Please cite the [study preprint](https://doi.org/10.1101/2025.09.01.673507) when using the data. See [LICENSE-DATA](LICENSE-DATA) for attribution and reuse terms.

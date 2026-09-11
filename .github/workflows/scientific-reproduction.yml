@@ -1,0 +1,89 @@
+name: Scientific reference comparison
+
+# Distinct from software readiness: differences fail this explicit author-review run.
+on:
+  workflow_dispatch:
+
+jobs:
+  # Reproduction is a required result, not an informational green check.
+  # Differences require review; this job never rewrites the source manifest.
+  pipeline:
+    name: frozen-reference reproduction
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      MPLBACKEND: Agg
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.10.10"
+          enable-cache: true
+
+      - name: Install locked environment
+        id: pipeline-install
+        run: uv sync --locked
+
+      - name: Diagnose Figure 6 CPU sorting sensitivity
+        run: uv run python scripts/diagnose_figure6_sorting.py > "${{ runner.temp }}/figure6-sorting.json"
+
+      - name: Preserve Figure 6 sorting diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: figure6-sorting-diagnostic
+          path: ${{ runner.temp }}/figure6-sorting.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Rebuild in isolation and compare frozen reference
+        if: ${{ !cancelled() && steps.pipeline-install.outcome == 'success' }}
+        run: uv run python -m coping_dynamics.reproduction --output "${{ runner.temp }}/coping-reproduction"
+
+      - name: Preserve reproduction evidence, including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reproduction-evidence
+          path: |
+            ${{ runner.temp }}/coping-reproduction/evidence.json
+            ${{ runner.temp }}/coping-reproduction/*.log
+            ${{ runner.temp }}/coping-reproduction/checkout/figures/
+            ${{ runner.temp }}/coping-reproduction/checkout/figure_source_data/
+            ${{ runner.temp }}/coping-reproduction/checkout/statistics/
+            ${{ runner.temp }}/coping-reproduction/checkout/report/*.xlsx
+          if-no-files-found: error
+          retention-days: 7
+
+      # Same-machine determinism is meaningful even where the bytes differ
+      # from the committed (Windows-built) artifacts: building twice on this
+      # runner must at least agree with itself.
+      - name: Determinism tests (double build)
+        if: ${{ !cancelled() && steps.pipeline-install.outcome == 'success' }}
+        run: uv run pytest -m slow -q
+
+      - name: Report isolated reproduction verdict
+        if: always()
+        env:
+          EVIDENCE_PATH: ${{ runner.temp }}/coping-reproduction/evidence.json
+        run: |
+          python - <<'PY'
+          import collections, json, os
+          from pathlib import Path
+          path = Path(os.environ["EVIDENCE_PATH"])
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
+              summary.write("## Frozen-reference reproduction\n\n")
+              if path.is_file():
+                  result = json.loads(path.read_text())
+                  counts = dict(collections.Counter(x["status"] for x in result.get("comparisons", [])))
+                  summary.write(f"Verdict: **{result.get('status', 'INCOMPLETE')}**\n\n")
+                  summary.write(f"Artifact comparisons: `{counts}`\n\n")
+                  summary.write(f"Failed model records: {len(result.get('failed_models', []))}\n\n")
+              else:
+                  summary.write("No final evidence report; reproduction is incomplete.\n\n")
+              summary.write("Source checkout cleanliness is not evidence of reproduction agreement. "
+                            "Inspect the uploaded logs and generated artifacts.\n")
+          PY

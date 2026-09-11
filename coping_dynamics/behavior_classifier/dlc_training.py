@@ -1,4 +1,4 @@
-"""Training helpers for DLC-derived SHAP-style behavior features."""
+"""Training helpers for experimental DLC-derived centroid behavior features."""
 
 from __future__ import annotations
 
