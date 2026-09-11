@@ -874,3 +874,7 @@ pickle and a portable `xgb_model.json`, and the loader falls back to the JSON
 automatically, so it still loads under XGBoost versions that cannot read the
 pickle. XGBoost 2.0 is the floor: 1.7 accepts the JSON but returns a transposed
 probability array, which is why the pin stops there rather than going lower.
+
+## macOS OpenMP runtime
+
+XGBoost requires the OpenMP runtime on macOS. Before installing or launching the classifiers, run `brew install libomp` using Homebrew. A `libxgboost.dylib` / `libomp.dylib` load error indicates that this system dependency is missing; reinstalling the Python package alone does not supply it.
