@@ -211,6 +211,24 @@ def compare_artifacts(source: Path, candidate: Path, names: list[str]) -> list[d
     return results
 
 
+def comparison_summary(comparisons: list[dict], observations: list[dict]) -> dict:
+    """Separate artifact agreement from observed writes, never infer a model refit."""
+    writes = {row["path"]: row["write_observed"] for row in observations}
+    counts = {key: {} for key in ("write_observed", "no_write_observed", "unknown")}
+    for row in comparisons:
+        written = writes.get(row["path"])
+        key = (
+            "write_observed"
+            if written is True
+            else "no_write_observed"
+            if written is False
+            else "unknown"
+        )
+        bucket = counts[key]
+        bucket[row["status"]] = bucket.get(row["status"], 0) + 1
+    return counts
+
+
 def observe_outputs(checkout: Path, before: dict[str, int]) -> list[dict]:
     """Record write observation separately from numerical/byte agreement.
 
@@ -352,6 +370,9 @@ def main(argv=None) -> int:
             break
     evidence["comparisons"] = compare_artifacts(source, checkout, names)
     evidence["output_write_observations"] = observe_outputs(checkout, output_stamps)
+    evidence["comparison_summary"] = comparison_summary(
+        evidence["comparisons"], evidence["output_write_observations"]
+    )
     # Require a write for the primary generated products. Other preserved
     # artifacts are explicitly listed, never credited as regenerated models.
     required = {
