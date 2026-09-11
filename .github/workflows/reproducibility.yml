@@ -34,11 +34,14 @@ jobs:
 
   software:
     runs-on: macos-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v7
         with:
           version: "0.10.10"
+      - name: Install macOS OpenMP runtime
+        run: brew install libomp
       - run: uv sync --locked
       - name: Import smoke
         run: uv run python -c "import coping_dynamics, numpy, pandas, matplotlib, scipy, sklearn, statsmodels, xgboost, shap"
