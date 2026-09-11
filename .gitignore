@@ -60,8 +60,13 @@ classifier/outputs/
 classifier/*_smoke.joblib
 data/processed/**/*_smoke.csv
 
-# Companion tools are kept out of version control for now.
-tools/
+# Local agent checkpoints and private verification evidence (not distribution inputs)
+/.claw/
+/verification/
 
-# Private local notes, never committed.
-notes/
+# Downloaded Figshare archives and extracted datasets
+/datasets/
+
+# Authorized model/example payloads are installed separately.
+/apps/behavior-dlc-classifier/models/
+/apps/behavior-dlc-classifier/data/raw/

@@ -42,13 +42,14 @@ from coping_dynamics.config import (
     PALETTE,
     SOURCE_DATA_DIR,
 )
+from coping_dynamics.protocol import TONE_SPANS_MIN
 from coping_dynamics.statistics import cohens_d, fit_mixed_models
 
 FIGURE_OUTPUT_DIR = FIGURES_DIR
 SOURCE_OUTPUT_DIR = FIGURE_SOURCE_DATA_DIR
 OVERLAP_SYLLABLES = {0, 28, 40}
 TIMECOURSE_SYLLABLES = {0, 28}
-EVENT_SPAN_STARTS_MIN = [3.5, 4.5, 5.5]
+EVENT_SPAN_STARTS_MIN = [start for start, _ in TONE_SPANS_MIN]
 EVENT_SPAN_WIDTH_MIN = 0.5
 
 

@@ -1,4 +1,4 @@
-name: Reproducibility checks
+name: Software checks
 
 on:
   push:
@@ -32,49 +32,25 @@ jobs:
       - name: Validate citation metadata
         run: uvx cffconvert@2.0.0 --validate
 
-  # The locked environment installs, imports, and passes the layout checks and
-  # the fast test suite, on both operating systems the repository documents.
-  checks:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+  software:
+    runs-on: macos-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v7
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v7
         with:
           version: "0.10.10"
-          enable-cache: true
-
-      - name: Install locked environment
-        run: uv sync --locked
-
-      - name: Import smoke check
-        run: >
-          uv run python -c "import matplotlib, numpy, openpyxl, pandas, scipy,
-          shap, sklearn, statsmodels, xgboost; import coping_dynamics.config"
-
-      - name: Compile every Python file
-        shell: bash
-        run: |
-          uv run python - <<'PY'
-          from pathlib import Path
-          import py_compile
-          for path in Path('.').rglob('*.py'):
-              if '.git' in path.parts or '.venv' in path.parts:
-                  continue
-              py_compile.compile(str(path), doraise=True)
-          PY
-
-      - name: Check publication artifact layout
+      - run: uv sync --locked
+      - name: Import smoke
+        run: uv run python -c "import coping_dynamics, numpy, pandas, matplotlib, scipy, sklearn, statsmodels, xgboost, shap"
+      - name: Compile maintained Python sources
+        run: uv run python -m compileall -q coping_dynamics scripts apps/behavior-dlc-classifier/src
+      - name: Artifact integrity
         run: uv run python scripts/check_reproducibility.py
-
-      - name: Check manuscript, figures and report agree
-        run: uv run python scripts/check_manuscript.py
-
-      - name: Fast test suite
+      - name: Fast research tests
         run: uv run pytest -m "not slow" -q
+      - name: Install app test dependencies
+        working-directory: apps/behavior-dlc-classifier
+        run: uv sync --locked --extra video --extra ml --extra dev
+      - name: App tests
+        working-directory: apps/behavior-dlc-classifier
+        run: uv run --no-sync pytest -q

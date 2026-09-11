@@ -1,0 +1,20 @@
+# One set of line endings everywhere, matching the manuscript repository this
+# tool is destined to sit inside. Listing extensions individually is what let
+# .jsonl slip through there once, so the rule stays a wildcard.
+* text=auto eol=lf
+
+# cmd.exe can mis-read a `goto` label in a file with LF-only endings.
+*.bat text eol=crlf
+
+# Model and media binaries. Marked explicitly because a pickle with enough
+# printable bytes can be mistaken for text, and EOL conversion would corrupt it.
+*.sav binary
+*.pkl binary
+*.joblib binary
+*.mp4 binary
+*.png binary
+*.pdf binary
+*.xlsx binary
+*.index binary
+*.meta binary
+*.data-* binary

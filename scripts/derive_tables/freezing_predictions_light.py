@@ -9,6 +9,7 @@ Run: python scripts/derive_tables/freezing_predictions_light.py
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import re
 from pathlib import Path
@@ -63,13 +64,22 @@ def load_group_map() -> dict[str, str]:
 
 
 def main() -> None:
-    if not PRED_DIR.is_dir():
-        raise FileNotFoundError(f"Missing raw freezing prediction directory: {PRED_DIR}")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--input", type=Path, default=PRED_DIR, help="Prediction CSV directory")
+    parser.add_argument(
+        "--output", type=Path, help="New output directory; default updates bundled compact tables"
+    )
+    args = parser.parse_args()
+    prediction_dir = args.input
+    if not prediction_dir.is_dir():
+        raise FileNotFoundError(f"Missing raw freezing prediction directory: {prediction_dir}")
+    if args.output and args.output.exists():
+        parser.error("Choose a new output directory; existing results will not be overwritten")
 
     group_map = load_group_map()
     frames = []
     index_rows = []
-    for path in sorted(PRED_DIR.glob("*_freezing_predictions_only.csv")):
+    for path in sorted(prediction_dir.glob("*_freezing_predictions_only.csv")):
         base = parse_base(path)
         animal_id = short_id(base)
         group = (
@@ -108,16 +118,21 @@ def main() -> None:
         )
 
     if not frames:
-        raise FileNotFoundError(f"No freezing prediction CSVs found in {PRED_DIR}")
+        raise FileNotFoundError(f"No freezing prediction CSVs found in {prediction_dir}")
+
+    if args.output:
+        args.output.mkdir(parents=True, exist_ok=False)
+    out_light = args.output / OUT_LIGHT.name if args.output else OUT_LIGHT
+    out_index = args.output / OUT_INDEX.name if args.output else OUT_INDEX
 
     # mtime=0 keeps the gzip header out of the bytes, so rebuilding unchanged
     # data is a no-op instead of a new hash in MANIFEST.csv every run.
     pd.concat(frames, ignore_index=True).to_csv(
-        OUT_LIGHT, index=False, compression={"method": "gzip", "mtime": 0}
+        out_light, index=False, compression={"method": "gzip", "mtime": 0}
     )
-    pd.DataFrame(index_rows).to_csv(OUT_INDEX, index=False)
-    print(f"Saved {OUT_LIGHT.relative_to(REPO)}")
-    print(f"Saved {OUT_INDEX.relative_to(REPO)} ({len(index_rows)} files)")
+    pd.DataFrame(index_rows).to_csv(out_index, index=False)
+    print(f"Saved {out_light}")
+    print(f"Saved {out_index} ({len(index_rows)} files)")
 
 
 if __name__ == "__main__":

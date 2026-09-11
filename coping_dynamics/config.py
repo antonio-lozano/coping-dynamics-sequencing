@@ -51,19 +51,14 @@ CONFIG_YML = _env_path("COPING_DYNAMICS_CONFIG_YML", METADATA_DIR / "config.yml"
 
 # Outputs
 FIGURES_DIR = PROJECT_ROOT / "figures"
-FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 
 FIGURE_SOURCE_DATA_DIR = PROJECT_ROOT / "figure_source_data"
-FIGURE_SOURCE_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 STATISTICS_DIR = PROJECT_ROOT / "statistics"
-STATISTICS_DIR.mkdir(parents=True, exist_ok=True)
 
 REPORT_DIR = PROJECT_ROOT / "report"
-REPORT_DIR.mkdir(parents=True, exist_ok=True)
 
 CLASSIFIER_DIR = PROJECT_ROOT / "classifier"
-CLASSIFIER_DIR.mkdir(parents=True, exist_ok=True)
 
 # ==============================================================================
 # Manuscript figure source data

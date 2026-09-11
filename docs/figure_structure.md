@@ -1,7 +1,6 @@
-# Figure Structure
+# Figure inventory
 
-This is the repository-wide panel map used by the figure generators, source-data
-exports, Excel reports, and reproducibility checks.
+The tables below map figure panels to bundled outputs and generators.
 
 ## Main Figures
 
@@ -25,10 +24,10 @@ exports, Excel reports, and reproducibility checks.
 | Figure | Panels | Content | Primary source data |
 | --- | --- | --- | --- |
 | Supplementary Figure 1 | A-D | Omitted/mixed behavior dynamics and total frequencies | `data/processed/supplementary_figure1_*` |
-| Supplementary Figure 2 | assembled | Behavioral-dynamics workflow | N/A |
+| Supplementary Figure 2 | assembled | Behavioral-dynamics workflow | Canonical tracked export |
 | Supplementary Figure 3 | A-K | Alternative distance metrics and resilient-group overlap | `data/processed/supplementary_figure3_*` |
-| Supplementary Figure 4 | A-H (published as Figure 7 panels D-M) | Class-specific behavior-classifier SHAP panels | `classifier/legacy_shap/shap_values.npz` and `figure_source_data/supplementary_figure4_shap_summary.csv` |
-| Supplementary Figure 5 | assembled | Convex-hull floor/wall overlap validation for climbing identification | N/A |
+| Supplementary Figure 4 | A-H | Class-specific behavior-classifier SHAP panels | `classifier/legacy_shap/shap_values.npz` and `figure_source_data/supplementary_figure4_shap_summary.csv` |
+| Supplementary Figure 5 | assembled | Convex-hull floor/wall overlap validation for climbing identification | Canonical tracked export |
 
 ### Supplementary Figure 4 comes from the legacy classifier
 
@@ -81,9 +80,9 @@ Behavior names use the short forms shared with every other figure in the set
 
 The bundled `classifier/figure7_behavior_classifier.joblib` is a **different
 model on a different feature set** (33 features derived from the five centroid
-kinematic signals in `data/raw/moseq_syllables_per_frame.csv.gz`) and is used by
-Figure 7A-C only. Running SHAP on it produces a re-analysis, not a reproduction
-of the published panels.
+kinematic signals in `data/raw/moseq_syllables_per_frame.csv.gz`) and is **not used to recompute Figure 7A-C**. Those panels replay historical
+scores, confusion values and extracted SHAP summaries. Running SHAP on the
+33-feature model is a reanalysis, not reproduction of the historical classifier.
 
 ## Workbook Assignment
 
@@ -102,13 +101,15 @@ panel across all eight behavior classes. The reusable classifier artifact has
 a separate 33-column engineering feature catalog; those columns are not mixed
 into Figure 7B because they are not the feature labels shown in that panel.
 
-### The legacy figure PDF is retired
+### Recovered original Figure 7
 
-Figure 7B's 20 x 8 values were extracted programmatically from the legacy
-figure PDF (`data/raw/legacy_figures/figure7_classifier_original.pdf`). That
-PDF was lost before it could be committed and exists on no known machine, so
-**`figure_source_data/figure7_classifier_global_shap.csv` - written by that
-same extraction - is the archival source of record** for these values. The
-figure generator reads the CSV directly; if a recovered copy of the PDF is
-ever placed back at the path above, the generator re-runs the original
-extraction so the CSV can be re-derived and compared.
+The original PDF was recovered from the supplied paper ZIP on 2026-09-09 and is
+preserved at [docs/provenance/original-figure7.pdf](provenance/original-figure7.pdf).
+Its SHA256 is recorded in `config/original-artifacts.json`. Earlier assertions
+that no copy exists are obsolete.
+
+The generator continues to read `figure7_classifier_global_shap.csv` as its
+inherited extracted table; the recovered PDF was not silently placed at a
+special legacy import path or used to overwrite that table. A future extraction
+must compare its values explicitly. Neither PDF recovery nor rendering archived
+SHAP arrays establishes original model retraining or historical prediction parity.

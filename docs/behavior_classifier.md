@@ -1,7 +1,8 @@
-# Figure 7A-C And Supplementary Figure 4 Behavior Classifier
+# Experimental behavior classifier and archived model provenance
 
-The classifier maps per-frame pose/MoSeq features onto the seven hand-curated
-behavior clusters summarized in Supplementary Figure 4 and Figure 7A-C:
+The reusable classifier predicts the same behavior labels as the paper, but it is **not** the historical model behind Figure 7A–C or Supplementary Figure 4. The reusable model has 33 centroid-derived features; archived SHAP uses 719 features. Figure 7A/C replay stored historical values and Figure 7B uses an extracted table. Regeneration is not retraining or independent cross-validation.
+
+The label mapping is:
 
 ```text
 Freeze: 0, 28
@@ -25,16 +26,16 @@ The feature extraction code is in `coping_dynamics/behavior_classifier/features.
 ## Train Or Evaluate From The Bundled MoSeq Table
 
 ```bash
-python behavior_classifier.py train
+python behavior_classifier.py train --model classifier/outputs/experimental.joblib
 ```
 
 Quick smoke run:
 
 ```bash
-python behavior_classifier.py train --skip-cv --max-frames 5000
+python behavior_classifier.py train --skip-cv --max-frames 5000 --model classifier/outputs/experimental-small.joblib
 ```
 
-Default outputs:
+Training defaults now write under ignored `classifier/outputs/`; prediction continues to load the archived model by default. Pass a distinct destination for each experiment. Historical artifact names (not new training defaults) are:
 
 - `classifier/figure7_behavior_classifier.joblib`
 - `classifier/figure7_behavior_classifier_cv_metrics.csv`
@@ -81,3 +82,14 @@ python behavior_classifier.py run-from-dlc \
   --model classifier/figure7_behavior_classifier.joblib \
   --output-dir classifier/outputs/behavior_predictions
 ```
+
+## Training change and interpretation
+
+Temporal features are now computed on complete recording sequences before label filtering or random frame subsampling. The old order manufactured adjacency between nonadjacent frames. This correction changes experimental retraining only; bundled model bytes and reported classifier scores remain unchanged. Root cross-validation still splits frames, not animals, and is not independent-animal validation. See [reproduction guidance](../REPRODUCIBILITY.md).
+
+## Companion archived-model compatibility
+
+The separate companion's 719-feature behavior model now uses the centered-only
+coordinate frame evidenced by its archived feature rows. See the
+[coordinate correction and real-data check](classifier-coordinate-correction.md).
+This does not turn the root 33-feature model into the historical classifier.

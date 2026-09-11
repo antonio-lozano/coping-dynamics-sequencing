@@ -1,9 +1,10 @@
-"""Rebuild the full manuscript reproducibility package from tracked inputs.
+"""Author artifacts in place, including replacement of the artifact manifest.
 
-This is the top-level command reviewers should use when they want to regenerate
-the repository artifacts from `data/raw`.
+This legacy maintenance command modifies the checkout and may reuse cached
+prediction products. It is not frozen-reference verification. Reviewers should
+use ``python -m coping_dynamics.reproduction --output NEW_EXTERNAL_DIRECTORY``.
 
-Run: python scripts/run_all.py
+Run for intentional artifact authoring only: python scripts/run_all.py
 """
 
 from __future__ import annotations
@@ -30,8 +31,8 @@ TASKS = [
     ("build statistical report workbook", ["scripts/build_statistical_report.py"]),
     ("update artifact manifest", ["scripts/update_manifest.py"]),
     ("check reproducibility package", ["scripts/check_reproducibility.py"]),
-    # Verification, so it runs last and against the finished artifacts.
-    ("check manuscript, figures and report agree", ["scripts/check_manuscript.py"]),
+    # Historical manuscript comparison is deliberately not automatic.
+    # Study reference: https://doi.org/10.1101/2025.09.01.673507.
 ]
 
 

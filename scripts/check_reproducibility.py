@@ -234,8 +234,7 @@ def check_layout(files: list[Path], errors: list[str]) -> None:
     for path in files:
         rel = path.relative_to(ROOT).as_posix()
         lower = rel.lower()
-        if path.name.lower().startswith("readme") and rel != "README.md":
-            fail(f"subfolder README found: {rel}", errors)
+        # Product packages own their onboarding; nested READMEs are valid.
         if lower.startswith("data/raw/") and path.suffix.lower() in {".pdf", ".png", ".svg"}:
             fail(f"figure artifact found in raw data: {rel}", errors)
         if lower.endswith(("_test.xlsx", "_rebuilt.xlsx")) or "smoke" in lower:
