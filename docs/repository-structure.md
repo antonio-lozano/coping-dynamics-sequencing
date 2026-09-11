@@ -37,6 +37,6 @@ uv run freezing-dlc-gui
 
 ## Compatibility
 
-Python module names, distribution names and console commands are unchanged. A relative symlink retains the former checkout location `tools/behavior_dlc_classifier` on systems with symlink support. New commands, CI and documentation use canonical locations and do not require these aliases. On Windows without Git symlink support, use the canonical directories; the old paths may be checked out as small link-text files.
+Python module names, distribution names and console commands are unchanged. The former checkout location `tools/behavior_dlc_classifier` contains a navigation README, not a symlink. Use `apps/behavior-dlc-classifier` for installation and execution on every platform. No Developer Mode or link-creation privilege is required to clone the repository.
 
-An existing editable app environment may point through the old alias. Resync from the canonical app directory after upgrading. Root wheels continue to contain Python code only, not the website, study inputs or trained models. App wheels contain `freezing_dlc`; use a checkout for bundled models and sample videos.
+Existing editable installations may still point through the former alias. Resync from the canonical app directory after upgrading. Root wheels contain Python code, not the website, study inputs or trained models. App models and examples are installed separately using the checksummed asset installer.
