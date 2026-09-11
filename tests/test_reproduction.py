@@ -176,3 +176,20 @@ def test_source_integrity_tracks_alias_and_target_changes_separately(tmp_path):
     assert changed_sources(tmp_path, before) == ["alias"]
     target.unlink()
     assert changed_sources(tmp_path, before) == names
+
+
+def test_comparison_summary_separates_cached_missing_and_unobserved_outputs():
+    from coping_dynamics.reproduction import comparison_summary
+
+    rows = [{"path": name, "status": "byte_equal"} for name in ("written", "cached", "unknown")]
+    rows.append({"path": "missing", "status": "missing"})
+    observations = [
+        {"path": "written", "write_observed": True},
+        {"path": "cached", "write_observed": False},
+        {"path": "missing", "write_observed": False},
+    ]
+    assert comparison_summary(rows, observations) == {
+        "write_observed": {"byte_equal": 1},
+        "no_write_observed": {"byte_equal": 1, "missing": 1},
+        "unknown": {"byte_equal": 1},
+    }

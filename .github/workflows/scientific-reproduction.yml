@@ -71,16 +71,20 @@ jobs:
           EVIDENCE_PATH: ${{ runner.temp }}/coping-reproduction/evidence.json
         run: |
           python - <<'PY'
-          import collections, json, os
+          import json, os
+          from coping_dynamics.reproduction import comparison_summary
           from pathlib import Path
           path = Path(os.environ["EVIDENCE_PATH"])
           with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
               summary.write("## Frozen-reference reproduction\n\n")
               if path.is_file():
                   result = json.loads(path.read_text())
-                  counts = dict(collections.Counter(x["status"] for x in result.get("comparisons", [])))
+                  counts = comparison_summary(result.get("comparisons", []), result.get("output_write_observations", []))
                   summary.write(f"Verdict: **{result.get('status', 'INCOMPLETE')}**\n\n")
-                  summary.write(f"Artifact comparisons: `{counts}`\n\n")
+                  for label, values in counts.items():
+                      summary.write(f"{label}: `{values}`\n\n")
+                  summary.write("Unwritten byte-equal artifacts are preserved inputs, not regenerated outputs. "
+                                "Observed writes alone do not prove classifier retraining.\n\n")
                   summary.write(f"Failed model records: {len(result.get('failed_models', []))}\n\n")
               else:
                   summary.write("No final evidence report; reproduction is incomplete.\n\n")
