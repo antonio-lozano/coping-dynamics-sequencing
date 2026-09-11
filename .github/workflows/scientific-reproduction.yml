@@ -1,8 +1,15 @@
 name: Scientific reference comparison
 
-# Distinct from software readiness: differences fail this explicit author-review run.
+# Distinct from software readiness: differences fail this automatic reference check.
 on:
+  push:
+    branches: [main]
+  pull_request:
   workflow_dispatch:
+
+concurrency:
+  group: scientific-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   # Reproduction is a required result, not an informational green check.

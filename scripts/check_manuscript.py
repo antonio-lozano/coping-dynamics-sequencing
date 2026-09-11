@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 # SPDX-License-Identifier: MIT
-"""Check that the manuscript, the figures and the statistical report agree.
+"""LEGACY DOCX checker; not validation of the submitted PDF.
+
+This historical claim registry is not wired into CI or the current build.
+It requires an explicitly selected DOCX and must not be reported as submitted-
+manuscript validation.
+
+Check that the manuscript, the figures and the statistical report agree.
 
 Four sources have to carry the same numbers:
 
@@ -1085,7 +1091,15 @@ def check_figure_stars(index, fails):
 
 
 def main() -> int:
-    ms_path = Path(sys.argv[1]) if len(sys.argv) > 1 else SHIPPED_MS
+    if len(sys.argv) != 2 or Path(sys.argv[1]).suffix.lower() != ".docx":
+        print(
+            "Legacy tool: provide an explicit historical DOCX; submitted PDF validation is not implemented."
+        )
+        return 2
+    ms_path = Path(sys.argv[1])
+    if not ms_path.is_file():
+        print("Manuscript not found; no manuscript agreement check was performed.")
+        return 2
     ms_stats = None
     if ms_path.exists():
         ms_stats = read_manuscript(ms_path)

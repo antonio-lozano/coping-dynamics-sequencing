@@ -14,8 +14,9 @@ The root rebuild starts from bundled predictions/sequence tables and other track
 ## Reading the checks
 
 The automatic **Software checks** workflow runs fast tests, imports, compilation,
-metadata and input integrity. The separate, manually dispatched **Scientific reference
-comparison** workflow rebuilds and compares archived results; differences fail that
+metadata and input integrity. The separate **Scientific reference
+comparison** workflow runs automatically on pull requests and pushes to `main`, and
+can also be dispatched manually. It rebuilds and compares archived results; differences fail that
 workflow and are never waived by the software badge. Interpret its outcomes as follows:
 
 - **Not started:** no runner steps executed (for example, an account billing or
@@ -120,3 +121,26 @@ use the isolated reproduction entry point for frozen-reference comparison.
 ## Manuscript authority
 
 `scripts/check_manuscript.py` is a legacy checker with a hard-coded DOCX claim registry. It is not an automatic check of the submitted PDF. It remains available for explicit historical use, not as a green claim of submitted-manuscript agreement. No result tolerances or archived tables are changed to make CI pass.
+
+## Manuscript checker status
+
+`scripts/check_manuscript.py` is an explicit-path **legacy DOCX** utility with a
+historical claim registry. It is intentionally excluded from CI and `run_all.py`: it
+does not validate the submitted PDF. Missing manuscripts fail rather than silently
+skipping checks. Scientific reference CI compares regenerated outputs with committed
+artifacts; neither that workflow nor the software badge claims manuscript agreement.
+
+Windows/Linux platform validation is deferred. The checkout contains no committed
+symlinks. Tests specifically about symlinks report a capability skip when the OS
+denies link creation; ordinary reproduction tests still run.
+
+## Tone-window figure refresh
+
+Figures 2, 3, 5 and Supplementary Figure 1 have been regenerated in PDF, SVG
+and PNG using tone windows 3.0–3.5, 4.5–5.0 and 6.0–6.5 physical minutes.
+Their 12 manifest entries were refreshed explicitly, without updating statistical
+reference tables. Paired old-window and corrected-window builds used the same
+inputs and statistical implementation; their generated numerical tables were
+identical. This demonstrates shading-only effects of the protocol change, not
+overall frozen-reference agreement. The automatic scientific workflow supplies
+the latter comparison separately.

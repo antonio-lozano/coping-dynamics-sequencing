@@ -1,8 +1,25 @@
 """Behavioral contracts for isolated reproduction and frozen-reference checks."""
 
+import errno
 from pathlib import Path
 
+import pytest
+
 from coping_dynamics.reproduction import compare_csv, copy_checkout, summarize_run
+
+
+def directory_alias(link, target):
+    """Exercise link contracts where the filesystem permits real symlinks."""
+    try:
+        link.symlink_to(target, target_is_directory=True)
+    except OSError as exc:
+        if getattr(exc, "winerror", None) == 1314 or exc.errno in {
+            errno.EPERM,
+            errno.EACCES,
+            errno.ENOTSUP,
+        }:
+            pytest.skip(f"Directory symlink creation unavailable: {exc}")
+        raise
 
 
 def test_numeric_roundoff_is_distinguished_from_changed_science(tmp_path):
@@ -32,7 +49,6 @@ def test_missing_rows_and_columns_fail(tmp_path):
 
 
 def test_isolated_copy_cannot_overwrite_source_or_existing_destination(tmp_path):
-    import pytest
 
     source = tmp_path / "source"
     source.mkdir()
@@ -125,7 +141,7 @@ def test_isolated_copy_preserves_internal_directory_alias(tmp_path):
     (source / "web/site").mkdir(parents=True)
     (source / "docs").mkdir()
     (source / "web/site/index.html").write_text("preview")
-    (source / "docs/web").symlink_to(Path("../web/site"), target_is_directory=True)
+    directory_alias(source / "docs/web", Path("../web/site"))
     # Windows stores link text verbatim: use native separators in the fixture.
     # Establish a working source alias before testing the isolation copy.
     assert (source / "docs/web/index.html").read_text() == "preview"
@@ -140,13 +156,12 @@ def test_isolated_copy_preserves_internal_directory_alias(tmp_path):
 
 
 def test_isolated_copy_rejects_external_directory_alias_before_writing(tmp_path):
-    import pytest
 
     source = tmp_path / "source"
     source.mkdir()
     outside = tmp_path / "outside"
     outside.mkdir()
-    (source / "escape").symlink_to(Path("../outside"), target_is_directory=True)
+    directory_alias(source / "escape", Path("../outside"))
     destination = tmp_path / "copy"
     with pytest.raises(ValueError):
         copy_checkout(source, destination, ["escape"])
@@ -160,7 +175,7 @@ def test_source_integrity_tracks_alias_and_target_changes_separately(tmp_path):
     target = tmp_path / "assets/input.csv"
     target.write_text("original")
     alias = tmp_path / "alias"
-    alias.symlink_to(Path("assets"), target_is_directory=True)
+    directory_alias(alias, Path("assets"))
     names = ["alias", "assets/input.csv"]
     before = {name: digest(tmp_path / name) for name in names}
     assert changed_sources(tmp_path, before) == []
@@ -168,7 +183,7 @@ def test_source_integrity_tracks_alias_and_target_changes_separately(tmp_path):
     assert changed_sources(tmp_path, before) == ["assets/input.csv"]
     target.write_text("original")
     alias.unlink()
-    alias.symlink_to(Path("missing"), target_is_directory=True)
+    directory_alias(alias, Path("missing"))
     assert changed_sources(tmp_path, before) == ["alias"]
     alias.unlink()
     assert changed_sources(tmp_path, before) == ["alias"]
@@ -193,3 +208,12 @@ def test_comparison_summary_separates_cached_missing_and_unobserved_outputs():
         "no_write_observed": {"byte_equal": 1, "missing": 1},
         "unknown": {"byte_equal": 1},
     }
+
+
+def test_symlink_permission_denial_is_an_explicit_capability_skip(tmp_path, monkeypatch):
+    def denied(*args, **kwargs):
+        raise OSError(errno.EPERM, "symlinks unavailable")
+
+    monkeypatch.setattr(Path, "symlink_to", denied)
+    with pytest.raises(pytest.skip.Exception, match="Directory symlink creation unavailable"):
+        directory_alias(tmp_path / "link", Path("target"))
