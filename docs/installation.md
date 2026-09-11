@@ -143,3 +143,7 @@ git rev-parse HEAD
 Expect Python 3.11 for the locked checkout, an import path in this checkout, and CLI usage containing `predict`. Save the revision with your outputs. These checks establish interpreter/import/entry-point readiness, not full workflow success. Next run [one complete bundled recording](first-recording.md); no video, GPU or tracking installation is required for that example.
 
 Next: [tutorials](tutorials.md) and [reproducibility evidence](../REPRODUCIBILITY.md).
+
+## macOS OpenMP runtime
+
+XGBoost requires the OpenMP runtime on macOS. Before installing or launching the classifiers, run `brew install libomp` using Homebrew. A `libxgboost.dylib` / `libomp.dylib` load error indicates that this system dependency is missing; reinstalling the Python package alone does not supply it.
