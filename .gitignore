@@ -64,6 +64,15 @@ data/processed/**/*_smoke.csv
 /.claw/
 /verification/
 
+# Private local notes, never committed.
+notes/
+
+# Local companion-tool checkouts stay out; only the pointer README is tracked.
+tools/*
+!tools/behavior_dlc_classifier/
+tools/behavior_dlc_classifier/*
+!tools/behavior_dlc_classifier/README.md
+
 # Downloaded Figshare archives and extracted datasets
 /datasets/
 

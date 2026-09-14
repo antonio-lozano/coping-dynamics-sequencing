@@ -1,6 +1,7 @@
 name: Scientific reference comparison
 
-# Distinct from software readiness: differences fail this automatic reference check.
+# Distinct from software readiness: any numerical difference fails this automatic
+# reference check; figure-only byte drift is reported for review (see evidence.json).
 on:
   push:
     branches: [main]
