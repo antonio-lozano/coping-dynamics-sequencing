@@ -243,12 +243,15 @@ def onset_of_prediction(labels: pd.DataFrame, root: Path, n_perm: int) -> pd.Dat
             perms = within_cohort_shuffles(cohort, y, n_perm, RANDOM_SEED)
             null = np.array([loocv_auc(x, p) for p in perms])
             null_mean = float(np.nanmean(null))
-            # AUC is k/(n_pos*n_neg) with the class counts fixed by the
-            # within-cohort shuffle, so compare the integer k: ties with the
-            # observed value are common and must not flip on CPU-level roundoff.
+            # AUC*n_pos*n_neg counts correctly ordered pairs plus half a
+            # point per tied pair, so twice that is an exact integer with the
+            # class counts fixed by the within-cohort shuffle. Compare those
+            # integers: ties with the observed value are common, and a
+            # half-integer sits exactly on a rounding boundary that one ulp
+            # of summation-order noise moves across on another CPU.
             pairs = int(y.sum()) * int(len(y) - y.sum())
-            null_r = np.rint(null * pairs)
-            observed_r = np.rint(observed * pairs)
+            null_r = np.rint(2.0 * null * pairs)
+            observed_r = np.rint(2.0 * observed * pairs)
 
             rows.append(
                 {
