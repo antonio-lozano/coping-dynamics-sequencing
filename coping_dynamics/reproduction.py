@@ -304,6 +304,25 @@ def failed_models(checkout: Path) -> list[dict]:
     return failures
 
 
+def new_failed_models(source: Path, checkout: Path) -> list[dict]:
+    """Failure rows the candidate has that the frozen reference does not.
+
+    A failure the reference already records is a reproduced reference fact
+    and is compared like any other row; a failure the reference lacks means
+    this run broke a model that used to fit.
+    """
+    reference = {
+        (f["path"], f["row"].get("analysis"), f["row"].get("cluster"), f["row"].get("parameter"))
+        for f in failed_models(source)
+    }
+    return [
+        f
+        for f in failed_models(checkout)
+        if (f["path"], f["row"].get("analysis"), f["row"].get("cluster"), f["row"].get("parameter"))
+        not in reference
+    ]
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -455,8 +474,12 @@ def main(argv=None) -> int:
         evidence["comparisons"],
         evidence["source_changed"] + evidence["raw_input_changed"],
     )
+    # A model the frozen reference itself records as failed (Groom/Combined
+    # is singular under the reference BLAS kernel) is reproduced, not broken;
+    # only a failure the reference does not carry fails the run.
     evidence["failed_models"] = failed_models(checkout)
-    if evidence["failed_models"] or evidence["missing_regeneration"]:
+    evidence["new_failed_models"] = new_failed_models(source, checkout)
+    if evidence["new_failed_models"] or evidence["missing_regeneration"]:
         evidence["status"] = "FAILED"
     if args.skip_figures and evidence["status"] == "PASS":
         evidence["status"] = "PARTIAL"
