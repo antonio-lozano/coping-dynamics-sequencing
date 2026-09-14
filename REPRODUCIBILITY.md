@@ -76,7 +76,10 @@ moves MixedLM roundoff enough to flip the near-singular Groom/Combined fit in
 reported as `Singular matrix` under Prescott). Hosted runners land on AVX2 or
 AVX-512 hosts at random, so without the pin the same commit can pass on one
 run and fail on the next; `evidence.json` records the kernel under `blas`.
-Note for the study: that fit sits at a numerical edge. This pass concerns
+Note for the study: that fit sits at a numerical edge. Because the reference
+records that failure, reproducing it is agreement: `failed_models` lists every
+failure row in the candidate, and only `new_failed_models` — failures the
+reference does not carry — fail the run. This pass concerns
 the bundled downstream pipeline, not raw-video reconstruction or original-paper
 scientific validity. See the [preprint](https://doi.org/10.1101/2025.09.01.673507) for study methods.
 

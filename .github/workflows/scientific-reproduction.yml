@@ -106,7 +106,8 @@ jobs:
                       summary.write(f"{label}: `{values}`\n\n")
                   summary.write("Unwritten byte-equal artifacts are preserved inputs, not regenerated outputs. "
                                 "Observed writes alone do not prove classifier retraining.\n\n")
-                  summary.write(f"Failed model records: {len(result.get('failed_models', []))}\n\n")
+                  summary.write(f"Failed model records: {len(result.get('failed_models', []))} "
+                                f"(not in the reference: {len(result.get('new_failed_models', []))})\n\n")
               else:
                   summary.write("No final evidence report; reproduction is incomplete.\n\n")
               summary.write("Source checkout cleanliness is not evidence of reproduction agreement. "

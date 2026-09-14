@@ -130,6 +130,25 @@ def test_failed_model_rows_are_not_successful_scientific_outputs(tmp_path):
     assert failures[0]["row"]["note"] == "Singular matrix"
 
 
+def test_reproduced_reference_failure_is_not_a_new_failure(tmp_path):
+    from coping_dynamics.reproduction import new_failed_models
+
+    source, checkout = tmp_path / "source", tmp_path / "checkout"
+    header = "cluster,analysis,parameter,note\n"
+    singular = "Groom,Combined,model_failed,Singular matrix\n"
+    for root in (source, checkout):
+        (root / "statistics").mkdir(parents=True)
+    (source / "statistics/fits.csv").write_text(header + singular)
+    (checkout / "statistics/fits.csv").write_text(header + singular)
+    assert new_failed_models(source, checkout) == []
+
+    (checkout / "statistics/fits.csv").write_text(
+        header + singular + "Freeze,Exp1,model_failed,Singular matrix\n"
+    )
+    new = new_failed_models(source, checkout)
+    assert [f["row"]["cluster"] for f in new] == ["Freeze"]
+
+
 def test_untouched_preexisting_outputs_are_not_counted_as_regenerated(tmp_path):
     from coping_dynamics.reproduction import observe_outputs
 
