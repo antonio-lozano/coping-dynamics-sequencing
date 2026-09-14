@@ -68,7 +68,15 @@ figures and workbooks are a same-machine guarantee (font rasterization and PDF
 stream compression differ between hosts), so `REVIEW_REQUIRED` — every table
 agrees but some rendered bytes differ — exits zero and lists each such artifact
 in `evidence.json` for inspection. The comparison runs on `windows-latest`
-because the frozen references were built on Windows. This pass concerns
+because the frozen references were built on Windows, and the generators run
+with `OPENBLAS_CORETYPE=Prescott`: the bundled OpenBLAS does not recognise the
+reference machine's CPU and falls back to that generic kernel, and kernel choice
+moves MixedLM roundoff enough to flip the near-singular Groom/Combined fit in
+`stats_figure3_overtime.csv` (it converges under the Haswell kernel and is
+reported as `Singular matrix` under Prescott). Hosted runners land on AVX2 or
+AVX-512 hosts at random, so without the pin the same commit can pass on one
+run and fail on the next; `evidence.json` records the kernel under `blas`.
+Note for the study: that fit sits at a numerical edge. This pass concerns
 the bundled downstream pipeline, not raw-video reconstruction or original-paper
 scientific validity. See the [preprint](https://doi.org/10.1101/2025.09.01.673507) for study methods.
 

@@ -48,6 +48,30 @@ ARTIFACT_DIRS = (
 )
 
 
+REFERENCE_BLAS_CORETYPE = "Prescott"
+
+
+def blas_runtime() -> dict:
+    """Record which BLAS kernels the generators will dispatch to.
+
+    OpenBLAS picks a kernel per host CPU; the pinned OPENBLAS_CORETYPE only
+    takes effect in the generator subprocesses, so this reports the parent's
+    view plus the value those subprocesses receive.
+    """
+    info: dict = {"openblas_coretype": os.environ.get("OPENBLAS_CORETYPE", REFERENCE_BLAS_CORETYPE)}
+    try:
+        import numpy  # noqa: F401  # loads the bundled OpenBLAS so it is visible below
+        from threadpoolctl import threadpool_info
+
+        info["libraries"] = [
+            {k: lib.get(k) for k in ("internal_api", "version", "architecture", "num_threads")}
+            for lib in threadpool_info()
+        ]
+    except ImportError:
+        info["libraries"] = "threadpoolctl unavailable"
+    return info
+
+
 # Text artifacts are written with CRLF on Windows and normalized to LF by
 # scripts/update_manifest.py before the reference hash is taken, so compare
 # them the same way; the raw digest stays for source files.
@@ -169,6 +193,12 @@ def compare_raw_inputs(
         a, b = source / name, candidate / name
         if b.is_file() and digest(a) == digest(b):
             continue
+        # The compact freezing step also rewrites its index CSV; only its line
+        # endings may differ, and that is named as serialization, not agreement.
+        if name == "data/raw/freezing_predictions_index.csv" and b.is_file():
+            if artifact_digest(a) == artifact_digest(b):
+                serialization.append(name)
+                continue
         if name == "data/raw/freezing_predictions_light.csv.gz" and b.is_file():
             try:
                 left = gzip.decompress(a.read_bytes()).replace(b"\r\n", b"\n")
@@ -322,6 +352,7 @@ def main(argv=None) -> int:
         "source_hashes": source_hashes,
         "python": sys.version,
         "platform": platform.platform(),
+        "blas": blas_runtime(),
         "scope": "tables_reports" if args.skip_figures else "data_derived_pipeline",
         "rtol": 1e-7,
         "atol": 1e-10,
@@ -340,6 +371,11 @@ def main(argv=None) -> int:
         BATCH_MODE="1",
         SOURCE_DATE_EPOCH="0",
         PYTHONUNBUFFERED="1",
+        # The frozen references were fitted with OpenBLAS's generic Prescott
+        # kernel (the reference machine's hybrid CPU is not recognised by the
+        # bundled OpenBLAS). Kernel choice moves MixedLM roundoff enough to
+        # flip a near-singular fit, so pin it rather than let each host pick.
+        OPENBLAS_CORETYPE=os.environ.get("OPENBLAS_CORETYPE", REFERENCE_BLAS_CORETYPE),
     )
     # Load only the task declaration, not a mutable manifest or precomputed verdict.
     import importlib.util

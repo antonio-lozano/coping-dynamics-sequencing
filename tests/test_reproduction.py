@@ -92,6 +92,20 @@ def test_raw_companion_serialization_is_distinct_from_input_mutation(tmp_path):
     assert compare_raw_inputs(a, b, [name])[0] == [name]
 
 
+def test_rewritten_index_csv_tolerates_only_line_endings(tmp_path):
+    from coping_dynamics.reproduction import compare_raw_inputs
+
+    a, b = tmp_path / "source", tmp_path / "candidate"
+    for root in (a, b):
+        (root / "data/raw").mkdir(parents=True)
+    name = "data/raw/freezing_predictions_index.csv"
+    (a / name).write_bytes(b"animal,file\n1,a.csv\n")
+    (b / name).write_bytes(b"animal,file\r\n1,a.csv\r\n")
+    assert compare_raw_inputs(a, b, [name]) == ([], [name])
+    (b / name).write_bytes(b"animal,file\r\n1,b.csv\r\n")
+    assert compare_raw_inputs(a, b, [name])[0] == [name]
+
+
 def test_primary_inputs_require_exact_bytes_even_with_line_ending_changes(tmp_path):
     from coping_dynamics.reproduction import compare_raw_inputs
 
@@ -217,6 +231,15 @@ def test_symlink_permission_denial_is_an_explicit_capability_skip(tmp_path, monk
     monkeypatch.setattr(Path, "symlink_to", denied)
     with pytest.raises(pytest.skip.Exception, match="Directory symlink creation unavailable"):
         directory_alias(tmp_path / "link", Path("target"))
+
+
+def test_blas_runtime_reports_pinned_reference_kernel(monkeypatch):
+    from coping_dynamics.reproduction import REFERENCE_BLAS_CORETYPE, blas_runtime
+
+    monkeypatch.delenv("OPENBLAS_CORETYPE", raising=False)
+    info = blas_runtime()
+    assert info["openblas_coretype"] == REFERENCE_BLAS_CORETYPE == "Prescott"
+    assert "libraries" in info
 
 
 def test_artifact_digest_ignores_crlf_in_text_artifacts(tmp_path):

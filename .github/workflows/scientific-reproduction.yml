@@ -27,9 +27,16 @@ jobs:
         shell: bash
     env:
       MPLBACKEND: Agg
+      # Kernel the frozen references were fitted with; hosted runners land on
+      # AVX2 or AVX-512 hosts at random and OpenBLAS would otherwise pick a
+      # different kernel each time (see REPRODUCIBILITY.md).
+      OPENBLAS_CORETYPE: Prescott
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Report host CPU
+        run: powershell -NoProfile -Command "(Get-CimInstance Win32_Processor).Name"
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v7
