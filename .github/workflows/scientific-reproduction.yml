@@ -16,8 +16,14 @@ jobs:
   # Differences require review; this job never rewrites the source manifest.
   pipeline:
     name: frozen-reference reproduction
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # The frozen references were built on Windows; MixedLM optimizer roundoff,
+    # a Groom/Combined singular-matrix fit and permutation draws all diverge on
+    # Linux beyond rtol=1e-7, so the comparison runs on the reference platform.
+    runs-on: windows-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
     env:
       MPLBACKEND: Agg
     steps:
