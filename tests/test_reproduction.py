@@ -217,3 +217,20 @@ def test_symlink_permission_denial_is_an_explicit_capability_skip(tmp_path, monk
     monkeypatch.setattr(Path, "symlink_to", denied)
     with pytest.raises(pytest.skip.Exception, match="Directory symlink creation unavailable"):
         directory_alias(tmp_path / "link", Path("target"))
+
+
+def test_artifact_digest_ignores_crlf_in_text_artifacts(tmp_path):
+    from coping_dynamics.reproduction import artifact_digest, digest
+
+    lf = tmp_path / "a.svg"
+    crlf = tmp_path / "b.svg"
+    lf.write_bytes(b"<svg>\n</svg>\n")
+    crlf.write_bytes(b"<svg>\r\n</svg>\r\n")
+    assert artifact_digest(lf) == artifact_digest(crlf)
+    assert digest(lf) != digest(crlf)
+
+    png_lf = tmp_path / "a.png"
+    png_crlf = tmp_path / "b.png"
+    png_lf.write_bytes(b"\x89PNG\n")
+    png_crlf.write_bytes(b"\x89PNG\r\n")
+    assert artifact_digest(png_lf) != artifact_digest(png_crlf)

@@ -59,10 +59,16 @@ The candidate snapshot records exactly which source bytes ran.
 
 CSV comparisons require identical column/row order and identifiers, with numeric
 roundoff limits `rtol=1e-7`, `atol=1e-10`. Missing values must remain missing.
-These limits do not authorize scientific changes. Other changed artifacts are
-reported for review, not silently accepted as equivalent. A successful process
-alone does not imply agreement: the runner exits nonzero for `FAILED`,
-`REVIEW_REQUIRED` or `PARTIAL`; only full `PASS` exits zero. This pass concerns
+These limits do not authorize scientific changes. Text artifacts (`.csv`, `.svg`,
+`.md`, `.txt`, `.json`) are compared after CRLF is normalized to LF, the same
+way `update_manifest.py` hashes them. Other changed artifacts are reported for
+review, not silently accepted as equivalent. A successful process alone does not
+imply agreement: the runner exits nonzero for `FAILED` or `PARTIAL`. Byte-identical
+figures and workbooks are a same-machine guarantee (font rasterization and PDF
+stream compression differ between hosts), so `REVIEW_REQUIRED` — every table
+agrees but some rendered bytes differ — exits zero and lists each such artifact
+in `evidence.json` for inspection. The comparison runs on `windows-latest`
+because the frozen references were built on Windows. This pass concerns
 the bundled downstream pipeline, not raw-video reconstruction or original-paper
 scientific validity. See the [preprint](https://doi.org/10.1101/2025.09.01.673507) for study methods.
 

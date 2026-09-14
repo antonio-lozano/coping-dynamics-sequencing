@@ -239,6 +239,10 @@ def onset_of_prediction(labels: pd.DataFrame, root: Path, n_perm: int) -> pd.Dat
             perms = within_cohort_shuffles(cohort, y, n_perm, RANDOM_SEED)
             null = np.array([loocv_auc(x, p) for p in perms])
             null_mean = float(np.nanmean(null))
+            # AUC is a multiple of 1/(n_pos*n_neg); ties with the observed value
+            # are common and must not flip on CPU-level roundoff in the scores.
+            null_r = np.round(null, 10)
+            observed_r = round(observed, 10)
 
             rows.append(
                 {
@@ -248,7 +252,7 @@ def onset_of_prediction(labels: pd.DataFrame, root: Path, n_perm: int) -> pd.Dat
                     "roc_auc": observed,
                     "null_mean": null_mean,
                     "auc_above_null_mean": float(observed - null_mean),
-                    "p_perm": float((np.sum(null >= observed) + 1) / (len(null) + 1)),
+                    "p_perm": float((np.sum(null_r >= observed_r) + 1) / (len(null) + 1)),
                 }
             )
             print(

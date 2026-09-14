@@ -1,6 +1,7 @@
 """Downloader integrity and safe extraction boundaries, without network access."""
 
 import hashlib
+import os
 import zipfile
 from pathlib import Path
 
@@ -12,9 +13,7 @@ from coping_dynamics import datasets
 def archive(tmp_path, name="recording/data.csv"):
     path = tmp_path / "input.zip"
     with zipfile.ZipFile(path, "w") as target:
-        info = zipfile.ZipInfo(name)
-        info.filename = name  # Preserve hostile separators on Windows too.
-        target.writestr(info, "frame,label\n0,Freeze\n")
+        target.writestr(zipfile.ZipInfo(name), "frame,label\n0,Freeze\n")
     return path
 
 
@@ -45,6 +44,11 @@ def test_checksum_failure_preserves_existing_file(tmp_path):
 
 @pytest.mark.parametrize("name", ["../escape", "/escape", "C:/escape", "dir\\escape"])
 def test_unsafe_archive_does_not_extract(tmp_path, name):
+    if os.sep == "\\" and "\\" in name:
+        # zipfile rewrites os.sep to "/" both when writing and when reading the
+        # central directory on Windows, so a backslash member cannot be built
+        # or observed here; the separator check is exercised on POSIX runners.
+        pytest.skip("zipfile normalizes backslashes on Windows")
     path = archive(tmp_path, name)
     with pytest.raises(ValueError, match="Unsafe"):
         datasets.extract(path, tmp_path / "out")
