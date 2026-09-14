@@ -203,7 +203,11 @@ def loocv_scores(x: np.ndarray, y: np.ndarray) -> np.ndarray:
 
 
 def loocv_auc(x: np.ndarray, y: np.ndarray) -> float:
-    return tier1.auc_or_nan(y, loocv_scores(x, y))
+    # AUC is a rank statistic: two animals whose scores agree to the last
+    # bit on one CPU can split by an ulp on another, turning a half-credit
+    # tie into a full step of 1/(n_pos*n_neg). Rank on scores rounded far
+    # below any meaningful difference so the ordering is the same everywhere.
+    return tier1.auc_or_nan(y, np.round(loocv_scores(x, y), 9))
 
 
 def within_cohort_shuffles(cohort: np.ndarray, y: np.ndarray, n_perm: int, seed: int) -> np.ndarray:
@@ -239,10 +243,12 @@ def onset_of_prediction(labels: pd.DataFrame, root: Path, n_perm: int) -> pd.Dat
             perms = within_cohort_shuffles(cohort, y, n_perm, RANDOM_SEED)
             null = np.array([loocv_auc(x, p) for p in perms])
             null_mean = float(np.nanmean(null))
-            # AUC is a multiple of 1/(n_pos*n_neg); ties with the observed value
-            # are common and must not flip on CPU-level roundoff in the scores.
-            null_r = np.round(null, 10)
-            observed_r = round(observed, 10)
+            # AUC is k/(n_pos*n_neg) with the class counts fixed by the
+            # within-cohort shuffle, so compare the integer k: ties with the
+            # observed value are common and must not flip on CPU-level roundoff.
+            pairs = int(y.sum()) * int(len(y) - y.sum())
+            null_r = np.rint(null * pairs)
+            observed_r = np.rint(observed * pairs)
 
             rows.append(
                 {
