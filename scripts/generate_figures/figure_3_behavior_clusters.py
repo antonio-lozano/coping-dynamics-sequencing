@@ -27,6 +27,7 @@ from coping_dynamics.config import (
     SYLLABLE_TIMEBIN_30S,
 )
 from coping_dynamics.panel_letters import align_panel_letters
+from coping_dynamics.protocol import TONE_SPANS_MIN
 from coping_dynamics.statistics import fit_mixed_models
 
 FIGURE_OUTPUT_DIR = FIGURES_DIR
@@ -154,8 +155,8 @@ def panel_letter(ax: plt.Axes, letter: str, x: float = -0.17, y: float = 1.16) -
 
 
 def add_shock_shading(ax: plt.Axes) -> None:
-    for start in [3.5, 5.0, 6.5]:
-        ax.axvspan(start, start + 0.5, color=SHADE_COLOR, zorder=0)
+    for start, end in TONE_SPANS_MIN:
+        ax.axvspan(start, end, color=SHADE_COLOR, zorder=0)
 
 
 def plot_bar_panel(ax: plt.Axes, total_summary: pd.DataFrame) -> plt.Text:

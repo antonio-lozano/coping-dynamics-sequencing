@@ -1,0 +1,85 @@
+{
+  "source": "User-supplied paper.zip, read-only manuscript reference",
+  "artifacts": [
+    {
+      "original_filename": "Figure1.pdf",
+      "sha256": "e62ebdba0c39ef248c400ba7f5153ea21cb6b2427adf0424605d74012eae6779",
+      "bytes": 375170
+    },
+    {
+      "original_filename": "Figure2.pdf",
+      "sha256": "870439d646a064b2c4943542c76c036bddd0a283447e2ef5f02356c3251cde84",
+      "bytes": 53194
+    },
+    {
+      "original_filename": "Figure3.pdf",
+      "sha256": "b456713df57ccb7559f4788f340fb69044eb8cde2faab1a341c6f7c2144e5a95",
+      "bytes": 39712
+    },
+    {
+      "original_filename": "Figure4.pdf",
+      "sha256": "88985f7755bfc124ddc49a26d432363c668b926c17d01510b3ae619192b1aa82",
+      "bytes": 252540
+    },
+    {
+      "original_filename": "Figure5.pdf",
+      "sha256": "a33f7e45fca6436a50a98bab44695b02b6f2595ce52294a78156c644a2a2494c",
+      "bytes": 106780
+    },
+    {
+      "original_filename": "Figure6.pdf",
+      "sha256": "a435d71cf8653096392f34bce86c4b00746d23adca2bab2ae0d9a169e76981f1",
+      "bytes": 317534
+    },
+    {
+      "original_filename": "Figure7.pdf",
+      "sha256": "6f1e0d3d609008704ba8cc67445214f0da0af9bdd72975877438fffb2c09e3e4",
+      "bytes": 222546
+    },
+    {
+      "original_filename": "Raw_data.xlsx",
+      "sha256": "0d780350dc20c6609df2523169969301b45396441810ef8565c8177ed52f60d8",
+      "bytes": 1218218
+    },
+    {
+      "original_filename": "Sanguino-Go╠ümez_coping_strategies_manuscript.docx",
+      "sha256": "a886072ec8df2a5ba80828784f1157814cd29a12d8ba46bab23ac71f3796df4f",
+      "bytes": 77984
+    },
+    {
+      "original_filename": "Statistical_report.xlsx",
+      "sha256": "5fd4092dcb57a925d54f4c9d265f01f06443b1931baf9e145bcc65cd1bdc1502",
+      "bytes": 456847
+    },
+    {
+      "original_filename": "Supplementary Figure1.pdf",
+      "sha256": "2d1488ba4800fcb23f16977ff9cdb61b9496a10451b456eed1fd93deccf6f935",
+      "bytes": 28617
+    },
+    {
+      "original_filename": "Supplementary Figure2.pdf",
+      "sha256": "b6c4432dee22dcd4fc343a67baae7d67208d2edfb7e68b57dad67119a2ded73d",
+      "bytes": 1986849
+    },
+    {
+      "original_filename": "Supplementary Figure3.pdf",
+      "sha256": "6e86fb83b0441aec1b0d0cffb5ccf0b77c56e13467a9b15ee65baa874f578106",
+      "bytes": 211805
+    },
+    {
+      "original_filename": "Supplementary Figure4.pdf",
+      "sha256": "1403924693cd4a11aa011c2bab6c5093e4b5376b8df592592761eb82d1b594ae",
+      "bytes": 1020989
+    },
+    {
+      "original_filename": "Supplementary Figure5.pdf",
+      "sha256": "c8afc64e61ed8bb766362c311bf2547f25c04c23d50567f9a9711bc54d6e9d61",
+      "bytes": 12961145
+    },
+    {
+      "original_filename": "Supplementary_Video_1_MoSeq_syllable_atlas.mp4",
+      "sha256": "abc332dd9f98bb733eb0fdb9f8fdc62162cc75d545ea6a200e742dd91429dbf0",
+      "bytes": 8286450
+    }
+  ]
+}

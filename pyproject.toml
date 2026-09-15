@@ -49,6 +49,11 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["coping_dynamics"]
 
+# PyPI-style distributions provide the library/CLI, not the study checkout or
+# companion runtimes. An allowlist also excludes local tracking environments.
+[tool.hatch.build.targets.sdist]
+only-include = ["coping_dynamics", "pyproject.toml", "README.md", "LICENSE"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 markers = [
@@ -59,7 +64,7 @@ markers = [
 line-length = 100
 # The vendored tool manages its own environment and style; the archive folder is
 # not part of the repository.
-extend-exclude = ["tools", "_archive_main"]
+extend-exclude = ["apps", "tools", "_archive_main"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]

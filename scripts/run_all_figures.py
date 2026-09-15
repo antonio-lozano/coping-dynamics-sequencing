@@ -13,6 +13,7 @@ Usage:
     python scripts/run_all_figures.py
 """
 
+import argparse
 import os
 import subprocess
 import sys
@@ -38,7 +39,7 @@ FIGURE_SCRIPTS = [
 ]
 
 
-def run_script(label: str, script_path: Path) -> tuple[str, float]:
+def run_script(label: str, script_path: Path, *, recompute: bool = False) -> tuple[str, float]:
     print(f"\n{'=' * 70}\n  {label}\n  Script: {script_path.name}\n{'=' * 70}\n")
     start = time.time()
     env = os.environ.copy()
@@ -48,10 +49,11 @@ def run_script(label: str, script_path: Path) -> tuple[str, float]:
     # (dc:date) output; together with svg.hashsalt in the repository
     # matplotlibrc this makes an unchanged figure an unchanged file.
     env.setdefault("SOURCE_DATE_EPOCH", "0")
+    command = [sys.executable, str(script_path)]
+    if recompute and script_path.name == "figure_7_resilience_prediction.py":
+        command.append("--recompute")
     try:
-        subprocess.run(
-            [sys.executable, str(script_path)], cwd=script_path.parents[2], check=True, env=env
-        )
+        subprocess.run(command, cwd=script_path.parents[2], check=True, env=env)
         duration = time.time() - start
         print(f"\n[OK] {label} completed in {duration:.1f}s")
         return "SUCCESS", duration
@@ -61,7 +63,7 @@ def run_script(label: str, script_path: Path) -> tuple[str, float]:
         return "FAILED", duration
 
 
-def main() -> None:
+def main(*, recompute: bool = False) -> None:
     print("\n" + "=" * 70 + "\n  GENERATING ALL MANUSCRIPT FIGURES\n" + "=" * 70)
     results = []
     total_start = time.time()
@@ -71,7 +73,7 @@ def main() -> None:
             print(f"\n[WARN] Script not found: {script_path}")
             results.append((label, "NOT FOUND", 0.0))
             continue
-        status, duration = run_script(label, script_path)
+        status, duration = run_script(label, script_path, recompute=recompute)
         results.append((label, status, duration))
 
     print("\n" + "=" * 70 + "\n  SUMMARY\n" + "=" * 70)
@@ -79,7 +81,7 @@ def main() -> None:
     print("-" * 65)
     n_failed = 0
     for label, status, duration in results:
-        if status == "FAILED":
+        if status != "SUCCESS":
             n_failed += 1
         time_str = f"{duration:.1f}s" if duration else "-"
         print(f"{label:<45} {status:<10} {time_str:>8}")
@@ -91,4 +93,10 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--recompute",
+        action="store_true",
+        help="Refit Figure 7 prediction models instead of reusing cached outputs",
+    )
+    main(recompute=parser.parse_args().recompute)

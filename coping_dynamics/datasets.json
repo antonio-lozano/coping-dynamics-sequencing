@@ -1,0 +1,45 @@
+{
+  "source": "https://doi.org/10.6084/m9.figshare.33439885",
+  "article_id": 33439885,
+  "files": {
+    "barcodes": {
+      "file_id": 68373082,
+      "filename": "barcodes.zip",
+      "size": 9504574
+    },
+    "ethograms": {
+      "file_id": 68373085,
+      "filename": "ethograms.zip",
+      "size": 3960673
+    },
+    "videos": {
+      "file_id": 68373091,
+      "filename": "videos.zip",
+      "size": 1931660184
+    },
+    "syllable_clips": {
+      "file_id": 68373094,
+      "filename": "syllable_clips.zip",
+      "size": 304887895
+    },
+    "keypoint_moseq": {
+      "file_id": 68373097,
+      "filename": "keypoint_moseq.zip",
+      "size": 131511685,
+      "sha256": "b0e61938386f5c3a81346eb15f6f59c7eb035394e0374ca16c8b993114fb9a75"
+    },
+    "freezing_predictions": {
+      "file_id": 68373100,
+      "filename": "freezing_predictions.zip",
+      "size": 2587723,
+      "sha256": "32eb10d092161d2dc58c8a285ad0a28d82870942e93b360aa2ff2fb8180b0c6a"
+    },
+    "dlc": {
+      "file_id": 68373103,
+      "filename": "dlc.zip",
+      "size": 716618456
+    }
+  },
+  "access": "embargoed",
+  "doi": "10.6084/m9.figshare.33439885"
+}

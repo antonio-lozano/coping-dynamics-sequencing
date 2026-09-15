@@ -1,0 +1,120 @@
+name: Next-version platform checks
+
+on:
+  workflow_dispatch:
+
+jobs:
+  # The locked environment installs, imports, and passes the layout checks and
+  # the fast test suite, on both operating systems the repository documents.
+  checks:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.10.10"
+          enable-cache: true
+
+      - name: Install locked environment
+        run: uv sync --locked
+
+      - name: Import smoke check
+        run: >
+          uv run python -c "import matplotlib, numpy, openpyxl, pandas, scipy,
+          shap, sklearn, statsmodels, xgboost; import coping_dynamics.config"
+
+      - name: Compile every Python file
+        shell: bash
+        run: |
+          uv run python - <<'PY'
+          from pathlib import Path
+          import py_compile
+          for path in Path('.').rglob('*.py'):
+              if '.git' in path.parts or '.venv' in path.parts:
+                  continue
+              py_compile.compile(str(path), doraise=True)
+          PY
+
+      - name: Check publication artifact layout
+        run: uv run python scripts/check_reproducibility.py
+
+
+      - name: Fast test suite
+        run: uv run pytest -m "not slow" -q
+
+
+  # The vendored classifier tool manages its own environment and ships its own
+  # test suite; this lane finally runs it. GUI code is imported but no window
+  # is opened, so the suite is headless-safe; the one test needing local demo
+  # tracking data skips itself on a fresh checkout.
+  tool-tests:
+    name: behavior-dlc-classifier (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: apps/behavior-dlc-classifier
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.10.10"
+          enable-cache: true
+
+      - name: System libraries for OpenCV
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libgl1 libglib2.0-0 xvfb xauth
+
+      - name: Lockfile matches pyproject
+        run: uv lock --check
+
+      - name: Install locked environment with test extras
+        run: uv sync --locked --extra video --extra ml --extra dev
+
+      # cv2 and tkinter degrade into silent skips or collection errors when
+      # missing; import them loudly so a broken runner image fails visibly.
+      - name: Optional dependencies import loudly
+        run: uv run --no-sync python -c "import tkinter, cv2, sklearn, openpyxl, matplotlib"
+
+      - name: Run the tool's test suite
+        env:
+          MPLBACKEND: Agg
+        run: uv run --no-sync pytest -q
+
+      # Exercise real Tk geometry and analysis-to-export lifecycle with bundled data.
+      # Native file dialogs and external-player interactions remain separate.
+      - name: Tk window regressions (Windows desktop)
+        if: runner.os == 'Windows'
+        env:
+          BEHAVIOR_STUDIO_NATIVE_TESTS: "1"
+          MPLBACKEND: Agg
+        run: uv run --no-sync pytest tests/test_gui_native.py -q --junitxml=tk-results.xml
+
+      - name: Tk window regressions (Linux virtual display)
+        if: runner.os == 'Linux'
+        env:
+          BEHAVIOR_STUDIO_NATIVE_TESTS: "1"
+          MPLBACKEND: Agg
+        run: xvfb-run -a -s "-screen 0 1920x1080x24" uv run --no-sync pytest tests/test_gui_native.py -q --junitxml=tk-results.xml
+
+      - name: Preserve Tk regression report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tk-regressions-${{ runner.os }}
+          path: apps/behavior-dlc-classifier/tk-results.xml
+          if-no-files-found: error
+          retention-days: 7

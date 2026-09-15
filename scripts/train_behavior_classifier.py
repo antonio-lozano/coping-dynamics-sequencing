@@ -1,4 +1,4 @@
-"""Train the reusable Figure 7A-C/Supplementary Figure 4 classifier."""
+"""Train the experimental centroid-feature classifier, not the archived figure model."""
 
 from __future__ import annotations
 
