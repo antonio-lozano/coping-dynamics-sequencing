@@ -1,0 +1,134 @@
+{
+  "apps/behavior-dlc-classifier/data/raw/manual_labels/Trial_14_mouse13_labels.csv": {
+    "size": 99880,
+    "sha256": "539e34c669f109d1a446d16eb9b004da0b287e7a373aa7f6b0ace725143dc123"
+  },
+  "apps/behavior-dlc-classifier/data/raw/manual_labels/Trial_9_mouse3_labels.csv": {
+    "size": 99880,
+    "sha256": "138b34f5ae08567fdb2075ea612f6dddcc00b75642346c48b00d3468d07f4fbb"
+  },
+  "apps/behavior-dlc-classifier/data/raw/manual_labels/Trial_9_mouse4_labels.csv": {
+    "size": 99880,
+    "sha256": "e67ebe71b690dc88cf3e741e423683b01951c66848a0b6a7b65df06cac2ea4b5"
+  },
+  "apps/behavior-dlc-classifier/data/raw/original_videos/Trial     9_mouse3.mp4": {
+    "size": 2968766,
+    "sha256": "0911f000bbeb1d49d4dbe209d2734e898bf85792a36cb013c7dd7633b2e712a8"
+  },
+  "apps/behavior-dlc-classifier/data/raw/original_videos/Trial     9_mouse3DLC_resnet50_Freezing_07-2020Sep29shuffle1_500000filtered.csv": {
+    "size": 5914253,
+    "sha256": "167648d5e991075f9ca39725be301851b54116071c5d46c475de9aee36eb8e2c"
+  },
+  "apps/behavior-dlc-classifier/data/raw/original_videos/Trial     9_mouse4.mp4": {
+    "size": 1990889,
+    "sha256": "9ec59157c242f880d69e05d919ded5af8ab9a6aa1045c0a5ff42c47fd0700d5d"
+  },
+  "apps/behavior-dlc-classifier/data/raw/original_videos/Trial     9_mouse4DLC_resnet50_Freezing_07-2020Sep29shuffle1_500000filtered.csv": {
+    "size": 5887473,
+    "sha256": "77ad735f64d40e6e395e02d12708ba3e5bc6317068b0ff165cefad2824d26600"
+  },
+  "apps/behavior-dlc-classifier/data/raw/original_videos/Trial    12_mouse10.mp4": {
+    "size": 1850295,
+    "sha256": "2845147a63b5ec5a8985635c7488ea16bd3b32d09ceff1336a2e939ad6962330"
+  },
+  "apps/behavior-dlc-classifier/data/raw/original_videos/Trial    12_mouse10DLC_resnet50_Freezing_07-2020Sep29shuffle1_500000filtered.csv": {
+    "size": 5925589,
+    "sha256": "04908e64017d37d0bd9cfe45abf178599c46d49e133426fdb080a3815f62ba17"
+  },
+  "apps/behavior-dlc-classifier/data/raw/original_videos/Trial    14_mouse13.mp4": {
+    "size": 2138587,
+    "sha256": "0144ae39c2df8c14ef34b359f212d68d8796a7d723fe63797afcc0ec51aff1a8"
+  },
+  "apps/behavior-dlc-classifier/data/raw/original_videos/Trial    14_mouse13DLC_resnet50_Freezing_07-2020Sep29shuffle1_500000filtered.csv": {
+    "size": 5926355,
+    "sha256": "2e4dd2a5c50313a1705422aa863e70d826eeff513b09084dfb7e9d39dc51fa11"
+  },
+  "apps/behavior-dlc-classifier/data/raw/original_videos/Trial    16_mouse17.mp4": {
+    "size": 3017993,
+    "sha256": "b2e4decee9174f06db619f62ab675d9dd3c1903574d88d0ef2c624e648d3b938"
+  },
+  "apps/behavior-dlc-classifier/data/raw/original_videos/Trial    16_mouse17DLC_resnet50_Freezing_07-2020Sep29shuffle1_500000filtered.csv": {
+    "size": 5908411,
+    "sha256": "858f81651d9483770234ba6b856c0389915a392be111b7e088d6237b52632c68"
+  },
+  "apps/behavior-dlc-classifier/data/raw/original_videos/Trial    20_mouse26.mp4": {
+    "size": 2028663,
+    "sha256": "1906fe38c75eea582bf54b6902c85ff1936583bddea692ec9e611509912dc100"
+  },
+  "apps/behavior-dlc-classifier/data/raw/original_videos/Trial    20_mouse26DLC_resnet50_Freezing_07-2020Sep29shuffle1_500000filtered.csv": {
+    "size": 5926965,
+    "sha256": "976b9ea36d1adb9342491fa8f01bdb2b0d25443e85a004763fb2b794c4445df8"
+  },
+  "apps/behavior-dlc-classifier/models/behavior/label_encoder.pkl": {
+    "size": 629,
+    "sha256": "0ef0951ad58ace99217c8186f564f1e910528794dd77e55f96ea8dfcece39bb6"
+  },
+  "apps/behavior-dlc-classifier/models/behavior/xgb_model.json": {
+    "size": 4441982,
+    "sha256": "974cf29c0fb3cc4c9a2dd203d351f5014e8aee3013c859a399ed82b7c9d63be7"
+  },
+  "apps/behavior-dlc-classifier/models/behavior/xgb_model.pkl": {
+    "size": 2869565,
+    "sha256": "dcc88056b0c87ff746061291daf5e1e5629dee252fbf2b71dcefb55490918782"
+  },
+  "apps/behavior-dlc-classifier/models/behavior/xgb_model_meta.json": {
+    "size": 17615,
+    "sha256": "78cacb96a06363ba8de8f4d48a422dd2a2e6fdf1517f82e86232339fba59a058"
+  },
+  "apps/behavior-dlc-classifier/models/dlc_project/Freezing_07-2020-Sanguino-Lozano-2020-09-29/config.yaml": {
+    "size": 1700,
+    "sha256": "9f4f4b407e66a1e641eb918de06a372f4178c0e1bab12919d184f8e138218261"
+  },
+  "apps/behavior-dlc-classifier/models/dlc_project/Freezing_07-2020-Sanguino-Lozano-2020-09-29/dlc-models/iteration-0/Freezing_07-2020Sep29-trainset90shuffle1/test/pose_cfg.yaml": {
+    "size": 548,
+    "sha256": "ca5f7c1c2d5590c76bf3d760991ebe7eb1c32cd58ef238d483bb41a27bbd4732"
+  },
+  "apps/behavior-dlc-classifier/models/dlc_project/Freezing_07-2020-Sanguino-Lozano-2020-09-29/dlc-models/iteration-0/Freezing_07-2020Sep29-trainset90shuffle1/train/checkpoint": {
+    "size": 87,
+    "sha256": "2002cac872357b26a7ba2b3ee77904b61f04744dcb677a2ecfb84b1bfe150fdd"
+  },
+  "apps/behavior-dlc-classifier/models/dlc_project/Freezing_07-2020-Sanguino-Lozano-2020-09-29/dlc-models/iteration-0/Freezing_07-2020Sep29-trainset90shuffle1/train/pose_cfg.yaml": {
+    "size": 1851,
+    "sha256": "3064688d53353ebeeb0517b65d477cf2a94d73a3cb8914b926083b60bb922d4d"
+  },
+  "apps/behavior-dlc-classifier/models/dlc_project/Freezing_07-2020-Sanguino-Lozano-2020-09-29/dlc-models/iteration-0/Freezing_07-2020Sep29-trainset90shuffle1/train/snapshot-500000.data-00000-of-00001": {
+    "size": 97341352,
+    "sha256": "f30675bdd747dfc4338a30184739e456a4ec767457f7f8eb82a06d3bbed9315b"
+  },
+  "apps/behavior-dlc-classifier/models/dlc_project/Freezing_07-2020-Sanguino-Lozano-2020-09-29/dlc-models/iteration-0/Freezing_07-2020Sep29-trainset90shuffle1/train/snapshot-500000.index": {
+    "size": 11442,
+    "sha256": "e391741e9ee6eb3410ccdcf7a09b15f1570ec2917b68c7ed21f8919ceec6d5aa"
+  },
+  "apps/behavior-dlc-classifier/models/dlc_project/Freezing_07-2020-Sanguino-Lozano-2020-09-29/dlc-models/iteration-0/Freezing_07-2020Sep29-trainset90shuffle1/train/snapshot-500000.meta": {
+    "size": 2070467,
+    "sha256": "257b97c95c09adfa5caab5b87bc15251cedd741dbb873d884a629569552ff98b"
+  },
+  "apps/behavior-dlc-classifier/models/dlc_project/Freezing_07-2020-Sanguino-Lozano-2020-09-29/dlc-models/iteration-1/Freezing_07-2020Sep29-trainset90shuffle1/test/pose_cfg.yaml": {
+    "size": 548,
+    "sha256": "b9c0ab5c7c440d82325baddd724945254d7fa1f29db2ec3840e0917edd8d0239"
+  },
+  "apps/behavior-dlc-classifier/models/dlc_project/Freezing_07-2020-Sanguino-Lozano-2020-09-29/dlc-models/iteration-1/Freezing_07-2020Sep29-trainset90shuffle1/train/checkpoint": {
+    "size": 87,
+    "sha256": "77bf31b1af7a80e7296ae9241549a20a5e08b5284c73ccdf15f1ec39c8dad131"
+  },
+  "apps/behavior-dlc-classifier/models/dlc_project/Freezing_07-2020-Sanguino-Lozano-2020-09-29/dlc-models/iteration-1/Freezing_07-2020Sep29-trainset90shuffle1/train/pose_cfg.yaml": {
+    "size": 2074,
+    "sha256": "4cd69d8c02b2eb16dd03f6e34e2712f367115672c8e7971a518f529a08d17bc3"
+  },
+  "apps/behavior-dlc-classifier/models/dlc_project/Freezing_07-2020-Sanguino-Lozano-2020-09-29/dlc-models/iteration-1/Freezing_07-2020Sep29-trainset90shuffle1/train/snapshot-100000.data-00000-of-00001": {
+    "size": 97341352,
+    "sha256": "c7143b3b0a58e1dce6ca8e422082feae4900f7cb61e8f563e3c150ff05f9351d"
+  },
+  "apps/behavior-dlc-classifier/models/dlc_project/Freezing_07-2020-Sanguino-Lozano-2020-09-29/dlc-models/iteration-1/Freezing_07-2020Sep29-trainset90shuffle1/train/snapshot-100000.index": {
+    "size": 11442,
+    "sha256": "eeea9a11429f3aa669478af2e7dfddae455f0936443f403495d859ef723a51a3"
+  },
+  "apps/behavior-dlc-classifier/models/dlc_project/Freezing_07-2020-Sanguino-Lozano-2020-09-29/dlc-models/iteration-1/Freezing_07-2020Sep29-trainset90shuffle1/train/snapshot-100000.meta": {
+    "size": 2071815,
+    "sha256": "e79879c7ab8cb0dd7e3088cb7ea657200537cdf9df291b0f0370cfdc9685bdd5"
+  },
+  "apps/behavior-dlc-classifier/models/freezing_model.sav": {
+    "size": 16155646,
+    "sha256": "52b904ecfd7be9b2f5f027f7d5db678badb16662f655b860fc9189ca33a9ef3c"
+  }
+}

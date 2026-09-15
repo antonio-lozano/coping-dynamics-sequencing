@@ -20,6 +20,7 @@ import numpy as np
 import pandas as pd
 
 from coping_dynamics.config import FIGURES_DIR, PROCESSED_DATA_DIR, SUPPLEMENTARY_TRACKING_CSV
+from coping_dynamics.protocol import TONE_SPANS_MIN
 
 SOURCE_CSV = SUPPLEMENTARY_TRACKING_CSV
 
@@ -125,8 +126,8 @@ def panel_letter(ax: plt.Axes, letter: str, x: float = -0.17, y: float = 1.16) -
 
 
 def add_shock_shading(ax: plt.Axes) -> None:
-    for start in [3.5, 5.0, 6.5]:
-        ax.axvspan(start, start + 0.5, color=SHADE_COLOR, zorder=0)
+    for start, end in TONE_SPANS_MIN:
+        ax.axvspan(start, end, color=SHADE_COLOR, zorder=0)
 
 
 def plot_time_panel(ax: plt.Axes, summary: pd.DataFrame, spec: dict[str, object]) -> plt.Text:

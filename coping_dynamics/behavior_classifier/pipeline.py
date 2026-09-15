@@ -1,4 +1,4 @@
-"""Train and apply the Figure 7A-C/Supplementary Figure 4 classifier."""
+"""Train and apply the experimental centroid-feature behavior classifier."""
 
 from __future__ import annotations
 
@@ -88,18 +88,27 @@ def _prepare_training_data(
     deps = _classifier_dependencies()
     lookup = behavior_lookup(BEHAVIOR_CLUSTER_MAP)
     labeled = add_behavior_labels(df, lookup, label_col=label_col)
+    # Temporal features describe the original recording, not adjacency among
+    # sampled/labeled training rows. Compute before either exclusion or random
+    # subsampling, just as predict_behaviors computes on a complete recording.
+    # This corrects experimental retraining only; archived manuscript models
+    # and classifier results are not regenerated or claimed to be reproduced.
+    featured, feature_cols = build_frame_features(labeled)
     if not include_unassigned:
-        labeled = labeled[labeled[label_col] != "Unassigned"].copy()
-    labeled = _sample_labeled_frames(
-        labeled,
+        featured = featured[featured[label_col] != "Unassigned"].copy()
+    featured = _sample_labeled_frames(
+        featured,
         label_col=label_col,
         max_frames=max_frames,
         random_state=random_state,
     )
 
-    featured, feature_cols = build_frame_features(labeled)
     require_columns(featured, [label_col])
-    featured = featured[featured[label_col].notna()].reset_index(drop=True)
+    featured = (
+        featured[featured[label_col].notna()]
+        .sort_values(["name", "frame_index"])
+        .reset_index(drop=True)
+    )
 
     label_order = [label for label in BEHAVIOR_ORDER if label in set(featured[label_col])]
     label_encoder = deps["LabelEncoder"]()
@@ -241,6 +250,7 @@ def train_behavior_classifier(
         "balanced_weights": bool(balanced_weights),
         "random_state": int(random_state),
         "max_frames": max_frames,
+        "temporal_feature_context": "full_recording_before_training_row_selection",
         "model_kwargs": model_kwargs,
     }
     return BehaviorClassifierBundle(
@@ -276,7 +286,33 @@ def load_bundle(path: str | Path) -> BehaviorClassifierBundle:
             "requirements first, for example: uv pip install -r requirements.txt"
         ) from exc
 
-    bundle = joblib.load(path)
+    try:
+        bundle = joblib.load(path)
+    except ModuleNotFoundError as exc:
+        if exc.name not in {"src", "src.behavior_classifier", "src.behavior_classifier.pipeline"}:
+            raise
+        # The trusted bundled, uncompressed archive predates the package rename.
+        # Remap only its exact class reference, without installing a global
+        # ``src`` alias or rewriting any model bytes. Other globals are resolved
+        # normally; this is compatibility, not a safe unpickler for untrusted data.
+        import inspect
+
+        from joblib.numpy_pickle import NumpyUnpickler
+
+        class LegacyBundleUnpickler(NumpyUnpickler):
+            def find_class(self, module, name):
+                if (module, name) == (
+                    "src.behavior_classifier.pipeline",
+                    "BehaviorClassifierBundle",
+                ):
+                    return BehaviorClassifierBundle
+                return super().find_class(module, name)
+
+        kwargs = {}
+        if "ensure_native_byte_order" in inspect.signature(NumpyUnpickler).parameters:
+            kwargs["ensure_native_byte_order"] = True
+        with Path(path).open("rb") as handle:
+            bundle = LegacyBundleUnpickler(str(path), handle, **kwargs).load()
     if not isinstance(bundle, BehaviorClassifierBundle):
         raise TypeError(f"Unexpected classifier bundle type: {type(bundle)!r}")
     return bundle
