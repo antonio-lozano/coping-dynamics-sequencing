@@ -113,7 +113,6 @@ REQUIRED_FILES = [
     "report/raw_data.xlsx",
     "report/statistical_report.xlsx",
     "report/SIGuide.docx",
-    "report/Sanguino-Gómez_coping_strategies_Nature_Neuroscience_highlighted.docx",
     "scripts/run_all.py",
     "scripts/run_all_figures.py",
     "scripts/update_manifest.py",

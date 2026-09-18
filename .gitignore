@@ -73,6 +73,11 @@ tools/*
 tools/behavior_dlc_classifier/*
 !tools/behavior_dlc_classifier/README.md
 
+# Manuscript under review. The submission text is not distributed from the
+# public repository; the bioRxiv preprint is the citable public version.
+/report/*.docx
+!/report/SIGuide.docx
+
 # Downloaded Figshare archives and extracted datasets
 /datasets/
 
